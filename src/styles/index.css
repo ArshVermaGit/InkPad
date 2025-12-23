@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Caveat:wght@400;700&family=Dancing+Script:wght@400;700&family=Patrick+Hand&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+  --color-gray-50: #F9FAFB;
+  --color-gray-100: #F5F5F5;
+  --color-gray-200: #E5E5E5;
+  --color-gray-300: #CCCCCC;
+  --color-gray-400: #999999;
+  --color-gray-500: #666666;
+  --color-gray-600: #333333;
+  --color-gray-700: #1A1A1A;
+  --color-gray-800: #121212;
+  --color-gray-900: #0A0A0A;
+
+  /* Typography */
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-handwriting: "Caveat", cursive;
+  --font-script: "Dancing Script", cursive;
+  --font-print: "Patrick Hand", cursive;
+
+  /* Spacing Scale */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-24: 96px;
+
+  /* Custom Shadows */
+  --shadow-premium: 0 10px 50px rgba(0, 0, 0, 0.04);
+  --shadow-premium-hover: 0 20px 70px rgba(0, 0, 0, 0.08);
+
+  /* Animations */
+  --animate-float: float 3s ease-in-out infinite;
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+}
+
+@layer base {
+  body {
+    background-color: white;
+    color: black;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .btn-minimal-primary {
+    @apply relative overflow-hidden px-6 py-3 font-medium transition-all duration-300 active:scale-95 bg-black text-white hover:bg-gray-600;
+  }
+
+  .btn-minimal-secondary {
+    @apply relative overflow-hidden px-6 py-3 font-medium transition-all duration-300 active:scale-95 bg-white text-black border border-gray-200 hover:bg-gray-100;
+  }
+
+  .input-minimal {
+    @apply w-full px-4 py-3 bg-white border border-gray-200 rounded-none focus:outline-none focus:border-black transition-colors duration-300;
+  }
+
+  .card-premium {
+    @apply bg-white border border-gray-100 p-8 transition-all duration-500 rounded-none shadow-premium;
+  }
+
+  .card-premium:hover {
+    @apply shadow-premium-hover;
+  }
+
+  .section-padding {
+    @apply py-24 px-6 md:px-12 lg:px-24;
+  }
+}
