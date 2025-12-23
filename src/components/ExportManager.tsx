@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { exportToPDF, exportToImage } from '../utils/export';
 
 export default function ExportManager() {
@@ -31,51 +31,57 @@ export default function ExportManager() {
     };
 
     return (
-        <div className="card">
-            <h2 className="text-xl font-bold text-ink-900 mb-6">Export</h2>
+        <div className="card-premium">
+            <div className="mb-8">
+                <h2 className="text-xl font-bold uppercase tracking-tighter text-black">Output</h2>
+                <div className="w-8 h-0.5 bg-black mt-2" />
+            </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
                 <button
                     onClick={() => handleExport('pdf')}
                     disabled={isExporting}
-                    className="btn-primary w-full flex items-center justify-center gap-3 py-4"
+                    className="btn-minimal-primary w-full flex items-center justify-center gap-3 py-5 uppercase tracking-[0.2em] text-[10px] font-black"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    Download PDF
+                    Export as PDF
                 </button>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                     <button
                         onClick={() => handleExport('png')}
                         disabled={isExporting}
-                        className="btn-secondary flex items-center justify-center gap-2 py-3"
+                        className="btn-minimal-secondary flex items-center justify-center gap-2 py-4 uppercase tracking-[0.2em] text-[8px] font-black"
                     >
-                        PNG
+                        PNG Image
                     </button>
                     <button
                         onClick={() => handleExport('jpg')}
                         disabled={isExporting}
-                        className="btn-secondary flex items-center justify-center gap-2 py-3"
+                        className="btn-minimal-secondary flex items-center justify-center gap-2 py-4 uppercase tracking-[0.2em] text-[8px] font-black"
                     >
-                        JPG
+                        JPG Image
                     </button>
                 </div>
             </div>
 
-            {msg && (
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`mt-4 p-3 rounded text-xs font-bold text-center border uppercase tracking-widest ${msg.type === 'error'
+            <AnimatePresence>
+                {msg && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className={`mt-6 p-4 rounded-none text-[8px] font-black text-center border uppercase tracking-[0.3em] ${msg.type === 'error'
                             ? 'bg-red-50 border-red-200 text-red-600'
-                            : 'bg-ink-50 border-ink-200 text-ink-900'
-                        }`}
-                >
-                    {msg.text}
-                </motion.div>
-            )}
+                            : 'bg-black border-black text-white'
+                            }`}
+                    >
+                        {msg.text}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
