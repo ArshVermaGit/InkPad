@@ -1,5 +1,4 @@
 import { useStore } from '../lib/store';
-import type { HandwritingStyle } from '../types';
 
 export default function StyleSelector() {
     const { handwritingStyle, setHandwritingStyle, customFonts } = useStore();
