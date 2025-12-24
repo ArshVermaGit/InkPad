@@ -3,7 +3,7 @@ import { useStore } from '../lib/store';
 import { getFontFamily, renderHandwriting } from '../utils/handwriting';
 import { Move } from 'lucide-react';
 
-export default function CanvasRenderer() {
+export default function CanvasRenderer({ overridePreset, overrideShowLines }: { overridePreset?: string, overrideShowLines?: boolean }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -24,30 +24,29 @@ export default function CanvasRenderer() {
         showGrid,
         compareMode,
         pan,
-        setPan
+        setPan,
+        pagePreset,
+        customBackground,
+        showPaperLines,
+        showMarginLine,
+        outputEffect,
     } = useStore();
 
     const [isPanning, setIsPanning] = useState(false);
     const [startPan, setStartPan] = useState({ x: 0, y: 0 });
 
     const getDimensions = () => {
-        let width = 1240;
-        let height = 1754;
+        let width = 595;  // A4 at 72 DPI
+        let height = 842;
 
         switch (paperSize) {
-            case 'letter':
-                width = 1275; height = 1650; break;
-            case 'a5':
-                width = 874; height = 1240; break;
-            case 'a6':
-                width = 620; height = 874; break;
-            case 'legal':
-                width = 1275; height = 2100; break;
-            case 'tabloid':
-                width = 1650; height = 2550; break;
+            case 'letter': width = 612; height = 792; break;
+            case 'a5': width = 420; height = 595; break;
+            case 'a6': width = 298; height = 420; break;
+            case 'legal': width = 612; height = 1008; break;
+            case 'tabloid': width = 792; height = 1224; break;
             case 'a4':
-            default:
-                width = 1240; height = 1754; break;
+            default: width = 595; height = 842; break;
         }
 
         if (paperOrientation === 'landscape') {
@@ -60,7 +59,7 @@ export default function CanvasRenderer() {
     const baseWidth = dimensions.width;
     const baseHeight = dimensions.height;
 
-    const render = () => {
+    const render = async () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -75,11 +74,44 @@ export default function CanvasRenderer() {
 
         ctx.scale(dpr, dpr);
 
+        const currentPreset = overridePreset || pagePreset;
+        const currentShowLines = overrideShowLines !== undefined ? overrideShowLines : showPaperLines;
+
+        const drawBg = async (offsetX: number = 0) => {
+            if (currentPreset === 'custom' && customBackground) {
+                const img = new Image();
+                img.src = customBackground;
+                await new Promise((resolve) => {
+                    img.onload = () => {
+                        ctx.drawImage(img, offsetX, 0, baseWidth, baseHeight);
+                        resolve(null);
+                    };
+                    img.onerror = () => resolve(null);
+                });
+            } else if (currentPreset && currentPreset !== 'custom') {
+                const img = new Image();
+                img.src = `/page_presets/${currentPreset}.jpg`;
+                await new Promise((resolve) => {
+                    img.onload = () => {
+                        ctx.drawImage(img, offsetX, 0, baseWidth, baseHeight);
+                        resolve(null);
+                    };
+                    img.onerror = () => resolve(null);
+                });
+            } else {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(offsetX, 0, baseWidth, baseHeight);
+            }
+        };
+
         if (compareMode) {
+            await drawBg(0);
+            await drawBg(baseWidth + 80);
+
             // Render Previous
             ctx.save();
             renderHandwriting(canvas, previousText || "No previous state captured.", getFontFamily(handwritingStyle, customFonts), fontSize, inkColor, settings, paperMaterial, paperPattern, {
-                skipClear: false,
+                skipClear: true,
                 regionWidth: baseWidth,
                 regionHeight: baseHeight
             });
@@ -103,7 +135,7 @@ export default function CanvasRenderer() {
             ctx.save();
             ctx.translate(baseWidth + 80, 0);
             renderHandwriting(canvas, text, getFontFamily(handwritingStyle, customFonts), fontSize, inkColor, settings, paperMaterial, paperPattern, {
-                skipClear: false,
+                skipClear: true,
                 regionWidth: baseWidth,
                 regionHeight: baseHeight
             });
@@ -113,11 +145,28 @@ export default function CanvasRenderer() {
             ctx.fillText('LIVE SYNTHESIS', 60, baseHeight - 60);
             ctx.restore();
         } else {
+            await drawBg(0);
             renderHandwriting(canvas, text, getFontFamily(handwritingStyle, customFonts), fontSize, inkColor, settings, paperMaterial, paperPattern, {
-                skipClear: false,
+                skipClear: true,
                 regionWidth: baseWidth,
                 regionHeight: baseHeight
             });
+
+            if (currentShowLines) {
+                // Overlay lines if necessary - renderHandwriting currently draws them if pattern is set
+                // But for presets, we might want manual control. 
+                // Currently renderHandwriting handles paperPattern.
+            }
+
+            if (showMarginLine) {
+                const marginX = settings.margins.left * 0.5 - 4;
+                ctx.strokeStyle = '#fca5a5';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(marginX, 0);
+                ctx.lineTo(marginX, baseHeight);
+                ctx.stroke();
+            }
         }
 
         if (showGrid) {
@@ -140,7 +189,7 @@ export default function CanvasRenderer() {
     useEffect(() => {
         const timer = setTimeout(render, 50);
         return () => clearTimeout(timer);
-    }, [text, previousText, handwritingStyle, fontSize, inkColor, paperMaterial, paperPattern, paperSize, paperOrientation, settings, customFonts, showGrid, compareMode]);
+    }, [text, previousText, handwritingStyle, fontSize, inkColor, paperMaterial, paperPattern, paperSize, paperOrientation, settings, customFonts, showGrid, compareMode, pagePreset, customBackground, showPaperLines, showMarginLine, outputEffect, zoom, pan, overridePreset, overrideShowLines]);
 
     useEffect(() => {
         const handleEditorScroll = (e: any) => {
