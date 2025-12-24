@@ -14,9 +14,13 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.4",
     "lucide-react": "^0.562.0",
+    "lz-string": "^1.5.0",
+    "mammoth": "^1.11.0",
+    "pdfjs-dist": "^5.4.449",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.11.0",
+    "tesseract.js": "^7.0.0",
     "zustand": "^5.0.9"
   },
   "devDependencies": {
