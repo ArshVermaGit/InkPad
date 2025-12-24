@@ -2,21 +2,21 @@ import { motion } from 'framer-motion';
 import { LayoutGrid, FileText, Square, Grid } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { useNavigate } from 'react-router-dom';
-import type { PaperType } from '../types';
+import type { PaperPattern } from '../types';
 
 export default function GalleryPage() {
-    const { setPaperType } = useStore();
+    const { setPaperPattern } = useStore();
     const navigate = useNavigate();
 
-    const templates = [
-        { name: 'Lined Classic', type: 'lined' as PaperType, icon: <FileText className="w-8 h-8" /> },
-        { name: 'Pure White', type: 'blank' as PaperType, icon: <Square className="w-8 h-8" /> },
-        { name: 'Grid Master', type: 'grid' as PaperType, icon: <Grid className="w-8 h-8" /> },
-        { name: 'Technical Sheet', type: 'grid' as PaperType, icon: <LayoutGrid className="w-8 h-8" /> },
+    const templates: { name: string; type: PaperPattern; icon: any }[] = [
+        { name: 'Lined Classic', type: 'college', icon: <FileText className="w-8 h-8" /> },
+        { name: 'Pure White', type: 'none', icon: <Square className="w-8 h-8" /> },
+        { name: 'Grid Master', type: 'graph', icon: <Grid className="w-8 h-8" /> },
+        { name: 'Laboratory', type: 'cornell', icon: <LayoutGrid className="w-8 h-8" /> },
     ];
 
-    const handleSelect = (type: PaperType) => {
-        setPaperType(type);
+    const handleSelect = (type: PaperPattern) => {
+        setPaperPattern(type);
         navigate('/editor');
     };
 
