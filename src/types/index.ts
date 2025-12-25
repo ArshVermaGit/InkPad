@@ -8,10 +8,10 @@ export interface FontPreference {
     url?: string;
 }
 
-export type PaperMaterial = 'white' | 'cream' | 'yellow' | 'aged' | 'recycled' | 'parchment';
+export type PaperMaterial = 'white' | 'cream' | 'rough' | 'vintage' | 'yellow-pad';
 
 // Page presets using JPG images from public/page_presets
-export type PagePreset = 'white-page-1' | 'white-page-2' | 'white-page-3' | 'black-line-page' | 'blue-line-page' | 'grey-line-page' | 'maths-page' | 'custom';
+export type PagePreset = 'white-page-1' | 'white-page-2' | 'white-page-3' | 'black-lines' | 'blue-lines' | 'grey-lines' | 'maths-grid' | 'yellow-pad' | 'vintage' | 'custom' | 'blue-line-page' | 'black-line-page' | 'grey-line-page' | 'maths-page';
 
 // Legacy pattern type (kept for compatibility)
 export type PaperPattern = 'none' | 'college' | 'wide' | 'narrow' | 'primary' | 'french' | 'music' | 'graph' | 'cornell' | 'dot' | 'engineer' | 'isometric' | 'hex' | 'poetry' | 'legal' | 'squared' | 'todo' | 'letter';
@@ -44,11 +44,14 @@ export interface RenderingSettings {
 
     // Realism Effects
     inkBleeding: boolean;
+    inkBleedingIntensity: number; // 0 to 1
     paperTexture: boolean;
     penSkip: boolean;
     smudgeMarks: boolean;
     marginViolations: boolean;
     spellingErrors: boolean;
+    pressureSimulation: boolean;
+    edgeWear: number; // 0 to 1
 
     // Layout
     wordSpacing: number;
@@ -77,9 +80,15 @@ export interface RenderingSettings {
     };
 }
 
+export interface Page {
+    id: string;
+    text: string;
+    margins?: { top: number; right: number; bottom: number; left: number };
+}
+
 export interface AppState {
     text: string;
-    pages: { id: string; text: string }[];
+    pages: Page[];
     currentPageIndex: number;
     handwritingStyle: HandwritingStyle;
     fontSize: number;
@@ -123,6 +132,10 @@ export interface AppState {
     pagePreset: PagePreset;
     customBackground: string | null; // Data URL for custom uploaded image
 
+    // AI Humanizer State
+    humanizeIntensity: number;
+    isHumanizeEnabled: boolean;
+
     // Actions
     setText: (text: string) => void;
     setPages: (pages: (string | { id: string; text: string })[]) => void;
@@ -140,6 +153,7 @@ export interface AppState {
     setPaperOrientation: (orientation: PaperOrientation) => void;
     setInkColor: (color: string) => void;
     updateSettings: (settings: Partial<RenderingSettings>) => void;
+    setPageMargins: (pageIndex: number, margins: RenderingSettings['margins']) => void;
     setQuality: (quality: AppState['quality']) => void;
     setLanguage: (lang: string) => void;
     setZoom: (zoom: number) => void;
@@ -169,6 +183,11 @@ export interface AppState {
     // Page Preset Actions
     setPagePreset: (preset: PagePreset) => void;
     setCustomBackground: (dataUrl: string | null) => void;
+
+    // AI Humanizer Actions
+    setHumanizeIntensity: (intensity: number) => void;
+    toggleHumanize: () => void;
+    applyHumanize: () => void;
 
     reset: () => void;
 }
