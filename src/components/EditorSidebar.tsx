@@ -1,612 +1,523 @@
-import { useState, useRef } from 'react';
-import { Plus, FolderOpen, Save, Search, FileText, Grid3X3, Type, Settings2, Palette, Upload, X } from 'lucide-react';
+import { useState } from 'react';
 import { useStore, getAvailableFonts } from '../lib/store';
-import type { PaperSize, OutputEffect, OutputResolution, PagePreset } from '../types';
-
-// Page presets using JPG images from public/page_presets
-const pagePresets: { name: string; value: PagePreset; image: string }[] = [
-    { name: 'White Page 1', value: 'white-page-1', image: '/page_presets/white-page-1.jpg' },
-    { name: 'White Page 2', value: 'white-page-2', image: '/page_presets/white-page-2.jpg' },
-    { name: 'White Page 3', value: 'white-page-3', image: '/page_presets/white-page-3.jpg' },
-    { name: 'Black Lines', value: 'black-line-page', image: '/page_presets/black-line-page.jpg' },
-    { name: 'Blue Lines', value: 'blue-line-page', image: '/page_presets/blue-line-page.jpg' },
-    { name: 'Grey Lines', value: 'grey-line-page', image: '/page_presets/grey-line-page.jpg' },
-    { name: 'Maths Grid', value: 'maths-page', image: '/page_presets/maths-page.jpg' },
-];
-
-const pageSizes: { name: string; value: PaperSize; dimensions: string }[] = [
-    { name: 'A4', value: 'a4', dimensions: '210×297mm' },
-    { name: 'Letter', value: 'letter', dimensions: '8.5×11"' },
-    { name: 'A5', value: 'a5', dimensions: '148×210mm' },
-    { name: 'A6', value: 'a6', dimensions: '105×148mm' },
-    { name: 'Legal', value: 'legal', dimensions: '8.5×14"' },
-];
-
-const inkColors = [
-    { name: 'Blue', value: '#1e40af', preset: 'blue' as const },
-    { name: 'Black', value: '#030712', preset: 'black' as const },
-    { name: 'Red', value: '#dc2626', preset: 'red' as const },
-];
-
-const effects: { name: string; value: OutputEffect }[] = [
-    { name: 'No Effect', value: 'none' },
-    { name: 'Shadows', value: 'shadows' },
-    { name: 'Scanner', value: 'scanner' },
-];
-
-const resolutions: { name: string; value: OutputResolution }[] = [
-    { name: 'Very Low', value: 'very-low' },
-    { name: 'Low', value: 'low' },
-    { name: 'Normal', value: 'normal' },
-    { name: 'High', value: 'high' },
-    { name: 'Very High', value: 'very-high' },
-];
+import {
+    Type,
+    Layers,
+    Maximize2,
+    Settings,
+    Wand2,
+    Trash2,
+    Copy,
+    FolderOpen,
+    Save,
+    Plus,
+    ChevronRight,
+    Search,
+    Clock,
+    Heart,
+    Palette,
+    History
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { PagePreset, HandwritingStyle } from '../types';
 
 export default function EditorSidebar() {
+    const state = useStore();
+    const [activeTab, setActiveTab] = useState<'font' | 'paper' | 'effects' | 'ai' | 'layout'>('font');
+
     const {
         handwritingStyle,
         setHandwritingStyle,
-        pagePreset,
-        setPagePreset,
-        customBackground,
-        setCustomBackground,
-        paperSize,
-        setPaperSize,
-        paperOrientation,
-        setPaperOrientation,
         fontSize,
         setFontSize,
         inkColor,
         setInkColor,
+        pagePreset,
+        setPagePreset,
         settings,
         updateSettings,
-        showPaperLines,
-        setShowPaperLines,
-        showMarginLine,
-        setShowMarginLine,
-        outputEffect,
-        setOutputEffect,
-        outputResolution,
-        setOutputResolution,
+        pages,
+        currentPageIndex,
+        setCurrentPageIndex,
         addPage,
-    } = useStore();
+        removePage,
+        duplicatePage,
+        isHumanizeEnabled,
+        toggleHumanize,
+        humanizeIntensity,
+        setHumanizeIntensity
+    } = state;
 
-    const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState<'styles' | 'paper' | 'page' | 'customize' | 'effects'>('styles');
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const fonts = getAvailableFonts(useStore.getState());
+    const fonts = getAvailableFonts(state);
 
-    const filteredFonts = fonts.filter(f =>
-        f.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const tabs = [
+        { id: 'font', label: 'Style', icon: Type },
+        { id: 'paper', label: 'Paper', icon: Layers },
+        { id: 'layout', label: 'Layout', icon: Maximize2 },
+        { id: 'ai', label: 'AI Tools', icon: Wand2 },
+        { id: 'effects', label: 'Effects', icon: Palette }
+    ];
 
-    // Handle custom background upload
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        // Validate file type
-        const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-        if (!validTypes.includes(file.type)) {
-            alert('Please upload a JPG, PNG, or PDF file');
-            return;
-        }
-
-        // For PDF, we'd need a library like pdf.js - for now just handle images
-        if (file.type === 'application/pdf') {
-            alert('PDF support coming soon! Please upload a JPG or PNG image.');
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const dataUrl = e.target?.result as string;
-            setCustomBackground(dataUrl);
-            setPagePreset('custom');
-        };
-        reader.readAsDataURL(file);
-    };
-
-    // Slider component for reuse
-    const Slider = ({
-        label,
-        value,
-        min,
-        max,
-        step = 1,
-        unit = '',
-        onChange
-    }: {
-        label: string;
-        value: number;
-        min: number;
-        max: number;
-        step?: number;
-        unit?: string;
-        onChange: (v: number) => void
-    }) => (
-        <div className="space-y-1.5">
-            <div className="flex justify-between items-center">
-                <span className="text-[11px] font-medium text-gray-600">{label}</span>
-                <span className="text-[11px] font-bold text-black">{value}{unit}</span>
-            </div>
-            <input
-                type="range"
-                min={min}
-                max={max}
-                step={step}
-                value={value}
-                onChange={(e) => onChange(Number(e.target.value))}
-                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
-            />
-        </div>
-    );
-
-    // Toggle component
-    const Toggle = ({
-        label,
-        checked,
-        onChange
-    }: {
-        label: string;
-        checked: boolean;
-        onChange: (v: boolean) => void
-    }) => (
-        <div className="flex items-center justify-between py-2">
-            <span className="text-[11px] font-medium text-gray-700">{label}</span>
-            <button
-                onClick={() => onChange(!checked)}
-                className={`w-10 h-5 rounded-full transition-all relative ${checked ? 'bg-black' : 'bg-gray-300'
-                    }`}
-            >
-                <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${checked ? 'right-0.5' : 'left-0.5'
-                    }`} />
-            </button>
-        </div>
-    );
+    const presets: { id: PagePreset; label: string; preview: string }[] = [
+        { id: 'white-page-1', label: 'Plain White', preview: '#ffffff' },
+        { id: 'blue-line-page', label: 'Blue Lines', preview: '#eff6ff' },
+        { id: 'black-line-page', label: 'Black Lines', preview: '#f3f4f6' },
+        { id: 'grey-line-page', label: 'Grey Lines', preview: '#f9fafb' },
+        { id: 'maths-page', label: 'Maths Grid', preview: '#f0fdf4' },
+        { id: 'yellow-pad', label: 'Yellow Pad', preview: '#ffffcc' },
+        { id: 'vintage', label: 'Vintage', preview: '#f4e8d0' }
+    ];
 
     return (
-        <aside className="h-full bg-[#FAFAFA] border-r border-gray-200 flex flex-col overflow-hidden">
-
-            {/* Quick Actions Section */}
-            <div className="p-3 space-y-2 border-b border-gray-100">
-                <button
-                    onClick={() => addPage()}
-                    className="w-full h-9 flex items-center justify-center gap-2 bg-black text-white rounded-lg font-bold text-xs hover:bg-gray-800 transition-all active:scale-[0.98]"
-                >
-                    <Plus size={14} />
-                    New Doc
-                </button>
-                <div className="grid grid-cols-2 gap-1.5">
-                    <button className="flex items-center justify-center gap-1.5 h-7 bg-white border border-gray-200 rounded-md text-[10px] font-medium text-gray-600 hover:bg-gray-50 transition-all">
-                        <FolderOpen size={11} />
-                        Open
+        <div className="w-[380px] h-full flex flex-col bg-white border-r border-gray-100 relative z-20">
+            {/* Top Toolbar */}
+            <div className="p-6 border-b border-gray-50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
+                        <Plus size={16} className="text-white" />
+                    </div>
+                    <span className="text-sm font-black tracking-tight">INKPAD <span className="text-gray-300 font-light">∞</span></span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <button className="p-2 hover:bg-gray-50 rounded-full transition-colors text-gray-400 hover:text-black">
+                        <FolderOpen size={18} />
                     </button>
-                    <button className="flex items-center justify-center gap-1.5 h-7 bg-white border border-gray-200 rounded-md text-[10px] font-medium text-gray-600 hover:bg-gray-50 transition-all">
-                        <Save size={11} />
-                        Save
+                    <button className="p-2 hover:bg-gray-50 rounded-full transition-colors text-gray-400 hover:text-black">
+                        <Save size={18} />
                     </button>
                 </div>
             </div>
 
-            {/* Tab Selector */}
-            <div className="flex border-b border-gray-100 px-1 overflow-x-auto">
-                {[
-                    { key: 'styles', icon: <Type size={12} />, label: 'Styles' },
-                    { key: 'paper', icon: <Grid3X3 size={12} />, label: 'Paper' },
-                    { key: 'page', icon: <FileText size={12} />, label: 'Size' },
-                    { key: 'customize', icon: <Settings2 size={12} />, label: 'Spacing' },
-                    { key: 'effects', icon: <Palette size={12} />, label: 'Effects' },
-                ].map((tab) => (
+            {/* Main Tabs */}
+            <div className="flex px-4 py-3 bg-gray-50/50">
+                {tabs.map((tab) => (
                     <button
-                        key={tab.key}
-                        onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                        className={`flex-1 py-2 flex flex-col items-center gap-0.5 text-[9px] font-medium transition-all min-w-[50px] ${activeTab === tab.key
-                                ? 'text-black border-b-2 border-black'
-                                : 'text-gray-400 hover:text-gray-600'
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all ${activeTab === tab.id
+                            ? 'bg-white shadow-sm text-black border border-gray-100'
+                            : 'text-gray-400 hover:text-gray-600'
                             }`}
                     >
-                        {tab.icon}
-                        {tab.label}
+                        <tab.icon size={18} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">{tab.label}</span>
                     </button>
                 ))}
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-3">
-
-                {/* Writing Styles Tab */}
-                {activeTab === 'styles' && (
-                    <div className="space-y-3">
-                        <div className="relative">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={12} />
-                            <input
-                                type="text"
-                                placeholder="Search styles..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-white border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-xs focus:outline-none focus:border-black transition-colors"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-1.5">
-                            {filteredFonts.map((font) => (
-                                <button
-                                    key={font.id}
-                                    onClick={() => setHandwritingStyle(font.id)}
-                                    className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all min-h-[52px] ${handwritingStyle === font.id
-                                            ? 'bg-black text-white shadow-lg'
-                                            : 'bg-white border border-gray-200 hover:border-gray-400'
-                                        }`}
-                                >
-                                    <div
-                                        className="text-base mb-0.5"
-                                        style={{ fontFamily: font.family }}
-                                    >
-                                        Aa
-                                    </div>
-                                    <span className="text-[8px] font-medium opacity-80">
-                                        {font.name}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Paper Tab - JPG Presets */}
-                {activeTab === 'paper' && (
-                    <div className="space-y-4">
-                        <p className="text-[10px] text-gray-500">Choose paper background</p>
-
-                        {/* Page Presets Grid */}
-                        <div className="grid grid-cols-2 gap-2">
-                            {pagePresets.map((preset) => (
-                                <button
-                                    key={preset.value}
-                                    onClick={() => {
-                                        setPagePreset(preset.value);
-                                        if (preset.value !== 'custom') {
-                                            setCustomBackground(null);
-                                        }
-                                    }}
-                                    className={`relative overflow-hidden rounded-lg transition-all ${pagePreset === preset.value
-                                            ? 'ring-2 ring-black shadow-lg'
-                                            : 'ring-1 ring-gray-200 hover:ring-gray-400'
-                                        }`}
-                                >
-                                    <img
-                                        src={preset.image}
-                                        alt={preset.name}
-                                        className="w-full h-20 object-cover"
-                                    />
-                                    <div className={`absolute bottom-0 left-0 right-0 px-1.5 py-1 text-[8px] font-medium ${pagePreset === preset.value
-                                            ? 'bg-black text-white'
-                                            : 'bg-white/90 text-gray-700'
-                                        }`}>
-                                        {preset.name}
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Custom Upload Section */}
-                        <div className="border-t border-gray-200 pt-4">
-                            <p className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-2">
-                                Custom Background
-                            </p>
-
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".jpg,.jpeg,.png,.pdf"
-                                onChange={handleFileUpload}
-                                className="hidden"
-                            />
-
-                            {customBackground ? (
-                                <div className="relative">
-                                    <img
-                                        src={customBackground}
-                                        alt="Custom background"
-                                        className={`w-full h-24 object-cover rounded-lg ${pagePreset === 'custom' ? 'ring-2 ring-black' : 'ring-1 ring-gray-200'
-                                            }`}
-                                        onClick={() => setPagePreset('custom')}
-                                    />
-                                    <button
-                                        onClick={() => {
-                                            setCustomBackground(null);
-                                            if (pagePreset === 'custom') {
-                                                setPagePreset('white-page-1');
-                                            }
-                                        }}
-                                        className="absolute top-1 right-1 p-1 bg-black/70 rounded-full text-white hover:bg-black"
-                                    >
-                                        <X size={12} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="w-full h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-gray-400 hover:text-gray-500 transition-all"
-                                >
-                                    <Upload size={20} />
-                                    <span className="text-[10px] font-medium">Upload JPG, PNG</span>
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* Page Settings Tab */}
-                {activeTab === 'page' && (
-                    <div className="space-y-4">
-                        {/* Page Size */}
-                        <div>
-                            <h4 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-2">
-                                Page Size
-                            </h4>
-                            <div className="space-y-1">
-                                {pageSizes.map((size) => (
-                                    <button
-                                        key={size.value}
-                                        onClick={() => setPaperSize(size.value)}
-                                        className={`w-full flex items-center justify-between p-2 rounded-lg transition-all ${paperSize === size.value
-                                                ? 'bg-black text-white'
-                                                : 'bg-white border border-gray-200 hover:border-gray-400'
-                                            }`}
-                                    >
-                                        <span className="text-xs font-medium">{size.name}</span>
-                                        <span className={`text-[9px] ${paperSize === size.value ? 'opacity-70' : 'text-gray-400'}`}>
-                                            {size.dimensions}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Orientation */}
-                        <div>
-                            <h4 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-2">
-                                Orientation
-                            </h4>
-                            <div className="grid grid-cols-2 gap-1.5">
-                                <button
-                                    onClick={() => setPaperOrientation('portrait')}
-                                    className={`flex flex-col items-center justify-center p-3 rounded-lg transition-all ${paperOrientation === 'portrait'
-                                            ? 'bg-black text-white'
-                                            : 'bg-white border border-gray-200 hover:border-gray-400'
-                                        }`}
-                                >
-                                    <div className={`w-4 h-6 border-2 rounded mb-1 ${paperOrientation === 'portrait' ? 'border-white' : 'border-gray-400'
-                                        }`} />
-                                    <span className="text-[9px] font-medium">Portrait</span>
-                                </button>
-                                <button
-                                    onClick={() => setPaperOrientation('landscape')}
-                                    className={`flex flex-col items-center justify-center p-3 rounded-lg transition-all ${paperOrientation === 'landscape'
-                                            ? 'bg-black text-white'
-                                            : 'bg-white border border-gray-200 hover:border-gray-400'
-                                        }`}
-                                >
-                                    <div className={`w-6 h-4 border-2 rounded mb-1 ${paperOrientation === 'landscape' ? 'border-white' : 'border-gray-400'
-                                        }`} />
-                                    <span className="text-[9px] font-medium">Landscape</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Customization Tab */}
-                {activeTab === 'customize' && (
-                    <div className="space-y-4">
-                        {/* Font Settings */}
-                        <div className="space-y-2">
-                            <h4 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide">
-                                Font
-                            </h4>
-                            <Slider
-                                label="Size"
-                                value={fontSize}
-                                min={12}
-                                max={48}
-                                unit="px"
-                                onChange={setFontSize}
-                            />
-                        </div>
-
-                        {/* Spacing Settings */}
-                        <div className="space-y-2">
-                            <h4 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide">
-                                Spacing
-                            </h4>
-                            <Slider
-                                label="Line Height"
-                                value={settings.lineHeight}
-                                min={1}
-                                max={3}
-                                step={0.1}
-                                onChange={(v) => updateSettings({ lineHeight: v })}
-                            />
-                            <Slider
-                                label="Letter Spacing"
-                                value={settings.letterSpacing}
-                                min={0}
-                                max={5}
-                                step={0.1}
-                                unit="px"
-                                onChange={(v) => updateSettings({ letterSpacing: v })}
-                            />
-                            <Slider
-                                label="Word Spacing"
-                                value={settings.wordSpacing}
-                                min={0.5}
-                                max={4}
-                                step={0.1}
-                                onChange={(v) => updateSettings({ wordSpacing: v })}
-                            />
-                        </div>
-
-                        {/* Margin Settings */}
-                        <div className="space-y-2">
-                            <h4 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide">
-                                Margins
-                            </h4>
-                            <Slider
-                                label="Top"
-                                value={settings.margins.top}
-                                min={20}
-                                max={150}
-                                unit="px"
-                                onChange={(v) => updateSettings({ margins: { ...settings.margins, top: v } })}
-                            />
-                            <Slider
-                                label="Bottom"
-                                value={settings.margins.bottom}
-                                min={20}
-                                max={150}
-                                unit="px"
-                                onChange={(v) => updateSettings({ margins: { ...settings.margins, bottom: v } })}
-                            />
-                            <Slider
-                                label="Left"
-                                value={settings.margins.left}
-                                min={20}
-                                max={150}
-                                unit="px"
-                                onChange={(v) => updateSettings({ margins: { ...settings.margins, left: v } })}
-                            />
-                            <Slider
-                                label="Right"
-                                value={settings.margins.right}
-                                min={20}
-                                max={150}
-                                unit="px"
-                                onChange={(v) => updateSettings({ margins: { ...settings.margins, right: v } })}
-                            />
-                        </div>
-                    </div>
-                )}
-
-                {/* Effects Tab */}
-                {activeTab === 'effects' && (
-                    <div className="space-y-4">
-                        {/* Ink Color */}
-                        <div>
-                            <h4 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-2">
-                                Ink Color
-                            </h4>
-                            <div className="flex gap-2">
-                                {inkColors.map((color) => (
-                                    <button
-                                        key={color.preset}
-                                        onClick={() => setInkColor(color.value)}
-                                        className={`flex-1 flex flex-col items-center p-2 rounded-lg transition-all ${inkColor === color.value
-                                                ? 'bg-gray-100 ring-2 ring-black'
-                                                : 'bg-white border border-gray-200 hover:border-gray-400'
-                                            }`}
-                                    >
-                                        <div
-                                            className="w-6 h-6 rounded-full mb-1 shadow-inner"
-                                            style={{ backgroundColor: color.value }}
-                                        />
-                                        <span className="text-[9px] font-medium">{color.name}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Paper Options */}
-                        <div className="space-y-1">
-                            <h4 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide">
-                                Overlays
-                            </h4>
-                            <Toggle
-                                label="Show Paper Lines"
-                                checked={showPaperLines}
-                                onChange={setShowPaperLines}
-                            />
-                            <Toggle
-                                label="Show Margin Line"
-                                checked={showMarginLine}
-                                onChange={setShowMarginLine}
-                            />
-                        </div>
-
-                        {/* Output Effects */}
-                        <div>
-                            <h4 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-2">
-                                Output Effect
-                            </h4>
-                            <div className="space-y-1">
-                                {effects.map((effect) => (
-                                    <button
-                                        key={effect.value}
-                                        onClick={() => setOutputEffect(effect.value)}
-                                        className={`w-full p-2 rounded-lg text-xs font-medium transition-all text-left ${outputEffect === effect.value
-                                                ? 'bg-black text-white'
-                                                : 'bg-white border border-gray-200 hover:border-gray-400'
-                                            }`}
-                                    >
-                                        {effect.name}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Resolution */}
-                        <div>
-                            <h4 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-2">
-                                Resolution
-                            </h4>
-                            <select
-                                value={outputResolution}
-                                onChange={(e) => setOutputResolution(e.target.value as OutputResolution)}
-                                className="w-full p-2 border border-gray-200 rounded-lg text-xs bg-white focus:outline-none focus:border-black"
+            <div className="flex-1 overflow-auto custom-scrollbar">
+                <div className="p-6">
+                    <AnimatePresence mode="wait">
+                        {activeTab === 'font' && (
+                            <motion.div
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                className="space-y-8"
                             >
-                                {resolutions.map((res) => (
-                                    <option key={res.value} value={res.value}>
-                                        {res.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                                <section>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 flex items-center gap-2">
+                                            <Search size={14} className="text-gray-400" />
+                                            Select Hand
+                                        </h3>
+                                        <div className="flex items-center gap-2">
+                                            <Heart size={14} className="text-gray-300 pointer-events-none" />
+                                            <Clock size={14} className="text-gray-300 pointer-events-none" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        {fonts.map((font) => (
+                                            <button
+                                                key={font.id}
+                                                onClick={() => setHandwritingStyle(font.id as HandwritingStyle)}
+                                                className={`group flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${handwritingStyle === font.id
+                                                    ? 'border-black bg-black text-white shadow-lg'
+                                                    : 'border-gray-100 bg-white hover:border-gray-200'
+                                                    }`}
+                                            >
+                                                <div className="flex flex-col items-start">
+                                                    <span className={`text-lg mb-0.5 ${handwritingStyle === font.id ? 'text-white' : 'text-gray-800'}`} style={{ fontFamily: font.family }}>
+                                                        {font.name}
+                                                    </span>
+                                                    <span className={`text-[9px] uppercase tracking-widest font-bold ${handwritingStyle === font.id ? 'text-white/50' : 'text-gray-400'}`}>
+                                                        Natural {font.type}
+                                                    </span>
+                                                </div>
+                                                {handwritingStyle === font.id && (
+                                                    <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                                                        <ChevronRight size={14} className="text-white" />
+                                                    </div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </section>
 
-                        {/* Handwriting Variation */}
-                        <div className="space-y-2">
-                            <h4 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide">
-                                Handwriting Variation
-                            </h4>
-                            <Slider
-                                label="Baseline"
-                                value={settings.baselineVar}
-                                min={0}
-                                max={5}
-                                step={0.1}
-                                onChange={(v) => updateSettings({ baselineVar: v })}
-                            />
-                            <Slider
-                                label="Rotation"
-                                value={settings.rotationVar}
-                                min={0}
-                                max={5}
-                                step={0.1}
-                                unit="°"
-                                onChange={(v) => updateSettings({ rotationVar: v })}
-                            />
-                            <Slider
-                                label="Slant"
-                                value={settings.slant}
-                                min={-15}
-                                max={15}
-                                unit="°"
-                                onChange={(v) => updateSettings({ slant: v })}
-                            />
-                        </div>
-                    </div>
-                )}
+                                <section className="space-y-6">
+                                    <div>
+                                        <div className="flex justify-between mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                            <span>Ink Color</span>
+                                            <span className="text-gray-900">{inkColor.toUpperCase()}</span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            {['#1e40af', '#000000', '#4b5563', '#991b1b', '#065f46'].map((color) => (
+                                                <button
+                                                    key={color}
+                                                    onClick={() => setInkColor(color)}
+                                                    className={`w-10 h-10 rounded-full border-4 transition-all ${inkColor === color ? 'border-gray-100 scale-110' : 'border-transparent'
+                                                        }`}
+                                                    style={{ backgroundColor: color }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="flex justify-between mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                            <span>Text Size</span>
+                                            <span className="text-gray-900">{fontSize}px</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="12"
+                                            max="48"
+                                            value={fontSize}
+                                            onChange={(e) => setFontSize(parseInt(e.target.value))}
+                                            className="w-full h-1.5 bg-gray-100 rounded-full appearance-none cursor-pointer accent-black"
+                                        />
+                                    </div>
+                                </section>
+                            </motion.div>
+                        )}
+
+                        {activeTab === 'paper' && (
+                            <motion.div
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                className="space-y-8"
+                            >
+                                <section>
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 mb-4 flex items-center gap-2">
+                                        <Layers size={14} className="text-gray-400" />
+                                        Paper Preset
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {presets.map((preset) => (
+                                            <button
+                                                key={preset.id}
+                                                onClick={() => setPagePreset(preset.id)}
+                                                className={`flex flex-col gap-3 p-4 rounded-2xl border-2 transition-all text-left ${pagePreset === preset.id
+                                                    ? 'border-black bg-white shadow-md'
+                                                    : 'border-gray-100 hover:border-gray-200'
+                                                    }`}
+                                            >
+                                                <div
+                                                    className="w-full aspect-[4/3] rounded-lg shadow-inner border border-gray-100"
+                                                    style={{ backgroundColor: preset.preview }}
+                                                />
+                                                <span className="text-[11px] font-black uppercase tracking-tighter text-gray-900">
+                                                    {preset.label}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                <section>
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 mb-4">Pagination</h3>
+                                    <div className="space-y-2">
+                                        {pages.map((page, idx) => (
+                                            <div
+                                                key={page.id}
+                                                className={`group flex items-center justify-between p-4 rounded-2xl border transition-all ${currentPageIndex === idx ? 'bg-black text-white' : 'bg-gray-50 border-transparent hover:bg-gray-100'
+                                                    }`}
+                                            >
+                                                <button
+                                                    onClick={() => setCurrentPageIndex(idx)}
+                                                    className="flex-1 text-left"
+                                                >
+                                                    <span className="text-[10px] font-bold uppercase block opacity-50">Page</span>
+                                                    <span className="font-black">Sheet #0{idx + 1}</span>
+                                                </button>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => duplicatePage(idx)} className="p-1 hover:text-blue-400">
+                                                        <Copy size={16} />
+                                                    </button>
+                                                    <button onClick={() => removePage(idx)} className="p-1 hover:text-red-400">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <button
+                                            onClick={() => addPage()}
+                                            className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 hover:text-black hover:border-black transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Plus size={16} />
+                                            <span className="font-bold text-xs uppercase tracking-widest">Add New Sheet</span>
+                                        </button>
+                                    </div>
+                                </section>
+                            </motion.div>
+                        )}
+
+                        {activeTab === 'layout' && (
+                            <motion.div
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                className="space-y-8"
+                            >
+                                <section className="space-y-6">
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 flex items-center gap-2">
+                                        <Maximize2 size={14} className="text-gray-400" />
+                                        Margins & Spacing
+                                    </h3>
+
+                                    <div className="space-y-6">
+                                        <div>
+                                            <div className="flex justify-between mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                <span>Top Margin</span>
+                                                <span className="text-gray-900">{settings.margins.top}px</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="20"
+                                                max="200"
+                                                value={settings.margins.top}
+                                                onChange={(e) => updateSettings({ margins: { ...settings.margins, top: parseInt(e.target.value) } })}
+                                                className="w-full h-1.5 bg-gray-100 rounded-full appearance-none cursor-pointer accent-black"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <div className="flex justify-between mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                <span>Left Margin</span>
+                                                <span className="text-gray-900">{settings.margins.left}px</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="20"
+                                                max="200"
+                                                value={settings.margins.left}
+                                                onChange={(e) => updateSettings({ margins: { ...settings.margins, left: parseInt(e.target.value) } })}
+                                                className="w-full h-1.5 bg-gray-100 rounded-full appearance-none cursor-pointer accent-black"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <div className="flex justify-between mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                <span>Line Spacing</span>
+                                                <span className="text-gray-900">{settings.lineHeight}x</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="1"
+                                                max="3"
+                                                step="0.1"
+                                                value={settings.lineHeight}
+                                                onChange={(e) => updateSettings({ lineHeight: parseFloat(e.target.value) })}
+                                                className="w-full h-1.5 bg-gray-100 rounded-full appearance-none cursor-pointer accent-black"
+                                            />
+                                        </div>
+                                    </div>
+                                </section>
+                            </motion.div>
+                        )}
+                        {activeTab === 'ai' && (
+                            <motion.div
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                className="space-y-8"
+                            >
+                                <section className="p-6 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-[2rem] text-white shadow-xl shadow-indigo-200">
+                                    <Wand2 size={32} className="mb-4 text-purple-200" />
+                                    <h2 className="text-xl font-black mb-2">AI Humanizer</h2>
+                                    <p className="text-[11px] text-white/70 font-medium leading-relaxed mb-6">
+                                        Transform rigid AI text into natural, flowing handwriting with intentional human-like imperfections.
+                                    </p>
+
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between p-4 bg-white/10 rounded-2xl border border-white/10">
+                                            <span className="text-xs font-bold uppercase tracking-widest">Enable AI Engine</span>
+                                            <button
+                                                onClick={toggleHumanize}
+                                                className={`w-12 h-6 rounded-full transition-all relative ${isHumanizeEnabled ? 'bg-green-400' : 'bg-white/20'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isHumanizeEnabled ? 'right-1' : 'left-1'}`} />
+                                            </button>
+                                        </div>
+
+                                        <div>
+                                            <div className="flex justify-between mb-2 text-[10px] font-bold uppercase tracking-widest text-white/60">
+                                                <span>Human Variance</span>
+                                                <span>{Math.round(humanizeIntensity * 100)}%</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="1"
+                                                step="0.1"
+                                                value={humanizeIntensity}
+                                                onChange={(e) => setHumanizeIntensity(parseFloat(e.target.value))}
+                                                className="w-full h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer accent-white"
+                                            />
+                                        </div>
+
+                                        <p className="text-[9px] text-white/50 italic text-center">
+                                            "A bridge between artificial perfection and natural beauty."
+                                        </p>
+                                    </div>
+                                </section>
+
+                                <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <h4 className="text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest flex items-center gap-2">
+                                        <History size={14} />
+                                        Smart Suggestions
+                                    </h4>
+                                    <p className="text-[11px] text-gray-500 font-medium leading-relaxed">
+                                        Higher intensity adds more typos, crossed-out words, and uneven baselines for maximum realism.
+                                    </p>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {activeTab === 'effects' && (
+                            <motion.div
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                className="space-y-8"
+                            >
+                                <section className="space-y-6">
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 flex items-center gap-2">
+                                        <Palette size={14} className="text-gray-400" />
+                                        Ink & Pressure
+                                    </h3>
+
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[11px] font-bold text-gray-700 uppercase tracking-tighter">Multi-Path Bleeding</span>
+                                            <button
+                                                onClick={() => updateSettings({ inkBleeding: !settings.inkBleeding })}
+                                                className={`w-10 h-5 rounded-full transition-colors relative ${settings.inkBleeding ? 'bg-black' : 'bg-gray-200'}`}
+                                            >
+                                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${settings.inkBleeding ? 'left-6' : 'left-1'}`} />
+                                            </button>
+                                        </div>
+
+                                        {settings.inkBleeding && (
+                                            <div>
+                                                <div className="flex justify-between mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                    <span>Bleeding Intensity</span>
+                                                    <span className="text-gray-900">{(settings.inkBleedingIntensity * 100).toFixed(0)}%</span>
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="1"
+                                                    step="0.01"
+                                                    value={settings.inkBleedingIntensity}
+                                                    onChange={(e) => updateSettings({ inkBleedingIntensity: parseFloat(e.target.value) })}
+                                                    className="w-full h-1.5 bg-gray-100 rounded-full appearance-none cursor-pointer accent-black"
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[11px] font-bold text-gray-700 uppercase tracking-tighter">Pressure Simulation</span>
+                                            <button
+                                                onClick={() => updateSettings({ pressureSimulation: !settings.pressureSimulation })}
+                                                className={`w-10 h-5 rounded-full transition-colors relative ${settings.pressureSimulation ? 'bg-black' : 'bg-gray-200'}`}
+                                            >
+                                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${settings.pressureSimulation ? 'left-6' : 'left-1'}`} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section className="space-y-6">
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 flex items-center gap-2">
+                                        <Clock size={14} className="text-gray-400" />
+                                        Paper Realism
+                                    </h3>
+
+                                    <div className="space-y-6">
+                                        <div>
+                                            <div className="flex justify-between mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                <span>Edge Wear & Fraying</span>
+                                                <span className="text-gray-900">{(settings.edgeWear * 100).toFixed(0)}%</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="1"
+                                                step="0.01"
+                                                value={settings.edgeWear}
+                                                onChange={(e) => updateSettings({ edgeWear: parseFloat(e.target.value) })}
+                                                className="w-full h-1.5 bg-gray-100 rounded-full appearance-none cursor-pointer accent-black"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {[
+                                                { label: 'Paper Grain', key: 'paperTexture' },
+                                                { label: 'Pen Skips', key: 'penSkip' },
+                                                { label: 'Smudge Marks', key: 'smudgeMarks' },
+                                                { label: 'Spiral Bound', key: 'spiral' },
+                                                { label: 'Hole Punches', key: 'holes' }
+                                            ].map((effect) => {
+                                                const isActive = effect.key === 'spiral' || effect.key === 'holes'
+                                                    ? (settings.decorations as any)[effect.key]
+                                                    : (settings as any)[effect.key];
+
+                                                return (
+                                                    <button
+                                                        key={effect.key}
+                                                        onClick={() => {
+                                                            if (effect.key === 'spiral' || effect.key === 'holes') {
+                                                                updateSettings({ decorations: { ...settings.decorations, [effect.key]: !isActive } });
+                                                            } else {
+                                                                updateSettings({ [effect.key]: !isActive });
+                                                            }
+                                                        }}
+                                                        className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${isActive
+                                                            ? 'border-black bg-black text-white shadow-sm'
+                                                            : 'border-gray-50 bg-gray-50/50 text-gray-400 hover:border-gray-100 hover:bg-gray-50'
+                                                            }`}
+                                                    >
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-center">{effect.label}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </section>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
-        </aside>
+
+            {/* Bottom Footer */}
+            <div className="p-6 border-t border-gray-50 bg-gray-50/30">
+                <div className="flex items-center gap-3 text-gray-400 mb-4">
+                    <Settings size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">System Engine v5.2</span>
+                </div>
+                <div className="flex gap-2">
+                    <button className="flex-1 py-3 bg-white border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-900 shadow-sm hover:shadow-md transition-all">
+                        Reset
+                    </button>
+                    <button className="flex-1 py-3 bg-black rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-black/20 hover:scale-[1.02] transition-all">
+                        Settings
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 }
