@@ -1,4 +1,4 @@
-import { RenderingSettings, PagePreset, Page, FontPreference } from '../types';
+import type { RenderingSettings, PagePreset, Page } from '../types';
 import { getPresetMetadata } from '../constants/presets';
 
 export interface PageData {
