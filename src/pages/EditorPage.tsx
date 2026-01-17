@@ -36,6 +36,25 @@ const HANDWRITING_FONTS = [
     { id: 'nothing-you-could-do', name: 'Nothing You Could Do', family: "'Nothing You Could Do', cursive" },
 ];
 
+// Ink Color Presets
+const INK_COLORS = [
+    { id: 'blue-dark', name: 'Blue Dark', color: '#0051a8' },
+    { id: 'blue-light', name: 'Blue Light', color: '#0066cc' },
+    { id: 'black', name: 'Black', color: '#000000' },
+    { id: 'black-gray', name: 'Black Gray', color: '#333333' },
+    { id: 'red', name: 'Red', color: '#cc0000' },
+];
+
+// Paper Types with CSS backgrounds
+const PAPER_TYPES = [
+    { id: 'white', name: 'White Paper', bg: '#ffffff', pattern: 'none' },
+    { id: 'ruled', name: 'Ruled Lines', bg: '#ffffff', pattern: 'repeating-linear-gradient(transparent, transparent 27px, #e0e0e0 27px, #e0e0e0 28px)' },
+    { id: 'graph', name: 'Graph Paper', bg: '#ffffff', pattern: 'linear-gradient(#e0e0e0 1px, transparent 1px), linear-gradient(90deg, #e0e0e0 1px, transparent 1px)' },
+    { id: 'dotted', name: 'Dotted Paper', bg: '#ffffff', pattern: 'radial-gradient(circle, #c0c0c0 1px, transparent 1px)' },
+    { id: 'vintage', name: 'Vintage Paper', bg: '#f5f0e1', pattern: 'none' },
+    { id: 'custom', name: 'Custom Upload', bg: '#ffffff', pattern: 'none' },
+];
+
 export default function EditorPage() {
     const { 
         text, 
@@ -58,16 +77,24 @@ export default function EditorPage() {
         setLineHeight,
         wordSpacing,
         setWordSpacing,
-        resetTypography
+        resetTypography,
+        inkColor,
+        setInkColor,
+        paperMaterial,
+        setPaperMaterial,
+        customPaperImage,
+        setCustomPaperImage
     } = useStore();
     
     const [isLoading, setIsLoading] = useState(true);
     const [secondsAgo, setSecondsAgo] = useState(0);
     const [isFontPanelOpen, setIsFontPanelOpen] = useState(true);
     const [isTypographyPanelOpen, setIsTypographyPanelOpen] = useState(false);
+    const [isPaperInkPanelOpen, setIsPaperInkPanelOpen] = useState(false);
     const [fontSearch, setFontSearch] = useState('');
     const richTextRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const paperImageRef = useRef<HTMLInputElement>(null);
 
     // Get current font family for preview
     const currentFontFamily = useMemo(() => {
@@ -480,6 +507,137 @@ export default function EditorPage() {
                             )}
                         </AnimatePresence>
                     </div>
+
+                    {/* ========== PAPER & INK PANEL ========== */}
+                    <div className="mt-6 border-t border-gray-100 pt-6">
+                        <button
+                            onClick={() => setIsPaperInkPanelOpen(!isPaperInkPanelOpen)}
+                            className="w-full flex items-center justify-between group"
+                        >
+                            <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">
+                                Paper & Ink
+                            </h3>
+                            <motion.div
+                                animate={{ rotate: isPaperInkPanelOpen ? 180 : 0 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                <ChevronDown size={16} className="text-gray-300 group-hover:text-black transition-colors" />
+                            </motion.div>
+                        </button>
+
+                        <AnimatePresence>
+                            {isPaperInkPanelOpen && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="pt-4 space-y-6">
+                                        {/* Ink Color Section */}
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Ink Color</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {INK_COLORS.map((ink) => (
+                                                    <button
+                                                        key={ink.id}
+                                                        onClick={() => setInkColor(ink.color)}
+                                                        title={ink.name}
+                                                        className={`relative w-8 h-8 rounded-full transition-all duration-200 ${inkColor === ink.color ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : 'hover:scale-110'}`}
+                                                        style={{ backgroundColor: ink.color }}
+                                                    >
+                                                        {inkColor === ink.color && (
+                                                            <Check size={14} className="absolute inset-0 m-auto text-white" />
+                                                        )}
+                                                    </button>
+                                                ))}
+                                                {/* Custom Color Picker */}
+                                                <div className="relative">
+                                                    <input
+                                                        type="color"
+                                                        value={inkColor}
+                                                        onChange={(e) => setInkColor(e.target.value)}
+                                                        className="absolute inset-0 w-8 h-8 opacity-0 cursor-pointer"
+                                                    />
+                                                    <div
+                                                        className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-gray-400 transition-colors"
+                                                        style={{ background: `conic-gradient(red, yellow, lime, aqua, blue, magenta, red)` }}
+                                                    >
+                                                        <span className="text-[8px] font-bold text-white bg-black/50 px-1 rounded">+</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Paper Type Section */}
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Paper Type</label>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {PAPER_TYPES.map((paper) => (
+                                                    <button
+                                                        key={paper.id}
+                                                        onClick={() => {
+                                                            setPaperMaterial(paper.id as 'white' | 'ruled' | 'graph' | 'dotted' | 'vintage' | 'custom');
+                                                            if (paper.id !== 'custom') setCustomPaperImage(null);
+                                                            if (paper.id === 'custom') paperImageRef.current?.click();
+                                                        }}
+                                                        title={paper.name}
+                                                        className={`relative aspect-3/4 rounded-lg overflow-hidden transition-all duration-200 group ${
+                                                            paperMaterial === paper.id
+                                                                ? 'ring-2 ring-blue-500 shadow-md'
+                                                                : 'border border-gray-200 hover:border-gray-300'
+                                                        }`}
+                                                    >
+                                                        <div
+                                                            className="absolute inset-0"
+                                                            style={{
+                                                                backgroundColor: paper.bg,
+                                                                backgroundImage: paper.pattern !== 'none' ? paper.pattern : undefined,
+                                                                backgroundSize: paper.id === 'graph' ? '20px 20px' : paper.id === 'dotted' ? '15px 15px' : undefined,
+                                                            }}
+                                                        />
+                                                        {paper.id === 'custom' && customPaperImage && (
+                                                            <div
+                                                                className="absolute inset-0 bg-cover bg-center"
+                                                                style={{ backgroundImage: `url(${customPaperImage})` }}
+                                                            />
+                                                        )}
+                                                        <div className="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm py-1 px-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <span className="text-[8px] font-bold text-white uppercase truncate block">{paper.name}</span>
+                                                        </div>
+                                                        {paperMaterial === paper.id && (
+                                                            <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                                                <Check size={10} className="text-white" />
+                                                            </div>
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            {/* Hidden file input for custom paper */}
+                                            <input
+                                                type="file"
+                                                ref={paperImageRef}
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onload = (event) => {
+                                                            setCustomPaperImage(event.target?.result as string);
+                                                            setPaperMaterial('custom');
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }}
+                                                className="hidden"
+                                            />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
             </motion.div>
 
@@ -526,20 +684,30 @@ export default function EditorPage() {
                                     y: 0 
                                 }}
                                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                                className="relative bg-white shadow-2xl w-[210mm] min-h-[297mm] h-fit flex flex-col p-[20mm] origin-center"
+                                className="relative shadow-2xl w-[210mm] min-h-[297mm] h-fit flex flex-col p-[20mm] origin-center"
+                                style={{
+                                    backgroundColor: PAPER_TYPES.find(p => p.id === paperMaterial)?.bg || '#ffffff',
+                                    backgroundImage: paperMaterial === 'custom' && customPaperImage 
+                                        ? `url(${customPaperImage})` 
+                                        : PAPER_TYPES.find(p => p.id === paperMaterial)?.pattern !== 'none' 
+                                            ? PAPER_TYPES.find(p => p.id === paperMaterial)?.pattern 
+                                            : undefined,
+                                    backgroundSize: paperMaterial === 'graph' ? '20px 20px' : paperMaterial === 'dotted' ? '15px 15px' : paperMaterial === 'custom' ? 'cover' : undefined,
+                                }}
                             >
                                 <div className="absolute inset-0 border border-black/5 pointer-events-none" />
                                 
                                 <div 
-                                    className="flex-1 whitespace-pre-wrap text-gray-800"
+                                    className="flex-1 whitespace-pre-wrap"
                                     style={{ 
                                         fontFamily: currentFontFamily,
                                         fontSize: `${fontSize}px`,
                                         letterSpacing: `${letterSpacing}px`,
                                         lineHeight: lineHeight,
-                                        wordSpacing: `${wordSpacing}px`
+                                        wordSpacing: `${wordSpacing}px`,
+                                        color: inkColor
                                     }}
-                                    dangerouslySetInnerHTML={{ __html: text || '<span class="opacity-10 italic">Your handwritten preview will appear here...</span>' }}
+                                    dangerouslySetInnerHTML={{ __html: text || '<span style="opacity: 0.1; font-style: italic;">Your handwritten preview will appear here...</span>' }}
                                 />
 
                                 <div className="absolute inset-0 pointer-events-none opacity-[0.03] overflow-hidden">
