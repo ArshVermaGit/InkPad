@@ -2,14 +2,25 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { AppState, FontPreference } from '../types';
 
-const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZoom' | 'setEditorMode' | 'setUploadedFileName' | 'setHandwritingStyle' | 'setFontSize' | 'setPaperMaterial' | 'setPaperSize' | 'setPaperOrientation' | 'setInkColor' | 'addCustomFont' | 'removeCustomFont' | 'completeOnboarding' | 'completeTour' | 'setSidebarCollapsed' | 'setSettingsOpen'> = {
+// Default typography values for reset
+const DEFAULT_TYPOGRAPHY = {
+    fontSize: 16,
+    letterSpacing: 0,
+    lineHeight: 1.5,
+    wordSpacing: 4,
+};
+
+const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZoom' | 'setEditorMode' | 'setUploadedFileName' | 'setHandwritingStyle' | 'setFontSize' | 'setLetterSpacing' | 'setLineHeight' | 'setWordSpacing' | 'setPaperMaterial' | 'setPaperSize' | 'setPaperOrientation' | 'setInkColor' | 'addCustomFont' | 'removeCustomFont' | 'resetTypography' | 'completeOnboarding' | 'completeTour' | 'setSidebarCollapsed' | 'setSettingsOpen'> = {
     text: '',
     lastSaved: null,
     zoom: 1,
     editorMode: 'plain',
     uploadedFileName: null,
     handwritingStyle: 'caveat',
-    fontSize: 24,
+    fontSize: DEFAULT_TYPOGRAPHY.fontSize,
+    letterSpacing: DEFAULT_TYPOGRAPHY.letterSpacing,
+    lineHeight: DEFAULT_TYPOGRAPHY.lineHeight,
+    wordSpacing: DEFAULT_TYPOGRAPHY.wordSpacing,
     inkColor: '#1e40af',
     paperMaterial: 'white',
     paperSize: 'a4',
@@ -34,6 +45,9 @@ export const useStore = create<AppState>()(
             setUploadedFileName: (uploadedFileName) => set({ uploadedFileName }),
             setHandwritingStyle: (handwritingStyle) => set({ handwritingStyle }),
             setFontSize: (fontSize) => set({ fontSize }),
+            setLetterSpacing: (letterSpacing) => set({ letterSpacing }),
+            setLineHeight: (lineHeight) => set({ lineHeight }),
+            setWordSpacing: (wordSpacing) => set({ wordSpacing }),
             setPaperMaterial: (paperMaterial) => set({ paperMaterial }),
             setPaperSize: (paperSize) => set({ paperSize }),
             setPaperOrientation: (paperOrientation) => set({ paperOrientation }),
@@ -41,6 +55,7 @@ export const useStore = create<AppState>()(
 
             addCustomFont: (font) => set((state) => ({ customFonts: [...state.customFonts, font] })),
             removeCustomFont: (id) => set((state) => ({ customFonts: state.customFonts.filter(f => f.id !== id) })),
+            resetTypography: () => set({ ...DEFAULT_TYPOGRAPHY }),
             completeOnboarding: () => set({ hasSeenOnboarding: true }),
             completeTour: () => set({ hasSeenTour: true }),
             setSidebarCollapsed: (isSidebarCollapsed) => set({ isSidebarCollapsed }),
@@ -50,7 +65,6 @@ export const useStore = create<AppState>()(
         }),
         {
             name: 'inkpad-core-storage',
-            // Correctly handle Date objects in persist
             storage: {
                 getItem: (name) => {
                     const str = localStorage.getItem(name);
