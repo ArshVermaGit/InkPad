@@ -180,6 +180,32 @@ export const HandwritingCanvas = forwardRef<HTMLCanvasElement, HandwritingCanvas
                 }
             }
 
+            if (!text.trim()) {
+                // Draw Empty State Placeholder
+                const cx = width / 2;
+                const cy = height / 2;
+                
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Draw a subtle "InkPad" watermark or icon
+                ctx.fillStyle = '#f0f0f0';
+                ctx.font = `bold 60px ${currentFontFamily}`;
+                ctx.fillText('InkPad', cx, cy - 40);
+                
+                // Draw instructional text
+                ctx.fillStyle = '#a0a0a0';
+                ctx.font = `italic 16px sans-serif`;
+                ctx.fillText('Start typing in the editor to see your manuscript...', cx, cy + 20);
+                ctx.fillText('Or use the "Sample" button to explore features.', cx, cy + 45);
+                
+                ctx.restore();
+                
+                if (onRenderComplete) onRenderComplete(1);
+                return;
+            }
+
             // 2. Render Tokens
             const tokens = tokenizeHTML(text);
             
