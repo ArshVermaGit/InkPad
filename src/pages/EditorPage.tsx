@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Trash2, 
@@ -42,7 +42,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { HandwritingCanvas } from '../components/HandwritingCanvas';
-import { useToast } from '../components/ui/Toast';
+import { useToast } from '../hooks/useToast';
 import { jsPDF } from 'jspdf';
 import JSZip from 'jszip';
 
@@ -120,6 +120,7 @@ export default function EditorPage() {
     const [isPresetsOpen, setIsPresetsOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [fontSearch, setFontSearch] = useState('');
+    const [isSampleLoading, setIsSampleLoading] = useState(false);
     const richTextRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const paperImageRef = useRef<HTMLInputElement>(null);
@@ -191,7 +192,7 @@ export default function EditorPage() {
     const HelpModal = () => (
         <AnimatePresence>
             {isHelpModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -314,22 +315,87 @@ export default function EditorPage() {
     }, [editorMode, text]);
 
     // File Upload Logic
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            if (file.type !== 'text/plain') {
-                alert('Please upload a .txt file');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const content = event.target?.result as string;
-                setText(content);
-                setUploadedFileName(file.name);
-                setLastSaved(new Date());
-            };
-            reader.readAsText(file);
+        if (!file) return;
+
+        const maxFileSize = 5 * 1024 * 1024; // 5MB limit
+        if (file.size > maxFileSize) {
+            addToast('File too large (max 5MB)', 'error');
+            return;
         }
+
+        setIsLoading(true);
+        try {
+            if (file.type === 'text/plain') {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const content = event.target?.result as string;
+                    setText(content);
+                    setUploadedFileName(file.name);
+                    addToast('Text file loaded!', 'success');
+                };
+                reader.readAsText(file);
+            } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await (await import('mammoth')).convertToHtml({ arrayBuffer });
+                setText(result.value);
+                setUploadedFileName(file.name);
+                addToast('DOCX file loaded!', 'success');
+            } else if (file.type === 'application/pdf') {
+                const pdfjs = await import('pdfjs-dist');
+                // Set worker src - assuming the CDN is fine for now or it's handled by vite
+                pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+                
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+                let fullText = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    fullText += textContent.items
+                        .map((item) => {
+                            const textItem = item as { str?: string };
+                            return textItem.str || '';
+                        })
+                        .join(' ') + '\n\n';
+                }
+                setText(fullText);
+                setUploadedFileName(file.name);
+                addToast('PDF text extracted!', 'success');
+            } else {
+                addToast('Unsupported file type. Use .txt, .docx, or .pdf', 'error');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            addToast('Failed to read file', 'error');
+        } finally {
+            setIsLoading(false);
+            if (e.target) e.target.value = ''; // Reset input
+        }
+    };
+
+    const loadSampleText = () => {
+        setIsSampleLoading(true);
+        setTimeout(() => {
+            const sample = `<h1>Welcome to InkPad!</h1>
+<p>This is a <b>digital manuscript</b> that feels like it was written by hand. You can format your text with <i>italics</i>, <u>underlines</u>, and different heading levels.</p>
+
+<h3>Writing Experience</h3>
+<p>InkPad is designed for those who miss the touch of paper but love the convenience of digital. Whether you're drafting a letter, a journal entry, or just some quick notes, we bring the soul back to your writing.</p>
+
+<ul>
+  <li>Instant Handwriting Conversion</li>
+  <li>Custom Paper & Ink Styles</li>
+  <li>High-Resolution PDF Exports</li>
+</ul>
+
+<p>Try changing the handwriting style in the sidebar or adjusting the typography to find your perfect flow.</p>`;
+            setText(sample);
+            setEditorMode('rich');
+            addToast('Sample text loaded!', 'success');
+            setIsSampleLoading(false);
+        }, 600);
     };
 
     const execCommand = (command: string, value: string | undefined = undefined) => {
@@ -349,7 +415,7 @@ export default function EditorPage() {
         }
     };
 
-    const clearContent = () => {
+    const clearContent = useCallback(() => {
         if (window.confirm('Are you sure you want to clear all text and saved data?')) {
             setText('');
             setUploadedFileName(null);
@@ -357,7 +423,7 @@ export default function EditorPage() {
             if (richTextRef.current) richTextRef.current.innerHTML = '';
             localStorage.removeItem('inkpad-core-storage');
         }
-    };
+    }, [setText, setUploadedFileName, setLastSaved]);
 
     const handleShare = () => {
         const url = window.location.href;
@@ -368,7 +434,7 @@ export default function EditorPage() {
         });
     };
 
-    const handleDownload = async (format: 'png' | 'pdf' | 'zip' | 'pdf-all') => {
+    const handleDownload = useCallback(async (format: 'png' | 'pdf' | 'zip' | 'pdf-all') => {
         if (!canvasRef.current) {
             addToast('Canvas Not Ready', 'error');
             return;
@@ -441,7 +507,7 @@ export default function EditorPage() {
             setIsExporting(false);
             setExportProgress(0);
         }
-    };
+    }, [totalPages, setCurrentPage, addToast, setIsExporting, setExportProgress]);
 
     const wordCount = useMemo(() => {
         const plainText = text.replace(/<[^>]*>/g, ' ');
@@ -449,6 +515,11 @@ export default function EditorPage() {
     }, [text]);
 
     const charCount = text.replace(/<[^>]*>/g, '').length;
+
+    // Headless SEO / Accessibility Titles
+    useEffect(() => {
+        document.title = text ? `Editing: ${text.slice(0, 20)}... | InkPad` : 'InkPad | Beautiful Handwriting Generator';
+    }, [text]);
 
     // Keyboard Shortcuts
     useEffect(() => {
@@ -505,19 +576,31 @@ export default function EditorPage() {
                         </div>
                         
                         <div className="flex items-center gap-3">
-                            <input 
-                                type="file" 
-                                ref={fileInputRef} 
-                                onChange={handleFileUpload} 
-                                accept=".txt" 
-                                className="hidden" 
-                            />
-                            <button 
-                                onClick={() => fileInputRef.current?.click()}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-black hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
+                            <button
+                                onClick={loadSampleText}
+                                disabled={isSampleLoading}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all disabled:opacity-50"
+                                aria-label="Load Sample Text"
                             >
-                                <Upload size={14} /> Upload File
+                                {isSampleLoading ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+                                Sample
                             </button>
+                             <input 
+                                 type="file" 
+                                 ref={fileInputRef} 
+                                 onChange={handleFileUpload}
+                                 className="hidden"
+                                 accept=".txt,.docx,.pdf"
+                                 aria-hidden="true"
+                             />
+                             <button 
+                                 onClick={() => fileInputRef.current?.click()}
+                                 className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all border border-gray-100"
+                                 aria-label="Upload File"
+                             >
+                                 <Upload size={12} />
+                                 Upload
+                             </button>
                             
                             <div className="flex p-1 bg-gray-100 rounded-lg">
                                 <button 
