@@ -33,7 +33,12 @@ import {
     ChevronLeft,
     ChevronRight,
     ChevronDown,
-    Search
+    Search,
+    HelpCircle,
+    LayoutTemplate,
+    Zap,
+    Info,
+    Monitor
 } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { HandwritingCanvas } from '../components/HandwritingCanvas';
@@ -102,15 +107,18 @@ export default function EditorPage() {
         paperMaterial,
         setPaperMaterial,
         customPaperImage,
-        setCustomPaperImage
+        setCustomPaperImage,
+        applyPreset,
+        expandedPanels,
+        togglePanel,
+        reset
     } = useStore();
     
     const [isLoading, setIsLoading] = useState(true);
     const [secondsAgo, setSecondsAgo] = useState(0);
-    const [isFontPanelOpen, setIsFontPanelOpen] = useState(true);
-    const [isTypographyPanelOpen, setIsTypographyPanelOpen] = useState(false);
-    const [isPaperInkPanelOpen, setIsPaperInkPanelOpen] = useState(false);
-    const [isVisualEffectsPanelOpen, setIsVisualEffectsPanelOpen] = useState(false);
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+    const [isPresetsOpen, setIsPresetsOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [fontSearch, setFontSearch] = useState('');
     const richTextRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -128,6 +136,119 @@ export default function EditorPage() {
     const [exportProgress, setExportProgress] = useState(0);
     const { addToast } = useToast();
     const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    const presets = {
+        homework: {
+            handwritingStyle: 'gloria',
+            inkColor: '#1e40af',
+            paperMaterial: 'ruled' as const,
+            fontSize: 18,
+            lineHeight: 1.6,
+            paperShadow: true,
+            paperTilt: false,
+        },
+        love: {
+            handwritingStyle: 'indie',
+            inkColor: '#be123c',
+            paperMaterial: 'white' as const,
+            fontSize: 20,
+            lineHeight: 1.4,
+            paperShadow: true,
+            paperTilt: true,
+        },
+        professional: {
+            handwritingStyle: 'patrick',
+            inkColor: '#111827',
+            paperMaterial: 'white' as const,
+            fontSize: 16,
+            lineHeight: 1.5,
+            paperShadow: false,
+            paperTilt: false,
+        },
+        journal: {
+            handwritingStyle: 'caveat',
+            inkColor: '#1e3a8a',
+            paperMaterial: 'vintage' as const,
+            fontSize: 17,
+            lineHeight: 1.8,
+            paperShadow: true,
+            paperTilt: false,
+        }
+    } as const;
+
+
+    // Components
+    const Tooltip = ({ text }: { text: string }) => (
+        <div className="group relative inline-block ml-1">
+            <Info size={12} className="text-gray-300 hover:text-blue-500 cursor-help transition-colors" />
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                {text}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-gray-900" />
+            </div>
+        </div>
+    );
+
+    const HelpModal = () => (
+        <AnimatePresence>
+            {isHelpModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsHelpModalOpen(false)}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm" 
+                    />
+                    <motion.div 
+                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                        className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden p-8"
+                    >
+                        <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-3">
+                            <Zap className="text-blue-500" fill="currentColor" /> Quick Guide
+                        </h2>
+                        
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-gray-50 rounded-2xl">
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-2">Shortcuts</h3>
+                                    <ul className="space-y-2 text-xs font-bold">
+                                        <li className="flex justify-between"><span>Generate</span> <span className="text-gray-400">Ctrl+G</span></li>
+                                        <li className="flex justify-between"><span>PNG Export</span> <span className="text-gray-400">Ctrl+D</span></li>
+                                        <li className="flex justify-between"><span>Clear Editor</span> <span className="text-gray-400">Ctrl+K</span></li>
+                                    </ul>
+                                </div>
+                                <div className="p-4 bg-gray-50 rounded-2xl">
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-2">Modes</h3>
+                                    <p className="text-[10px] text-gray-500 leading-relaxed font-bold">
+                                        Switch to <span className="text-black">Rich Mode</span> for Bold, Italic, Headings, and Image insertion.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-3">
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Pro Tips</h3>
+                                <div className="flex gap-4 items-start p-3 border-2 border-dashed border-gray-100 rounded-2xl">
+                                    <Monitor size={20} className="text-gray-400 shrink-0" />
+                                    <p className="text-[10px] text-gray-400 font-bold leading-relaxed">
+                                        Use <span className="text-black">Presets</span> to instantly apply curated styles for assignments, letters, or journaling.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => setIsHelpModalOpen(false)}
+                            className="w-full mt-8 py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all"
+                        >
+                            Got it, thanks!
+                        </button>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+    );
 
     // List of filtered fonts
     const filteredFonts = useMemo(() => {
@@ -329,6 +450,28 @@ export default function EditorPage() {
 
     const charCount = text.replace(/<[^>]*>/g, '').length;
 
+    // Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'g') {
+                    e.preventDefault();
+                    handleDownload(totalPages > 1 ? 'pdf-all' : 'pdf');
+                }
+                if (e.key === 'd') {
+                    e.preventDefault();
+                    handleDownload('png');
+                }
+                if (e.key === 'k') {
+                    e.preventDefault();
+                    clearContent();
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [totalPages, clearContent, handleDownload]);
+
     const zoomLevels = [
         { label: 'Fit', value: 0.65 }, // Roughly fit for most displays
         { label: '75%', value: 0.75 },
@@ -340,11 +483,15 @@ export default function EditorPage() {
     return (
         <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-white font-sans text-gray-900">
             {/* LEFT PANEL (40%) */}
-            <motion.div 
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                className="w-full md:w-[40%] h-full flex flex-col border-r border-gray-100 relative z-10"
-            >
+            <AnimatePresence mode="wait">
+                {isSidebarOpen && (
+                    <motion.div 
+                        initial={{ x: -450, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: -450, opacity: 0 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                        className="w-full md:w-[40%] h-full flex flex-col border-r border-gray-100 relative z-10 bg-white"
+                    >
                 <div className="flex-1 flex flex-col p-6 md:p-8 overflow-y-auto">
                     {/* Header with Mode Toggle and Upload */}
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
@@ -498,18 +645,87 @@ export default function EditorPage() {
                             )}
                         </div>
                     </div>
+                    
+                    {/* ========== QUICK PRESETS & HELP ========== */}
+                    <div className="mt-8 flex items-center gap-2 px-6">
+                        <div className="relative flex-1">
+                            <button
+                                onClick={() => setIsPresetsOpen(!isPresetsOpen)}
+                                className="w-full flex items-center justify-between px-4 py-3 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <LayoutTemplate size={16} />
+                                    Quick Presets
+                                </div>
+                                <ChevronDown size={14} className={`transition-transform duration-300 ${isPresetsOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            
+                            <AnimatePresence>
+                                {isPresetsOpen && (
+                                    <>
+                                        <motion.div 
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            onClick={() => setIsPresetsOpen(false)}
+                                            className="fixed inset-0 z-40"
+                                        />
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            className="absolute top-full left-0 right-0 mt-2 p-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+                                        >
+                                            {Object.entries(presets).map(([key, value]) => (
+                                                <button
+                                                    key={key}
+                                                    onClick={() => {
+                                                        applyPreset(value);
+                                                        setIsPresetsOpen(false);
+                                                        addToast(`${key.charAt(0).toUpperCase() + key.slice(1)} preset applied!`, 'success');
+                                                    }}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-xl text-left transition-colors group"
+                                                >
+                                                    <div className="p-2 bg-gray-50 group-hover:bg-white rounded-lg transition-colors">
+                                                        <Zap size={14} className="text-blue-500" fill="currentColor" />
+                                                    </div>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">{key}</span>
+                                                </button>
+                                            ))}
+                                            <div className="p-3 border-t border-gray-50">
+                                                <button 
+                                                    onClick={() => { reset(); setIsPresetsOpen(false); }}
+                                                    className="w-full py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black transition-colors"
+                                                >
+                                                    Reset All
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                        
+                        <button
+                            onClick={() => setIsHelpModalOpen(true)}
+                            className="p-3 bg-gray-50 hover:bg-white text-gray-400 hover:text-blue-500 rounded-2xl border border-transparent hover:border-gray-100 transition-all hover:scale-105"
+                            title="Help Guide"
+                        >
+                            <HelpCircle size={20} />
+                        </button>
+                    </div>
 
                     {/* ========== HANDWRITING STYLE PANEL ========== */}
-                    <div className="mt-6 border-t border-gray-100 pt-6">
+                    <div className="mt-6 border-t border-gray-100 pt-6 px-6">
                         <button
-                            onClick={() => setIsFontPanelOpen(!isFontPanelOpen)}
+                            onClick={() => togglePanel('handwriting')}
                             className="w-full flex items-center justify-between group"
                         >
                             <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">
-                                Handwriting Style
+                                Handwriting Style <Tooltip text="Select the handwriting font that best fits your document." />
                             </h3>
                             <motion.div
-                                animate={{ rotate: isFontPanelOpen ? 180 : 0 }}
+                                animate={{ rotate: expandedPanels.includes('handwriting') ? 180 : 0 }}
                                 transition={{ duration: 0.2 }}
                             >
                                 <ChevronDown size={16} className="text-gray-300 group-hover:text-black transition-colors" />
@@ -517,7 +733,7 @@ export default function EditorPage() {
                         </button>
 
                         <AnimatePresence>
-                            {isFontPanelOpen && (
+                            {expandedPanels.includes('handwriting') && (
                                 <motion.div
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
@@ -582,14 +798,14 @@ export default function EditorPage() {
                     {/* ========== TYPOGRAPHY SETTINGS PANEL ========== */}
                     <div className="mt-6 border-t border-gray-100 pt-6">
                         <button
-                            onClick={() => setIsTypographyPanelOpen(!isTypographyPanelOpen)}
+                            onClick={() => togglePanel('typography')}
                             className="w-full flex items-center justify-between group"
                         >
                             <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">
-                                Typography Settings
+                                Typography Settings <Tooltip text="Adjust text size and spacing to match natural handwriting flow." />
                             </h3>
                             <motion.div
-                                animate={{ rotate: isTypographyPanelOpen ? 180 : 0 }}
+                                animate={{ rotate: expandedPanels.includes('typography') ? 180 : 0 }}
                                 transition={{ duration: 0.2 }}
                             >
                                 <ChevronDown size={16} className="text-gray-300 group-hover:text-black transition-colors" />
@@ -597,7 +813,7 @@ export default function EditorPage() {
                         </button>
 
                         <AnimatePresence>
-                            {isTypographyPanelOpen && (
+                            {expandedPanels.includes('typography') && (
                                 <motion.div
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
@@ -687,14 +903,14 @@ export default function EditorPage() {
                     {/* ========== PAPER & INK PANEL ========== */}
                     <div className="mt-6 border-t border-gray-100 pt-6">
                         <button
-                            onClick={() => setIsPaperInkPanelOpen(!isPaperInkPanelOpen)}
+                            onClick={() => togglePanel('paper')}
                             className="w-full flex items-center justify-between group"
                         >
                             <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">
-                                Paper & Ink
+                                Paper & Ink <Tooltip text="Customize the paper appearance and ink color." />
                             </h3>
                             <motion.div
-                                animate={{ rotate: isPaperInkPanelOpen ? 180 : 0 }}
+                                animate={{ rotate: expandedPanels.includes('paper') ? 180 : 0 }}
                                 transition={{ duration: 0.2 }}
                             >
                                 <ChevronDown size={16} className="text-gray-300 group-hover:text-black transition-colors" />
@@ -702,7 +918,7 @@ export default function EditorPage() {
                         </button>
 
                         <AnimatePresence>
-                            {isPaperInkPanelOpen && (
+                            {expandedPanels.includes('paper') && (
                                 <motion.div
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
@@ -816,16 +1032,16 @@ export default function EditorPage() {
                     </div>
 
                     {/* ========== VISUAL EFFECTS PANEL ========== */}
-                    <div className="mt-6 border-t border-gray-100 pt-6">
+                    <div className="mt-6 border-t border-gray-100 pt-6 px-6">
                         <button
-                            onClick={() => setIsVisualEffectsPanelOpen(!isVisualEffectsPanelOpen)}
+                            onClick={() => togglePanel('effects')}
                             className="w-full flex items-center justify-between group"
                         >
                             <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 group-hover:text-black transition-colors">
-                                Visual Effects
+                                Visual Effects <Tooltip text="Add organic depth with shadows, tilt, and realistic ink artifacts." />
                             </h3>
                             <motion.div
-                                animate={{ rotate: isVisualEffectsPanelOpen ? 180 : 0 }}
+                                animate={{ rotate: expandedPanels.includes('effects') ? 180 : 0 }}
                                 transition={{ duration: 0.2 }}
                             >
                                 <ChevronDown size={16} className="text-gray-300 group-hover:text-black transition-colors" />
@@ -833,7 +1049,7 @@ export default function EditorPage() {
                         </button>
 
                         <AnimatePresence>
-                            {isVisualEffectsPanelOpen && (
+                            {expandedPanels.includes('effects') && (
                                 <motion.div
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
@@ -963,10 +1179,23 @@ export default function EditorPage() {
                         </div>
                     </div>
                 </div>
-            </motion.div>
+                </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* RIGHT PANEL (60%) */}
-            <div className="w-full md:w-[60%] h-full bg-[#f5f5f5] relative flex flex-col overflow-hidden">
+            <div className="flex-1 h-full bg-[#f5f5f5] relative flex flex-col overflow-hidden">
+                {/* Toggle Sidebar Button */}
+                <button
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                    className="absolute top-8 left-8 z-20 p-3 bg-white/80 backdrop-blur-md hover:bg-black hover:text-white rounded-xl shadow-lg transition-all group border border-white/50"
+                    title={isSidebarOpen ? "Collapse Sidebar" : "Expand User Settings"}
+                >
+                    <div className="flex items-center gap-2">
+                        {isSidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+                        {!isSidebarOpen && <span className="text-[10px] font-black uppercase tracking-widest mr-1">Settings</span>}
+                    </div>
+                </button>
                 {/* TOOLBAR */}
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 p-1 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-white/50">
                     {zoomLevels.map((lvl) => (
@@ -1065,6 +1294,40 @@ export default function EditorPage() {
                         <ZoomOut size={18} className="text-gray-400 group-hover:text-white" />
                     </button>
                 </div>
+            {/* HELP MODAL */}
+            <HelpModal />
+
+            {/* PROCESSING OVERLAY */}
+            <AnimatePresence>
+                {isExporting && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/40 backdrop-blur-md"
+                    >
+                        <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-6 max-w-sm w-full">
+                            <div className="relative">
+                                <Loader2 className="animate-spin text-blue-500" size={48} />
+                                <div className="absolute inset-0 m-auto w-2 h-2 bg-blue-500 rounded-full" />
+                            </div>
+                            <div className="text-center space-y-2">
+                                <h3 className="text-lg font-black uppercase tracking-tighter">Generating Manuscript</h3>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+                                    Crafting your pages with care... {exportProgress}%
+                                </p>
+                            </div>
+                            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <motion.div 
+                                    className="h-full bg-blue-500"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${exportProgress}%` }}
+                                />
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             </div>
         </div>
     );
