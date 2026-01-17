@@ -19,7 +19,7 @@ export default function SwipeableContainer({
 }: SwipeableContainerProps) {
     const [isDragging, setIsDragging] = useState(false);
 
-    const handleDragEnd = (_: any, info: PanInfo) => {
+    const handleDragEnd = (_: unknown, info: PanInfo) => {
         setIsDragging(false);
         if (info.offset.x < -threshold && onSwipeLeft) {
             onSwipeLeft();
