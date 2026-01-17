@@ -8,13 +8,10 @@ import {
     CheckCircle2,
     ArrowRight
 } from 'lucide-react';
-import { useStore } from '../lib/store';
-import CanvasRenderer from '../components/CanvasRenderer';
 import RippleButton from '../components/ui/RippleButton';
 
 export default function LandingPage() {
     const navigate = useNavigate();
-    const { text, setText } = useStore();
     const { scrollYProgress } = useScroll();
     const yParallaxFast = useTransform(scrollYProgress, [0, 1], [0, -300]);
     const yParallaxMedium = useTransform(scrollYProgress, [0, 1], [0, -150]);
@@ -169,46 +166,6 @@ export default function LandingPage() {
                     >
                         craft
                     </motion.div>
-                </div>
-            </section>
-
-            {/* Live Demo Section */}
-            <section className="bg-gray-100 section-padding overflow-hidden">
-                <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                        <motion.div
-                            initial={{ opacity: 0, x: -50 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                        >
-                            <h2 className="text-4xl md:text-5xl mb-6 tracking-tight">Experience Real-time Magic.</h2>
-                            <p className="text-gray-500 text-lg mb-8 leading-relaxed">
-                                Watch as your typed characters instantly transform into unique, flowing handwriting. Customize line spacing, ink depth, and paper texture to match your vision.
-                            </p>
-
-                            <div className="space-y-4">
-                                <textarea
-                                    value={text}
-                                    onChange={(e) => setText(e.target.value)}
-                                    placeholder="Type anything here..."
-                                    className="input-minimal h-32 text-lg italic"
-                                />
-                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                    Try it above to see the transformation →
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        <motion.div
-                            style={{ y: yParallaxMedium }}
-                            className="relative"
-                        >
-                            <div className="card-premium h-[500px] overflow-hidden rotate-2 shadow-2xl bg-white flex items-center justify-center p-4">
-                                <CanvasRenderer overridePreset="white-page-1" overrideShowLines={true} />
-                            </div>
-                            <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-black -z-10" />
-                        </motion.div>
-                    </div>
                 </div>
             </section>
 
