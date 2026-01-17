@@ -10,7 +10,7 @@ const DEFAULT_TYPOGRAPHY = {
     wordSpacing: 4,
 };
 
-const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZoom' | 'setEditorMode' | 'setUploadedFileName' | 'setHandwritingStyle' | 'setFontSize' | 'setLetterSpacing' | 'setLineHeight' | 'setWordSpacing' | 'setPaperMaterial' | 'setPaperSize' | 'setPaperOrientation' | 'setInkColor' | 'addCustomFont' | 'removeCustomFont' | 'resetTypography' | 'setCustomPaperImage' | 'completeOnboarding' | 'completeTour' | 'setSidebarCollapsed' | 'setSettingsOpen' | 'setPaperShadow' | 'setInkBlur' | 'setResolutionQuality' | 'setPaperTilt' | 'setPaperTexture'> = {
+const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZoom' | 'setEditorMode' | 'setUploadedFileName' | 'setHandwritingStyle' | 'setFontSize' | 'setLetterSpacing' | 'setLineHeight' | 'setWordSpacing' | 'setPaperMaterial' | 'setPaperSize' | 'setPaperOrientation' | 'setInkColor' | 'addCustomFont' | 'removeCustomFont' | 'resetTypography' | 'setCustomPaperImage' | 'completeOnboarding' | 'completeTour' | 'setSidebarCollapsed' | 'setSettingsOpen' | 'setPaperShadow' | 'setInkBlur' | 'setResolutionQuality' | 'setPaperTilt' | 'setPaperTexture' | 'setExpandedPanels' | 'togglePanel' | 'applyPreset'> = {
     text: '',
     lastSaved: null,
     zoom: 1,
@@ -37,6 +37,7 @@ const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZo
     hasSeenTour: false,
     isSidebarCollapsed: false,
     isSettingsOpen: false,
+    expandedPanels: ['handwriting', 'typography', 'paper', 'effects'],
 };
 
 export const useStore = create<AppState>()(
@@ -76,6 +77,13 @@ export const useStore = create<AppState>()(
             completeTour: () => set({ hasSeenTour: true }),
             setSidebarCollapsed: (isSidebarCollapsed) => set({ isSidebarCollapsed }),
             setSettingsOpen: (isSettingsOpen) => set({ isSettingsOpen }),
+            setExpandedPanels: (expandedPanels) => set({ expandedPanels }),
+            togglePanel: (panel) => set((state) => ({
+                expandedPanels: state.expandedPanels.includes(panel)
+                    ? state.expandedPanels.filter(p => p !== panel)
+                    : [...state.expandedPanels, panel]
+            })),
+            applyPreset: (settings) => set((state) => ({ ...state, ...settings })),
 
             reset: () => set(() => initialState),
         }),
@@ -107,6 +115,7 @@ export const getAvailableFonts = (state: AppState) => {
         { id: 'patrick', name: 'Patrick Hand', family: 'Patrick Hand', type: 'google' },
         { id: 'kalam', name: 'Kalam', family: 'Kalam', type: 'google' },
         { id: 'marker', name: 'Permanent Marker', family: 'Permanent Marker', type: 'google' },
+        { id: 'gloria', name: 'Gloria Hallelujah', family: 'Gloria Hallelujah', type: 'google' },
     ];
     return [...defaultFonts, ...state.customFonts];
 };
