@@ -21,7 +21,7 @@ export default function AboutPage() {
                                 alt="Arsh Verma"
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                            <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent" />
                         </div>
                     </motion.div>
 
@@ -80,7 +80,13 @@ export default function AboutPage() {
     );
 }
 
-function SocialLink({ href, icon: Icon, label }: any) {
+interface SocialLinkProps {
+    href: string;
+    icon: React.ComponentType<{ size?: number }>;
+    label: string;
+}
+
+function SocialLink({ href, icon: Icon, label }: SocialLinkProps) {
     return (
         <a
             href={href}
