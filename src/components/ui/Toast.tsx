@@ -52,9 +52,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                                 }`} />
 
                             <div className="p-4 flex items-center gap-3 flex-1">
-                                {toast.type === 'success' && <CheckCircle className="text-green-500 w-5 h-5 flex-shrink-0" />}
-                                {toast.type === 'error' && <AlertCircle className="text-red-500 w-5 h-5 flex-shrink-0" />}
-                                {toast.type === 'info' && <Info className="text-blue-500 w-5 h-5 flex-shrink-0" />}
+                                {toast.type === 'success' && <CheckCircle className="text-green-500 w-5 h-5 shrink-0" />}
+                                {toast.type === 'error' && <AlertCircle className="text-red-500 w-5 h-5 shrink-0" />}
+                                {toast.type === 'info' && <Info className="text-blue-500 w-5 h-5 shrink-0" />}
 
                                 <p className="text-sm font-medium text-gray-800">{toast.message}</p>
 
