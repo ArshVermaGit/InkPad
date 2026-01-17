@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '../../lib/store';
 import { ChevronRight, X, PenTool, Download, Settings } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface TourStep {
     target: string;
     title: string;
     description: string;
     position: 'top' | 'bottom' | 'left' | 'right';
-    icon?: any;
+    icon?: LucideIcon;
 }
 
 const steps: TourStep[] = [
@@ -40,9 +41,23 @@ export default function TourOverlay({ isOpen, onClose }: { isOpen: boolean; onCl
     const { completeTour } = useStore();
     const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
 
+    const handleComplete = useCallback(() => {
+        completeTour();
+        onClose();
+        setCurrentStep(0);
+    }, [completeTour, onClose]);
+
+    const handleNext = useCallback(() => {
+        if (currentStep < steps.length - 1) {
+            setCurrentStep(curr => curr + 1);
+        } else {
+            handleComplete();
+        }
+    }, [currentStep, handleComplete]);
+
     useEffect(() => {
         if (!isOpen) {
-            setTargetRect(null);
+            Promise.resolve().then(() => setTargetRect(null));
             return;
         }
 
@@ -62,21 +77,7 @@ export default function TourOverlay({ isOpen, onClose }: { isOpen: boolean; onCl
                 handleComplete();
             }
         }
-    }, [currentStep, isOpen]);
-
-    const handleNext = () => {
-        if (currentStep < steps.length - 1) {
-            setCurrentStep(curr => curr + 1);
-        } else {
-            handleComplete();
-        }
-    };
-
-    const handleComplete = () => {
-        completeTour();
-        onClose();
-        setCurrentStep(0);
-    };
+    }, [currentStep, isOpen, handleComplete]);
 
     if (!isOpen || !targetRect) return null;
 
@@ -101,7 +102,7 @@ export default function TourOverlay({ isOpen, onClose }: { isOpen: boolean; onCl
     };
 
     return (
-        <div className="fixed inset-0 z-[100] pointer-events-none">
+        <div className="fixed inset-0 z-100 pointer-events-none">
             {/* Dark Backdrop with Hole */}
             <div className="absolute inset-0 bg-black/50 overflow-hidden mix-blend-hard-light">
                 {/* This is a visual trick, robust implementation usually requires SVG masks or box-shadow 
@@ -125,7 +126,7 @@ export default function TourOverlay({ isOpen, onClose }: { isOpen: boolean; onCl
                     height: targetRect.height + 16,
                 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="absolute border-2 border-white rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.7)] pointer-events-none z-[101]"
+                className="absolute border-2 border-white rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.7)] pointer-events-none z-101"
             />
 
             {/* Tooltip Card */}
@@ -134,7 +135,7 @@ export default function TourOverlay({ isOpen, onClose }: { isOpen: boolean; onCl
                 animate={{ opacity: 1, y: 0 }}
                 key={currentStep}
                 style={getTooltipStyle()}
-                className="absolute w-72 bg-white rounded-2xl shadow-2xl p-6 pointer-events-auto z-[102]"
+                className="absolute w-72 bg-white rounded-2xl shadow-2xl p-6 pointer-events-auto z-102"
             >
                 <button
                     onClick={handleComplete}
