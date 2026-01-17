@@ -135,6 +135,14 @@ export const HandwritingCanvas = forwardRef<HTMLCanvasElement, HandwritingCanvas
             ctx.fillStyle = isVintage ? '#f5f0e1' : isCream ? '#fffaf0' : '#ffffff';
             ctx.fillRect(0, 0, baseWidth, baseHeight);
 
+            // Aging effect for vintage paper
+            if (isVintage) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(255, 230, 150, 0.05)';
+                ctx.fillRect(0, 0, baseWidth, baseHeight);
+                ctx.restore();
+            }
+
             // Custom Background
             if (paperMaterial === 'custom' && customPaperImage) {
                 const img = new Image();
@@ -205,6 +213,21 @@ export const HandwritingCanvas = forwardRef<HTMLCanvasElement, HandwritingCanvas
                 return;
             }
 
+            // Global document imperfections
+            const globalSlant = (Math.random() - 0.5) * 0.08; // ±4.5 deg
+            const driftAmplitude = 2.5;
+            const driftWavelength = 700;
+
+            const adjustBrightness = (hex: string, factor: number) => {
+                const r = parseInt(hex.slice(1, 3), 16) || 0;
+                const g = parseInt(hex.slice(3, 5), 16) || 0;
+                const b = parseInt(hex.slice(5, 7), 16) || 0;
+                const nr = Math.min(255, Math.max(0, Math.round(r * factor)));
+                const ng = Math.min(255, Math.max(0, Math.round(g * factor)));
+                const nb = Math.min(255, Math.max(0, Math.round(b * factor)));
+                return `rgb(${nr}, ${ng}, ${nb})`;
+            };
+
             // 2. Render Tokens
             const tokens = tokenizeHTML(text);
             const leftMargin = PAPER_CONFIG.margins.left;
@@ -223,7 +246,6 @@ export const HandwritingCanvas = forwardRef<HTMLCanvasElement, HandwritingCanvas
                 let baseFSize = fontSize * (PAPER_CONFIG.ppi / 96);
                 
                 ctx.textBaseline = 'alphabetic';
-                ctx.fillStyle = inkColor;
 
                 const setCtxFont = (sizeVariation = 0) => {
                     const finalSize = baseFSize + sizeVariation;
@@ -255,13 +277,11 @@ export const HandwritingCanvas = forwardRef<HTMLCanvasElement, HandwritingCanvas
                             await new Promise(r => img.onload = r);
                             const iW = Math.min(img.width, usableWidth);
                             const iH = (img.height * iW) / img.width;
-                            
                             if (currentLineY + iH > bottomMargin) {
                                 pageNum++;
-                                currentLineY = topMargin;
                                 currentX = leftMargin;
+                                currentLineY = topMargin;
                             }
-                            
                             if (!isMeasuring && pageNum === currentPage) {
                                 ctx.drawImage(img, currentX, currentLineY, iW, iH);
                             }
@@ -278,12 +298,12 @@ export const HandwritingCanvas = forwardRef<HTMLCanvasElement, HandwritingCanvas
                             const isSpace = /\s+/.test(word);
                             
                             if (isSpace) {
-                                const spaceVariation = (Math.random() - 0.5) * 4; // ±2px
+                                const spaceVariation = (Math.random() - 0.5) * 8; 
                                 currentX += ctx.measureText(word).width + wordSpacing + spaceVariation;
                                 continue;
                             }
 
-                            // Measure word width
+                            setCtxFont();
                             const wordWidth = ctx.measureText(word).width + (word.length * letterSpacing);
                             
                             // 1. Wrapping Logic
@@ -302,32 +322,11 @@ export const HandwritingCanvas = forwardRef<HTMLCanvasElement, HandwritingCanvas
                                             }
                                             currentLineY += lineSpacing;
                                             currentX = leftMargin;
-                                            if (currentLineY > bottomMargin) {
-                                                pageNum++;
-                                                currentLineY = topMargin;
-                                            }
+                                            if (currentLineY > bottomMargin) { pageNum++; currentLineY = topMargin; }
                                         }
-                                        
                                         if (!isMeasuring && pageNum === currentPage) {
-                                            const jitterX = (Math.random() - 0.5) * 2;
-                                            const jitterY = (Math.random() - 0.5) * 4;
-                                            const jitterRotation = (Math.random() - 0.5) * 0.035;
-                                            const sizeVariation = (Math.random() - 0.5) * (baseFSize * 0.1);
-                                            const letterVariation = (Math.random() - 0.5) * 4 - 2;
-
-                                            ctx.save();
-                                            ctx.shadowBlur = 0.5;
-                                            ctx.shadowColor = `${inkColor}4D`;
-                                            const finalSize = baseFSize + sizeVariation;
-                                            ctx.font = `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}${finalSize}px "${currentFontFamily}"`;
-                                            ctx.translate(currentX + jitterX, currentLineY + jitterY);
-                                            ctx.rotate(jitterRotation);
-                                            ctx.globalAlpha = 0.4;
-                                            ctx.fillText(char, 0.2, 0.2);
-                                            ctx.globalAlpha = 1.0;
-                                            ctx.fillText(char, 0, 0);
-                                            ctx.restore();
-                                            currentX += ctx.measureText(char).width + letterSpacing + letterVariation;
+                                            const w = drawCharWithEffects(char, currentX, currentLineY, baseFSize, bold, italic);
+                                            currentX += w;
                                         } else {
                                             currentX += charWidth;
                                         }
@@ -336,41 +335,15 @@ export const HandwritingCanvas = forwardRef<HTMLCanvasElement, HandwritingCanvas
                                 } else {
                                     currentLineY += lineSpacing;
                                     currentX = leftMargin;
-                                    if (currentLineY > bottomMargin) {
-                                        pageNum++;
-                                        currentLineY = topMargin;
-                                    }
+                                    if (currentLineY > bottomMargin) { pageNum++; currentLineY = topMargin; }
                                 }
                             }
 
                             // 2. Draw Word
                             if (!isMeasuring && pageNum === currentPage) {
                                 for (let i = 0; i < word.length; i++) {
-                                    const char = word[i];
-                                    const jitterX = (Math.random() - 0.5) * 2;
-                                    const jitterY = (Math.random() - 0.5) * 4;
-                                    const jitterRotation = (Math.random() - 0.5) * 0.035;
-                                    const sizeVariation = (Math.random() - 0.5) * (baseFSize * 0.1);
-                                    const letterVariation = (Math.random() - 0.5) * 4 - 2;
-
-                                    ctx.save();
-                                    ctx.shadowBlur = 0.5;
-                                    ctx.shadowColor = `${inkColor}4D`;
-                                    
-                                    const finalSize = baseFSize + sizeVariation;
-                                    ctx.font = `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}${finalSize}px "${currentFontFamily}"`;
-                                    
-                                    ctx.translate(currentX + jitterX, currentLineY + jitterY);
-                                    ctx.rotate(jitterRotation);
-
-                                    ctx.globalAlpha = 0.4;
-                                    ctx.fillText(char, 0.2, 0.2);
-                                    ctx.globalAlpha = 1.0;
-                                    ctx.fillText(char, 0, 0);
-
-                                    ctx.restore();
-                                    
-                                    currentX += ctx.measureText(char).width + letterSpacing + letterVariation;
+                                    const w = drawCharWithEffects(word[i], currentX, currentLineY, baseFSize, bold, italic);
+                                    currentX += w;
                                 }
                             } else {
                                 currentX += wordWidth;
@@ -379,6 +352,72 @@ export const HandwritingCanvas = forwardRef<HTMLCanvasElement, HandwritingCanvas
                     }
                 }
                 return pageNum;
+            };
+
+            const drawCharWithEffects = (char: string, x: number, lineY: number, bFSize: number, isBold: boolean, isItalic: boolean) => {
+                // 1. Baseline Drift
+                const driftY = driftAmplitude * Math.sin(x / driftWavelength);
+                const targetY = lineY + driftY;
+
+                // 2. Random Variations
+                const jitterX = (Math.random() - 0.5) * 2;
+                const jitterY = (Math.random() - 0.5) * 4;
+                const charSlant = (Math.random() - 0.5) * 0.02; // ±1 deg
+                const rotation = globalSlant + charSlant;
+                
+                // Pressure simulation
+                const scaleVariation = 0.95 + Math.random() * 0.1; // ±5%
+                const alpha = 0.85 + Math.random() * 0.15;
+                const inkWetness = 0.3 + Math.random() * 0.5; // 0.3-0.8 shadowBlur
+
+                // 3. Ink Color Variation
+                let charColor = inkColor;
+                if (Math.random() > 0.9) {
+                    const shift = 0.85 + Math.random() * 0.15;
+                    charColor = adjustBrightness(inkColor, shift);
+                }
+
+                ctx.save();
+                
+                // 4. Soft Edges (Bleeding)
+                ctx.shadowBlur = inkWetness;
+                ctx.shadowColor = charColor;
+                
+                const finalSize = bFSize * scaleVariation;
+                ctx.font = `${isItalic ? 'italic ' : ''}${isBold ? 'bold ' : ''}${finalSize}px "${currentFontFamily}"`;
+                
+                ctx.translate(x + jitterX, targetY + jitterY);
+                ctx.rotate(rotation);
+
+                // 5. Ink Texture (Gradient)
+                const gradient = ctx.createLinearGradient(0, -finalSize, 0, 0);
+                gradient.addColorStop(0, charColor);
+                gradient.addColorStop(1, adjustBrightness(inkColor, 0.9));
+                ctx.fillStyle = gradient;
+
+                // 6. Dual layer for depth
+                ctx.globalAlpha = alpha * 0.4;
+                ctx.fillText(char, 0.3, 0.3);
+                ctx.globalAlpha = alpha;
+                ctx.fillText(char, 0, 0);
+
+                ctx.restore();
+
+                // 7. Ink Dots Near Baseline
+                if (Math.random() < 0.05) {
+                    ctx.save();
+                    ctx.fillStyle = charColor;
+                    ctx.globalAlpha = 0.3;
+                    const dx = x + Math.random() * 10 - 5;
+                    const dy = targetY + Math.random() * 4 - 2;
+                    ctx.beginPath();
+                    ctx.arc(dx, dy, 0.5 + Math.random(), 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+                
+                const letterVariation = (Math.random() - 0.5) * 4 - 2;
+                return ctx.measureText(char).width + letterSpacing + letterVariation;
             };
 
             const totalP = await renderPass(true);
@@ -402,7 +441,7 @@ export const HandwritingCanvas = forwardRef<HTMLCanvasElement, HandwritingCanvas
                     grainData.data[i] = val;     
                     grainData.data[i + 1] = val; 
                     grainData.data[i + 2] = val; 
-                    grainData.data[i + 3] = 35;  
+                    grainData.data[i + 3] = isVintage ? 45 : 35;  
                 }
                 grainCtx.putImageData(grainData, 0, 0);
                 
@@ -427,10 +466,27 @@ export const HandwritingCanvas = forwardRef<HTMLCanvasElement, HandwritingCanvas
 
     return (
         <div className="relative transition-all duration-500 ease-in-out">
-            <canvas
-                ref={internalCanvasRef}
-                className={`bg-white transition-shadow duration-500 ${paperShadow ? 'shadow-[0_20px_50px_rgba(0,0,0,0.15)]' : 'shadow-none'}`}
-            />
+            <div 
+                className={`transform-gpu transition-all duration-500 ${paperShadow ? 'shadow-2xl' : ''}`}
+                style={{
+                    width: displayWidth,
+                    height: displayHeight,
+                    backgroundColor: paperMaterial === 'vintage' ? '#f5f0e1' : 
+                                   (paperMaterial as string) === 'cream' ? '#fffaf0' : '#ffffff'
+                }}
+            >
+                <canvas
+                    ref={internalCanvasRef}
+                    className="w-full h-full rounded-sm"
+                />
+            </div>
+            
+            {/* Pagination Indicator */}
+            <div className="absolute -bottom-10 left-0 right-0 flex justify-center items-center gap-4 text-sm text-gray-400 font-medium">
+                <span>Page {currentPage} of {totalPages}</span>
+            </div>
         </div>
     );
 });
+
+HandwritingCanvas.displayName = 'HandwritingCanvas';
