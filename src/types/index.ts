@@ -42,6 +42,7 @@ export interface AppState {
     // UI State
     isSidebarCollapsed: boolean;
     isSettingsOpen: boolean;
+    expandedPanels: string[];
 
     // Actions
     setText: (text: string) => void;
@@ -77,6 +78,9 @@ export interface AppState {
     // UI Actions
     setSidebarCollapsed: (collapsed: boolean) => void;
     setSettingsOpen: (open: boolean) => void;
+    setExpandedPanels: (panels: string[]) => void;
+    togglePanel: (panel: string) => void;
+    applyPreset: (settings: Partial<AppState>) => void;
 
     reset: () => void;
 }
