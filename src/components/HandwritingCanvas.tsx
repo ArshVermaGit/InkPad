@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, forwardRef, useImperativeHandle, useCallba
 import { useStore } from '../lib/store';
 import { jsPDF } from 'jspdf';
 import JSZip from 'jszip';
+import type { Token } from '../types';
 
 interface HandwritingCanvasProps {
     text: string;
