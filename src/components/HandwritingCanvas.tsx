@@ -62,7 +62,11 @@ const tokenizeHTML = (html: string): Token[] => {
                 if (srcMatch) attributes.src = srcMatch[1];
             }
             
-            tokens.push({ type: 'tag', tagName, isClosing, attributes });
+            // Filter tags to only those we support
+            const supported = ['b', 'strong', 'i', 'em', 'u', 'h1', 'h2', 'h3', 'p', 'div', 'br', 'img', 'ul', 'ol', 'li'];
+            if (supported.includes(tagName)) {
+                tokens.push({ type: 'tag', tagName, isClosing, attributes });
+            }
         } else {
             const words = part.split(/(\s+)/);
             words.forEach(word => {
@@ -436,6 +440,12 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
 
             let bold = false;
             let italic = false;
+            let underline = false;
+            let prevWordEndedWith = '';
+            let listLevel = 0;
+            let listIndex = 0;
+            let isNumberedList = false;
+            let currentIndent = 0;
             // Base Font Size scaled to PPI
             const fontScale = PPI / 96; 
             let baseFSize = fontSize * fontScale;
@@ -444,31 +454,59 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
 
             const usableWidth = baseWidth - marginR - marginL;
 
+            const drawUnderline = (width: number, color: string) => {
+                ctx.save();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.2;
+                ctx.globalAlpha = 0.6;
+                ctx.beginPath();
+                ctx.moveTo(0, 6);
+                for (let i = 0; i <= width; i += 4) {
+                    const waveY = Math.sin(i / 8) * 1.2;
+                    ctx.lineTo(i, 6 + waveY);
+                }
+                ctx.stroke();
+                ctx.restore();
+            };
+
+            const isComplexScript = (text: string) => {
+                // Arabic: \u0600-\u06FF, Devanagari: \u0900-\u097F
+                // Simplified regex to avoid lint errors with combined characters
+                return /[\u0600-\u06FF]/.test(text) || /[\u0900-\u097F]/.test(text);
+            };
+
             // DRAW CHAR FUNCTION (Scoped here to use local vars)
-            const drawCharWithEffects = (char: string, x: number, lineY: number, bFSize: number, isBold: boolean, isItalic: boolean) => {
-                // 1. Baseline Drift (Sinusoidal wave: A=2-3px, λ=500-800px)
+            const drawCharWithEffects = (char: string, x: number, lineY: number, bFSize: number, isBold: boolean, isItalic: boolean, isUnderline: boolean) => {
+                // 1. Script & Emoji Detection
+                // Safer emoji detection using charCodeAt to avoid lint issues
+                const code = char.charCodeAt(0);
+                const isEmoji = (code >= 0xD800 && code <= 0xDBFF) || char.length > 1; 
+                const complex = isComplexScript(char);
+                const isRTL = /[\u0600-\u06FF]/u.test(char);
+                
+                // 2. Baseline Drift (Sinusoidal wave: A=2-3px, λ=500-800px)
                 const driftY = driftAmplitude * Math.sin(x / driftWavelength);
                 
-                // 2. CHARACTER-LEVEL RANDOMIZATION
-                // A. POSITION VARIATIONS (Hand wobble)
+                // 3. CHARACTER-LEVEL RANDOMIZATION
                 const yVar = (Math.random() - 0.5) * 4; // ±2px
                 const xVar = (Math.random() - 0.5) * 2; // ±1px
-                
-                // Rotation: Global slant + local variation (±1 degree)
                 const localSlantVar = (Math.random() - 0.5) * 0.035; // ±1 degree
                 const rotation = globalSlant + localSlantVar;
-
-                // B. SIZE VARIATIONS
                 const sizeVar = 1 + (Math.random() - 0.5) * 0.1; // ±5%
                 const finalSize = bFSize * sizeVar;
 
-                // C. INK EFFECTS & PRESSURE
+                // 4. INK EFFECTS & PRESSURE
                 const charInk = getInkVariation(inkColor);
-                const pressureOpacity = 0.85 + Math.random() * 0.15; // 0.85 - 1.0
-                const bleeding = 0.3 + Math.random() * 0.5; // shadowBlur 0.3-0.8
+                const pressureOpacity = 0.85 + Math.random() * 0.15;
+                const bleeding = 0.3 + Math.random() * 0.5;
                 
-                // Apply font-specific baseline offset
                 const adjustedY = getBaselineY(lineY, bFSize) + driftY;
+
+                // Calculate width early for underline
+                ctx.save();
+                ctx.font = `${isItalic ? 'italic ' : ''}${isBold ? 'bold ' : ''}${finalSize}px "${currentFontFamily}"`;
+                const charWidth = ctx.measureText(char).width;
+                ctx.restore();
 
                 ctx.save();
                 
@@ -480,28 +518,58 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                 ctx.translate(x + xVar, adjustedY + yVar);
                 ctx.rotate(rotation);
 
-                // --- LAYERED RENDERING ---
-                
-                // Layer 1: Ink Bleeding (Soft edge)
-                ctx.shadowBlur = bleeding;
-                ctx.shadowColor = charInk;
-                
-                // Layer 2: Main Character with Texture Gradient
-                const gradient = ctx.createLinearGradient(0, -finalSize, 0, 0);
-                gradient.addColorStop(0, charInk);
-                gradient.addColorStop(1, adjustBrightness(charInk, 0.9));
-                
-                ctx.fillStyle = gradient;
-                ctx.fillText(char, 0, 0);
+                if (isEmoji) {
+                    ctx.shadowBlur = 0;
+                    ctx.globalAlpha = 1.0;
+                    ctx.font = `${finalSize}px serif`; 
+                    ctx.fillText(char, 0, 0);
+                } else if (complex) {
+                    // For complex scripts (Arabic, Hindi), we render the whole unit
+                    // to preserve ligatures and connections.
+                    ctx.direction = isRTL ? 'rtl' : 'ltr';
+                    ctx.shadowBlur = bleeding;
+                    ctx.shadowColor = charInk;
+                    ctx.fillStyle = charInk;
+                    ctx.fillText(char, 0, 0);
+                    
+                    if (isBold) {
+                        ctx.strokeStyle = charInk;
+                        ctx.lineWidth = 0.5;
+                        ctx.strokeText(char, 0, 0);
+                    }
+                    if (isUnderline) {
+                        drawUnderline(charWidth, charInk);
+                    }
+                } else {
+                    // --- LAYERED RENDERING ---
+                    ctx.shadowBlur = bleeding;
+                    ctx.shadowColor = charInk;
+                    
+                    const gradient = ctx.createLinearGradient(0, -finalSize, 0, 0);
+                    gradient.addColorStop(0, charInk);
+                    gradient.addColorStop(1, adjustBrightness(charInk, 0.9));
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.fillText(char, 0, 0);
+
+                    if (isBold) {
+                        ctx.strokeStyle = charInk;
+                        ctx.lineWidth = 0.5;
+                        ctx.strokeText(char, 0, 0);
+                    }
+
+                    if (isUnderline) {
+                        drawUnderline(charWidth, charInk);
+                    }
+                }
 
                 ctx.restore();
 
-                // 3. Artifacts: Ink Dots / Splatter (5% chance)
-                if (Math.random() < 0.05) {
+                // 5. Artifacts: Ink Dots / Splatter (5% chance)
+                if (!isEmoji && Math.random() < 0.05) {
                    ctx.save();
                    ctx.fillStyle = charInk;
                    ctx.globalAlpha = 0.4;
-                   // Position randomly near baseline
                    const dx = x + Math.random() * 10 - 5;
                    const dy = adjustedY + (Math.random() * 6 - 3); 
                    ctx.beginPath();
@@ -510,9 +578,8 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                    ctx.restore();
                 }
 
-                // Return actual width + Random Spacing variation
                 const w = ctx.measureText(char).width;
-                const spacingVar = (Math.random() - 0.5) * 3; // ±1.5px
+                const spacingVar = (Math.random() - 0.5) * 3; 
                 
                 return w + letterSpacing + spacingVar;
             };
@@ -522,9 +589,64 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                     const tag = token.tagName;
                     if (tag === 'b' || tag === 'strong') bold = !token.isClosing;
                     else if (tag === 'i' || tag === 'em') italic = !token.isClosing;
-                    else if (tag === 'h1') baseFSize = (token.isClosing ? fontSize : 28) * fontScale;
-                    else if (tag === 'h2') baseFSize = (token.isClosing ? fontSize : 24) * fontScale;
-                    else if (tag === 'h3') baseFSize = (token.isClosing ? fontSize : 20) * fontScale;
+                    else if (tag === 'u') underline = !token.isClosing;
+                    else if (tag === 'h1') {
+                        baseFSize = (token.isClosing ? fontSize : 36) * fontScale;
+                        if (!token.isClosing) currentLineIndex++; // Extra gap for H1
+                    }
+                    else if (tag === 'h2') {
+                        baseFSize = (token.isClosing ? fontSize : 30) * fontScale;
+                        if (!token.isClosing) currentLineIndex += 0.5;
+                    }
+                    else if (tag === 'h3') {
+                        baseFSize = (token.isClosing ? fontSize : 24) * fontScale;
+                    }
+                    else if (tag === 'ul') {
+                        listLevel = token.isClosing ? 0 : 1;
+                        isNumberedList = false;
+                        listIndex = 0;
+                    }
+                    else if (tag === 'ol') {
+                        listLevel = token.isClosing ? 0 : 1;
+                        isNumberedList = true;
+                        listIndex = 0;
+                    }
+                    else if (tag === 'li') {
+                        if (!token.isClosing) {
+                             listIndex++;
+                             currentLineIndex++;
+                             currentBaselineY = marginT + (lineH * currentLineIndex);
+                             currentIndent = listLevel * 40;
+                             currentX = textStartX + currentIndent;
+                             
+                             if (pageNum === targetPage) {
+                                 if (isNumberedList) {
+                                     // Render "1." as a unit to preserve baseline
+                                     drawCharWithEffects(`${listIndex}.`, currentX, currentBaselineY, baseFSize, bold, italic, underline);
+                                     currentX += 30;
+                                 } else {
+                                     // Hand-drawn bullet (messy circle)
+                                     ctx.save();
+                                     ctx.beginPath();
+                                     ctx.arc(currentX + 10, currentBaselineY - (baseFSize * 0.3), 3.5, 0, Math.PI * 2);
+                                     ctx.strokeStyle = inkColor;
+                                     ctx.lineWidth = 1.2;
+                                     ctx.stroke();
+                                     ctx.globalAlpha = 0.3;
+                                     ctx.fill();
+                                     ctx.restore();
+                                     currentX += 30;
+                                 }
+                             } else {
+                                 currentX += 30;
+                             }
+                             // Hanging indent for continuation lines
+                             currentIndent += 30;
+                        } else {
+                            // When LI ends, we don't necessarily reset currentIndent if we are still in UL/OL
+                            // but usually next text will be another LI.
+                        }
+                    }
                     else if (tag === 'br' || tag === 'div' || tag === 'p') {
                         if (!token.isClosing || tag === 'br') {
                             const isParagraph = tag === 'p' || (tag === 'div' && !token.isClosing);
@@ -533,6 +655,7 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                             currentLineIndex += linesToSkip;
                             currentBaselineY = marginT + (lineH * currentLineIndex);
                             currentX = textStartX + (isParagraph ? 30 : 0);
+                            currentIndent = isParagraph ? 30 : 0;
                             
                             if (currentLineIndex > linesPerPage) {
                                 pageNum++;
@@ -578,7 +701,12 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
 
                         if (isSpace) {
                             const spaceVar = (Math.random() - 0.5) * 8; // ±4px natural variation
-                            const spaceW = ctx.measureText(' ').width + wordSpacing + spaceVar; 
+                            let spaceW = ctx.measureText(' ').width + wordSpacing + spaceVar; 
+                            
+                            // Advanced Spacing Rules: Punctuation
+                            if (prevWordEndedWith === '.') spaceW += wordSpacing * 0.8;
+                            else if (prevWordEndedWith === ',') spaceW += wordSpacing * 0.3;
+
                             currentX += spaceW;
                             continue;
                         }
@@ -612,16 +740,17 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                                             currentLineIndex++;
                                         }
                                         currentBaselineY = marginT + (lineH * currentLineIndex);
-                                        currentX = textStartX;
+                                        currentX = textStartX + currentIndent;
                                     }
 
                                     if (pageNum === targetPage) {
-                                        const w = drawCharWithEffects(char, currentX, currentBaselineY, baseFSize, bold, italic);
+                                        const w = drawCharWithEffects(char, currentX, currentBaselineY, baseFSize, bold, italic, underline);
                                         currentX += w;
                                     } else {
                                         currentX += charWidth;
                                     }
                                 }
+                                prevWordEndedWith = word.endsWith('.') ? '.' : (word.endsWith(',') ? ',' : '');
                                 continue; 
                             } else {
                                 // Word fits on a line but not the current one - move to next line
@@ -632,19 +761,30 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                                     currentLineIndex++;
                                 }
                                 currentBaselineY = marginT + (lineH * currentLineIndex);
-                                currentX = textStartX;
+                                currentX = textStartX + currentIndent;
                             }
                         }
 
                         // Draw Word Normally
                         if (pageNum === targetPage) {
-                            for (let i = 0; i < word.length; i++) {
-                                const w = drawCharWithEffects(word[i], currentX, currentBaselineY, baseFSize, bold, italic);
+                            // Cursive/Ligature handling: Group common pairs
+                            const ligatureRegex = /th|ch|sh|ff|fi|fl|ll|st|oo|ee/i;
+                            let i = 0;
+                            while (i < word.length) {
+                                let chunk = word[i];
+                                if (i < word.length - 1 && ligatureRegex.test(word.substring(i, i + 2))) {
+                                    chunk = word.substring(i, i + 2);
+                                    i += 2;
+                                } else {
+                                    i++;
+                                }
+                                const w = drawCharWithEffects(chunk, currentX, currentBaselineY, baseFSize, bold, italic, underline);
                                 currentX += w;
                             }
                         } else {
                             currentX += wordWidth;
                         }
+                        prevWordEndedWith = word.endsWith('.') ? '.' : (word.endsWith(',') ? ',' : '');
                     }
                 }
             }
