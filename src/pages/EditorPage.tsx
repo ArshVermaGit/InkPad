@@ -144,7 +144,7 @@ export default function EditorPage() {
     const { addToast } = useToast();
     const canvasRef = useRef<HandwritingCanvasHandle>(null);
 
-    const handleExportPDF = async () => {
+    const handleExportPDF = useCallback(async () => {
         if (!canvasRef.current || isExporting) return;
         setIsExporting(true);
         addToast('Generating PDF...');
@@ -159,9 +159,9 @@ export default function EditorPage() {
         } finally {
             setIsExporting(false);
         }
-    };
+    }, [isExporting, uploadedFileName, addToast]);
 
-    const handleExportZIP = async () => {
+    const handleExportZIP = useCallback(async () => {
         if (!canvasRef.current || isExporting) return;
         setIsExporting(true);
         addToast('Creating ZIP archive...');
@@ -179,7 +179,27 @@ export default function EditorPage() {
         } finally {
             setIsExporting(false);
         }
-    };
+    }, [isExporting, uploadedFileName, addToast]);
+
+    const handleExportPNG = useCallback(async () => {
+        if (!canvasRef.current || isExporting) return;
+        setIsExporting(true);
+        addToast('Capturing Page...');
+        
+        try {
+            const dataUrl = await canvasRef.current.exportPNG();
+            const link = document.createElement('a');
+            link.download = `${uploadedFileName || 'inkpad-page'}.png`;
+            link.href = dataUrl;
+            link.click();
+            addToast('PNG Downloaded!');
+        } catch (error) {
+            console.error(error);
+            addToast('Export failed');
+        } finally {
+            setIsExporting(false);
+        }
+    }, [isExporting, uploadedFileName, addToast]);
 
     const presets = {
         homework: {
@@ -477,6 +497,8 @@ export default function EditorPage() {
         });
     };
 
+
+
     const wordCount = useMemo(() => {
         const plainText = text.replace(/<[^>]*>/g, ' ');
         return plainText.trim() ? plainText.trim().split(/\s+/).length : 0;
@@ -497,6 +519,10 @@ export default function EditorPage() {
                     e.preventDefault();
                     handleExportPDF();
                 }
+                if (e.key === 'd') {
+                    e.preventDefault();
+                    handleExportPNG();
+                }
                 if (e.key === 'k') {
                     e.preventDefault();
                     clearContent();
@@ -505,7 +531,7 @@ export default function EditorPage() {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [clearContent]);
+    }, [clearContent, handleExportPDF, handleExportPNG]);
 
     const zoomLevels = [
         { label: 'Fit', value: 0.65 }, // Roughly fit for most displays
@@ -1195,43 +1221,37 @@ export default function EditorPage() {
                             </div>
                             
                             <button
-                                onClick={() => handleDownload(totalPages > 1 ? 'pdf-all' : 'pdf')}
+                                onClick={handleExportPDF}
                                 disabled={isExporting}
                                 className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed group"
                             >
                                 {isExporting ? (
                                     <>
                                         <Loader2 size={18} className="animate-spin" />
-                                        <span>Capturing {exportProgress}%</span>
+                                        <span>Exporting...</span>
                                     </>
                                 ) : (
                                     <>
                                         <FileDown size={18} className="group-hover:scale-110 transition-transform" />
-                                        <span>Convert to Handwriting</span>
+                                        <span>Export as PDF</span>
                                     </>
                                 )}
                             </button>
 
-                            {!isExporting && (
-                                <p className="text-[10px] text-center text-gray-400 font-medium">
-                                    Estimated time: {Math.max(2, Math.round(totalPages * 1.5))} seconds
-                                </p>
-                            )}
-
                             <div className="grid grid-cols-2 gap-2">
                                 <button
-                                    onClick={() => handleDownload('png')}
+                                    onClick={handleExportPNG}
                                     disabled={isExporting}
                                     className="py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-[10px] font-bold uppercase tracking-tight hover:border-gray-300 hover:text-black transition-all flex items-center justify-center gap-2"
                                 >
                                     <Download size={12} /> PNG
                                 </button>
                                 <button
-                                    onClick={() => handleDownload('zip')}
+                                    onClick={handleExportZIP}
                                     disabled={isExporting || totalPages <= 1}
                                     className="py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-[10px] font-bold uppercase tracking-tight hover:border-gray-300 hover:text-black transition-all flex items-center justify-center gap-2 disabled:opacity-30 disabled:hover:border-gray-200"
                                 >
-                                    <Download size={12} /> Multiple (ZIP)
+                                    <Download size={12} /> ZIP Archive
                                 </button>
                             </div>
 
@@ -1361,38 +1381,6 @@ export default function EditorPage() {
                 </div>
             {/* HELP MODAL */}
             <HelpModal />
-
-            {/* PROCESSING OVERLAY */}
-            <AnimatePresence>
-                {isExporting && (
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/40 backdrop-blur-md"
-                    >
-                        <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-6 max-w-sm w-full">
-                            <div className="relative">
-                                <Loader2 className="animate-spin text-blue-500" size={48} />
-                                <div className="absolute inset-0 m-auto w-2 h-2 bg-blue-500 rounded-full" />
-                            </div>
-                            <div className="text-center space-y-2">
-                                <h3 className="text-lg font-black uppercase tracking-tighter">Generating Manuscript</h3>
-                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-                                    Crafting your pages with care... {exportProgress}%
-                                </p>
-                            </div>
-                            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <motion.div 
-                                    className="h-full bg-blue-500"
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${exportProgress}%` }}
-                                />
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
             </div>
         </div>
     );
