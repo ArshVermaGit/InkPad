@@ -8,7 +8,7 @@ export interface FontPreference {
     url?: string;
 }
 
-export type PaperMaterial = 'white' | 'ruled' | 'graph' | 'dotted' | 'vintage' | 'aged' | 'college' | 'wide' | 'love-letter' | 'birthday' | 'christmas' | 'professional' | 'custom';
+export type PaperMaterial = 'white' | 'ruled' | 'graph' | 'dotted' | 'vintage' | 'aged' | 'cream' | 'college' | 'wide' | 'love-letter' | 'birthday' | 'christmas' | 'professional' | 'custom';
 export type PaperSize = 'a4' | 'letter' | 'a5' | 'a6' | 'legal' | 'tabloid';
 export type PaperOrientation = 'portrait' | 'landscape';
 
