@@ -37,7 +37,7 @@ const pxToDisplay = (px: number) => (px * 96) / PPI;
 export interface HandwritingCanvasHandle {
     exportPDF: () => Promise<jsPDF>;
     exportZIP: () => Promise<Blob>;
-    exportPNG: () => Promise<string>;
+    exportPNG: (quality?: number, format?: 'image/png' | 'image/jpeg') => Promise<string>;
 }
 
 // Font family mapping
@@ -778,13 +778,21 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
 
 
     // Export & Rendering Logic
-    const renderPageToCanvas = async (pageIndex: number, targetCanvas: HTMLCanvasElement, tokens: Token[]) => {
-        const ctx = targetCanvas.getContext('2d', { alpha: false });
+    const renderPageToCanvas = async (pageIndex: number, targetCanvas: HTMLCanvasElement, tokens: Token[], format: 'png' | 'jpeg' = 'png') => {
+        const ctx = targetCanvas.getContext('2d', { 
+            alpha: format === 'png', 
+            colorSpace: 'srgb' 
+        });
         if (!ctx) return;
 
-        targetCanvas.width = baseWidth * 2;
-        targetCanvas.height = baseHeight * 2;
-        ctx.scale(2, 2);
+        // A4 at 300 DPI is 2480x3508. Double for Retina/Professional grade.
+        const scaleFactor = 2; 
+        targetCanvas.width = baseWidth * scaleFactor;
+        targetCanvas.height = baseHeight * scaleFactor;
+        
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.scale(scaleFactor, scaleFactor);
 
         await renderContent(ctx, pageIndex, true, tokens);
     };
@@ -815,9 +823,9 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
             const offscreenCanvas = document.createElement('canvas');
             for (let i = 1; i <= totalPages; i++) {
                 if (i > 1) pdf.addPage([widthMM, heightMM], isLandscape ? 'landscape' : 'portrait');
-                await renderPageToCanvas(i, offscreenCanvas, tokens);
-                const imgData = offscreenCanvas.toDataURL('image/jpeg', 0.95);
-                pdf.addImage(imgData, 'JPEG', 0, 0, widthMM, heightMM);
+                await renderPageToCanvas(i, offscreenCanvas, tokens, 'jpeg');
+                const imgData = offscreenCanvas.toDataURL('image/jpeg', 1.0); // Maximum quality
+                pdf.addImage(imgData, 'JPEG', 0, 0, widthMM, heightMM, undefined, 'FAST');
             }
             
             return pdf;
@@ -845,9 +853,9 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                 zip.file(`page-${i}.png`, blob);
             }
             
-            return zip.generateAsync({ type: 'blob' });
+            return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 9 } });
         },
-        exportPNG: async () => {
+        exportPNG: async (quality = 1.0, format: 'image/png' | 'image/jpeg' = 'image/png') => {
             const tokens = await new Promise<Token[]>((resolve) => {
                 const w = new Worker(new URL('../workers/layout.worker.ts', import.meta.url), { type: 'module' });
                 w.onmessage = (e) => {
@@ -859,8 +867,8 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                 w.postMessage({ type: 'LAYOUT', text });
             });
             const offscreenCanvas = document.createElement('canvas');
-            await renderPageToCanvas(currentPage, offscreenCanvas, tokens);
-            return offscreenCanvas.toDataURL('image/png');
+            await renderPageToCanvas(currentPage, offscreenCanvas, tokens, format === 'image/png' ? 'png' : 'jpeg');
+            return offscreenCanvas.toDataURL(format, quality);
         }
     }));
 
