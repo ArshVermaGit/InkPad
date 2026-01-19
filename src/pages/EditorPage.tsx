@@ -1341,24 +1341,83 @@ export default function EditorPage() {
                                         }}
                                     />
                                 </motion.div>
+                                
+                                {/* Thumbnail Strip */}
+                                {totalPages > 1 && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="flex gap-4 overflow-x-auto py-2 px-4 scrollbar-hide max-w-[80vw] bg-gray-50/50 rounded-2xl backdrop-blur-sm border border-gray-100"
+                                    >
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                                className={`relative shrink-0 transition-all duration-300 group ${
+                                                    currentPage === pageNum 
+                                                    ? 'scale-110 shadow-lg' 
+                                                    : 'opacity-40 hover:opacity-100 hover:scale-105'
+                                                }`}
+                                            >
+                                                <div 
+                                                    className={`w-16 h-20 rounded-md shadow-sm border transition-all ${
+                                                        currentPage === pageNum ? 'border-blue-500' : 'border-gray-200'
+                                                    }`}
+                                                    style={{
+                                                        backgroundColor: paperMaterial === 'vintage' ? '#f5f0e1' : 
+                                                                       paperMaterial === 'aged' ? '#e8dcc4' :
+                                                                       (paperMaterial as string) === 'cream' ? '#fffaf0' : '#ffffff'
+                                                    }}
+                                                >
+                                                    {/* Abstract Paper Content */}
+                                                    <div className="p-2 space-y-1 mt-2">
+                                                        <div className="w-full h-px bg-gray-100" />
+                                                        <div className="w-full h-px bg-gray-100" />
+                                                        <div className="w-full h-px bg-gray-100" />
+                                                        <div className="w-4/5 h-px bg-gray-100" />
+                                                    </div>
+                                                    <span className={`absolute bottom-1 right-2 text-[8px] font-bold ${currentPage === pageNum ? 'text-blue-500' : 'text-gray-300'}`}>
+                                                        {pageNum}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </motion.div>
+                                )}
 
                                 {/* Pagination Controls */}
                                 {totalPages > 1 && (
-                                    <div className="flex items-center gap-4 p-2 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-white/50">
+                                    <div className="flex items-center gap-4 p-2 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-white/50 px-4">
                                         <button
                                             disabled={currentPage === 1}
                                             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                                             className={`p-2 rounded-full transition-all ${currentPage === 1 ? 'text-gray-200 cursor-not-allowed' : 'text-black hover:bg-gray-100'}`}
+                                            title="Previous Page"
                                         >
                                             <ChevronLeft size={20} />
                                         </button>
-                                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                                            Page <span className="text-black">{currentPage}</span> of <span className="text-black">{totalPages}</span>
-                                        </span>
+                                        
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Page</span>
+                                            <input 
+                                                type="number"
+                                                min={1}
+                                                max={totalPages}
+                                                value={currentPage}
+                                                onChange={(e) => {
+                                                    const val = parseInt(e.target.value);
+                                                    if (val >= 1 && val <= totalPages) setCurrentPage(val);
+                                                }}
+                                                className="w-10 h-8 bg-gray-50 border border-gray-100 rounded-lg text-center text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                            />
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">of {totalPages}</span>
+                                        </div>
+
                                         <button
                                             disabled={currentPage === totalPages}
                                             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                                             className={`p-2 rounded-full transition-all ${currentPage === totalPages ? 'text-gray-200 cursor-not-allowed' : 'text-black hover:bg-gray-100'}`}
+                                            title="Next Page"
                                         >
                                             <ChevronRight size={20} />
                                         </button>
