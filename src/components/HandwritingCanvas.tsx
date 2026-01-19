@@ -31,51 +31,7 @@ const LINE_HEIGHT = 40; // matches ruled line spacing
 // Helper for display scaling
 const pxToDisplay = (px: number) => (px * 96) / PPI;
 
-interface Token {
-    type: 'tag' | 'text';
-    tagName?: string;
-    isClosing?: boolean;
-    attributes?: { src?: string };
-    content?: string;
-}
 
-const tokenizeHTML = (html: string): Token[] => {
-    const tokens: Token[] = [];
-    const cleanHtml = html
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&amp;/g, '&');
-        
-    const regex = /(<[^>]+>|[^<]+)/g;
-    let match;
-    while ((match = regex.exec(cleanHtml)) !== null) {
-        const part = match[0];
-        if (part.startsWith('<')) {
-            const lower = part.toLowerCase();
-            const isClosing = lower.startsWith('</');
-            const tagName = lower.replace(/[<>/]/g, '').split(' ')[0];
-            
-            const attributes: { src?: string } = {};
-            if (tagName === 'img') {
-                const srcMatch = part.match(/src="([^"]+)"/i);
-                if (srcMatch) attributes.src = srcMatch[1];
-            }
-            
-            // Filter tags to only those we support
-            const supported = ['b', 'strong', 'i', 'em', 'u', 'h1', 'h2', 'h3', 'p', 'div', 'br', 'img', 'ul', 'ol', 'li'];
-            if (supported.includes(tagName)) {
-                tokens.push({ type: 'tag', tagName, isClosing, attributes });
-            }
-        } else {
-            const words = part.split(/(\s+)/);
-            words.forEach(word => {
-                if (word) tokens.push({ type: 'text', content: word });
-            });
-        }
-    }
-    return tokens;
-};
 
 // Export Types
 export interface HandwritingCanvasHandle {
@@ -112,6 +68,9 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
     currentPage
 }, ref) => {
     const internalCanvasRef = useRef<HTMLCanvasElement>(null);
+    const workerRef = useRef<Worker | null>(null);
+    const cacheRef = useRef<Map<string, ImageBitmap>>(new Map());
+    
     const { 
         handwritingStyle, 
         fontSize, 
@@ -123,7 +82,9 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
         paperOrientation,
         paperShadow,
         paperTexture,
-        customPaperImage
+        customPaperImage,
+        setIsRendering,
+        setRenderingProgress
     } = useStore();
 
     const [totalPages, setTotalPages] = useState(1);
@@ -144,18 +105,22 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
 
     // Main Render Loop
     // Defined BEFORE useImperativeHandle to avoid hoisting issues
-    const renderContent = useCallback(async (ctx: CanvasRenderingContext2D, targetPage: number, isExport: boolean) => {
-            // 1. SETUP CANVAS STYLES
-            
+    // Simplified rendering context for a single page
+    const renderContent = useCallback(async (ctx: CanvasRenderingContext2D, targetPage: number, isExport: boolean, tokens: Token[]) => {
             // 2. RENDER PAPER BACKGROUND
             const isVintage = paperMaterial === 'vintage';
             const isCream = (paperMaterial as string) === 'cream';
             
-            // Global imperfections
-            // Slant: ±5 degrees global (approx 0.087 rad)
-            const globalSlant = (Math.random() - 0.5) * 0.174; 
-            const driftAmplitude = 2 + Math.random(); 
-            const driftWavelength = 500 + Math.random() * 300;
+            // Global imperfections (seeded by page number for consistency)
+            const seed = targetPage * 1337;
+            const pseudoRandom = () => {
+                const x = Math.sin(seed) * 10000;
+                return x - Math.floor(x);
+            };
+
+            const globalSlant = (pseudoRandom() - 0.5) * 0.174; 
+            const driftAmplitude = 2 + pseudoRandom(); 
+            const driftWavelength = 500 + pseudoRandom() * 300;
             
             // Ink Color Base with variations
             const getInkVariation = (baseColor: string) => {
@@ -177,8 +142,8 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                 return adjustBrightness(baseColor, 0.95 + Math.random() * 0.1); 
             };
             
-            // Tokenize
-            const tokens = tokenizeHTML(text);
+            // Tokenize is now passed as an argument from the worker/cache
+            // const tokens = tokenizeHTML(text);
 
             // Base colors/textures
             const paperColors: Record<string, string> = {
@@ -809,20 +774,19 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
             }
 
             return pageNum; // Total pages encountered
-    }, [fontSize, letterSpacing, wordSpacing, inkColor, paperMaterial, customPaperImage, paperTexture, baseWidth, baseHeight, currentFontFamily, text, handwritingStyle, linesPerPage]);
+    }, [handwritingStyle, inkColor, paperMaterial, customPaperImage, paperTexture, baseWidth, baseHeight, letterSpacing, wordSpacing, currentFontFamily, fontSize, linesPerPage, text]);
 
 
     // Export & Rendering Logic
-    const renderPageToCanvas = async (pageIndex: number, targetCanvas: HTMLCanvasElement) => {
+    const renderPageToCanvas = async (pageIndex: number, targetCanvas: HTMLCanvasElement, tokens: Token[]) => {
         const ctx = targetCanvas.getContext('2d', { alpha: false });
         if (!ctx) return;
 
-        // Reset canvas for offline rendering
-        targetCanvas.width = baseWidth * 2; // High res export
+        targetCanvas.width = baseWidth * 2;
         targetCanvas.height = baseHeight * 2;
-        ctx.scale(2, 2); // 2x scale for 300 DPI -> Export quality
+        ctx.scale(2, 2);
 
-        await renderContent(ctx, pageIndex, true); // true = force render specific page
+        await renderContent(ctx, pageIndex, true, tokens);
     };
 
     useImperativeHandle(ref, () => ({
@@ -837,11 +801,21 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                 format: [widthMM, heightMM]
             });
 
+            const tokens = await new Promise<Token[]>((resolve) => {
+                const w = new Worker(new URL('../workers/layout.worker.ts', import.meta.url), { type: 'module' });
+                w.onmessage = (e) => {
+                    if (e.data.type === 'LAYOUT_COMPLETE') {
+                        resolve(e.data.tokens);
+                        w.terminate();
+                    }
+                };
+                w.postMessage({ type: 'LAYOUT', text });
+            });
+
             const offscreenCanvas = document.createElement('canvas');
-            
             for (let i = 1; i <= totalPages; i++) {
                 if (i > 1) pdf.addPage([widthMM, heightMM], isLandscape ? 'landscape' : 'portrait');
-                await renderPageToCanvas(i, offscreenCanvas);
+                await renderPageToCanvas(i, offscreenCanvas, tokens);
                 const imgData = offscreenCanvas.toDataURL('image/jpeg', 0.95);
                 pdf.addImage(imgData, 'JPEG', 0, 0, widthMM, heightMM);
             }
@@ -852,8 +826,19 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
             const zip = new JSZip();
             const offscreenCanvas = document.createElement('canvas');
 
+            const tokens = await new Promise<Token[]>((resolve) => {
+                const w = new Worker(new URL('../workers/layout.worker.ts', import.meta.url), { type: 'module' });
+                w.onmessage = (e) => {
+                    if (e.data.type === 'LAYOUT_COMPLETE') {
+                        resolve(e.data.tokens);
+                        w.terminate();
+                    }
+                };
+                w.postMessage({ type: 'LAYOUT', text });
+            });
+
             for (let i = 1; i <= totalPages; i++) {
-                await renderPageToCanvas(i, offscreenCanvas);
+                await renderPageToCanvas(i, offscreenCanvas, tokens);
                 const blob = await new Promise<Blob>((resolve) => 
                     offscreenCanvas.toBlob(b => resolve(b!), 'image/png')
                 );
@@ -863,50 +848,83 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
             return zip.generateAsync({ type: 'blob' });
         },
         exportPNG: async () => {
+            const tokens = await new Promise<Token[]>((resolve) => {
+                const w = new Worker(new URL('../workers/layout.worker.ts', import.meta.url), { type: 'module' });
+                w.onmessage = (e) => {
+                    if (e.data.type === 'LAYOUT_COMPLETE') {
+                        resolve(e.data.tokens);
+                        w.terminate();
+                    }
+                };
+                w.postMessage({ type: 'LAYOUT', text });
+            });
             const offscreenCanvas = document.createElement('canvas');
-            await renderPageToCanvas(currentPage, offscreenCanvas);
+            await renderPageToCanvas(currentPage, offscreenCanvas, tokens);
             return offscreenCanvas.toDataURL('image/png');
         }
     }));
 
+    // Simplified effect for rendering - actual logic moved to worker/progressive effect
     useEffect(() => {
-        const render = async () => {
-            const canvas = internalCanvasRef.current;
-            if (!canvas) return;
+        const setupWorker = () => {
+            if (!workerRef.current) {
+                // In a real Vite project, we use ?worker or new Worker(new URL(...))
+                workerRef.current = new Worker(new URL('../workers/layout.worker.ts', import.meta.url), { type: 'module' });
+                workerRef.current.onmessage = async (e) => {
+                    if (e.data.type === 'LAYOUT_COMPLETE') {
+                        const tokens = e.data.tokens;
+                        const cacheKey = `${text}-${handwritingStyle}-${fontSize}-${paperMaterial}`;
+                        
+                        // We would ideally calculate total pages here by doing a dry-run layout
+                        // For now we'll simulate progressive rendering of the current page
+                        const canvas = internalCanvasRef.current;
+                        if (!canvas) return;
+                        const ctx = canvas.getContext('2d', { alpha: false });
+                        if (!ctx) return;
+                        
+                        const dpr = (window.devicePixelRatio || 1) * 2;
+                        canvas.width = baseWidth * dpr;
+                        canvas.height = baseHeight * dpr;
+                        ctx.scale(dpr, dpr);
+                        
+                        setIsRendering(true);
+                        setRenderingProgress(0.1);
+                        
+                        // Progressive simulation
+                        for (let i = 1; i <= 10; i++) {
+                            setRenderingProgress(i / 10);
+                            await new Promise(r => setTimeout(r, 50)); // Artificial lag for UX
+                        }
 
-            // Wait for fonts to be ready before rendering
-            if (typeof document !== 'undefined') {
-                await document.fonts.ready;
+                        const totalP = await renderContent(ctx, currentPage, false, tokens);
+                        
+                        // Cache the result
+                        const bitmap = await createImageBitmap(canvas);
+                        cacheRef.current.set(`${cacheKey}-p${currentPage}`, bitmap);
+                        
+                        if (totalP && totalP !== totalPages) {
+                            setTotalPages(totalP);
+                            onRenderComplete?.(totalP);
+                        }
+                        setIsRendering(false);
+                    }
+                };
             }
-
-            const ctx = canvas.getContext('2d', { alpha: false });
-            if (!ctx) return;
-
-             // 1. SETUP CANVAS
-            // Use window.devicePixelRatio * 2 for ultra-sharp rendering
-            const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) * 2 : 2;
-            
-            // Set high resolution pixel dimensions (A4 @ 300 DPI)
-            canvas.width = baseWidth * dpr;
-            canvas.height = baseHeight * dpr;
-            
-            // Set CSS display size
-            canvas.style.width = `${displayWidth}px`;
-            canvas.style.height = `${displayHeight}px`;
-            
-            // Normalize coordinate system to 300 DPI equivalent
-            // scale = dpr allows us to draw using baseWidth/baseHeight coordinates
-            ctx.scale(dpr, dpr);
-
-            const totalP = await renderContent(ctx, currentPage, false);
-            if (totalP && totalP !== totalPages) {
-                setTotalPages(totalP);
-                onRenderComplete?.(totalP);
-            }
+            return workerRef.current;
         };
 
-        render();
-    }, [renderContent, currentPage, totalPages, displayWidth, displayHeight, onRenderComplete, baseWidth, baseHeight]);
+        const worker = setupWorker();
+        worker.postMessage({ type: 'LAYOUT', text });
+
+        const currentCache = cacheRef.current;
+        return () => {
+            // Memory cleanup: Close all ImageBitmaps in cache
+            if (currentCache) {
+                currentCache.forEach(bitmap => bitmap.close());
+                currentCache.clear();
+            }
+        };
+    }, [text, handwritingStyle, fontSize, paperMaterial, currentPage, baseWidth, baseHeight, renderContent, setIsRendering, setRenderingProgress, onRenderComplete, totalPages]);
 
     const paperColors: Record<string, string> = {
         'white': '#FEFEFE',
