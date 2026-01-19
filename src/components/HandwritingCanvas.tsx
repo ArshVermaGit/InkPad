@@ -71,7 +71,31 @@ const tokenizeHTML = (html: string): Token[] => {
 export interface HandwritingCanvasHandle {
     exportPDF: () => Promise<jsPDF>;
     exportZIP: () => Promise<Blob>;
+    exportPNG: () => Promise<string>;
 }
+
+// Font family mapping
+const fontFamilies: Record<string, string> = {
+    'caveat': 'Caveat',
+    'gloria': 'Gloria Hallelujah',
+    'indie': 'Indie Flower',
+    'shadows': 'Shadows Into Light',
+    'patrick': 'Patrick Hand',
+    'marker': 'Permanent Marker',
+    'kalam': 'Kalam'
+};
+
+// Baseline offsets (Ratio of font size to shift UP)
+// Positive value moves text UP from the baseline
+const BASELINE_OFFSETS: Record<string, number> = {
+    'caveat': 0.15,
+    'gloria': 0.25,
+    'indie': 0.20,
+    'shadows': 0.25,
+    'patrick': 0.20,
+    'marker': 0.10,
+    'kalam': 0.20
+};
 
 export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, HandwritingCanvasProps>(({ 
     text,
@@ -99,17 +123,6 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
     // For display, we use a smaller size or fit to container
     const displayWidth = (PAPER_CONFIG.width * 96) / 25.4;
     const displayHeight = (PAPER_CONFIG.height * 96) / 25.4;
-
-    // Font family mapping
-    const fontFamilies: Record<string, string> = {
-        'caveat': 'Caveat',
-        'gloria': 'Gloria Hallelujah',
-        'indie': 'Indie Flower',
-        'shadows': 'Shadows Into Light',
-        'patrick': 'Patrick Hand',
-        'marker': 'Permanent Marker',
-        'kalam': 'Kalam'
-    };
 
     const currentFontFamily = fontFamilies[handwritingStyle] || 'Caveat';
 
@@ -158,7 +171,7 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                     ctx.save();
                     
                     // Horizontal Lines
-                    ctx.strokeStyle = '#d0d0d0'; // Light gray
+                    ctx.strokeStyle = '#a0a0a0'; // Darker gray for visibility
                     ctx.lineWidth = 1;
                     ctx.beginPath();
                     
@@ -171,8 +184,8 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                     ctx.stroke();
                     
                     // Vertical Margin Line
-                    ctx.strokeStyle = 'rgba(255, 100, 100, 0.4)'; // Faint red/pink
-                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = 'rgba(255, 80, 80, 0.5)'; // Distinct red
+                    ctx.lineWidth = 2; // Slightly thicker
                     ctx.beginPath();
                     ctx.moveTo(marginL, 0); 
                     ctx.lineTo(marginL, baseHeight);
@@ -301,7 +314,13 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
             const drawCharWithEffects = (char: string, x: number, lineY: number, bFSize: number, isBold: boolean, isItalic: boolean) => {
                 // 1. Baseline Drift
                 const driftY = driftAmplitude * Math.sin(x / driftWavelength);
-                const targetY = lineY + driftY;
+                
+                // 2. Baseline Offset
+                const baselineRatio = BASELINE_OFFSETS[handwritingStyle] || 0.15;
+                const fontBaselineOffset = bFSize * baselineRatio;
+
+                // Final Target Y: LineY (ruled line) + Drift - FontOffset
+                const targetY = lineY + driftY - fontBaselineOffset;
 
                 // 2. CHARACTER-LEVEL RANDOMIZATION
                 // A. POSITION VARIATIONS (Hand wobble)
@@ -500,18 +519,7 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
             return pageNum; // Total pages encountered
     }, [handwritingStyle, fontSize, letterSpacing, wordSpacing, inkColor, paperMaterial, customPaperImage, baseWidth, baseHeight, currentFontFamily, text]);
 
-    // Export Types
-export interface HandwritingCanvasHandle {
-    exportPDF: () => Promise<jsPDF>;
-    exportZIP: () => Promise<Blob>;
-    exportPNG: () => Promise<string>;
-}
 
-export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, HandwritingCanvasProps>(({ 
-    text,
-    onRenderComplete,
-    currentPage
-}, ref) => {
     // Export & Rendering Logic
     const renderPageToCanvas = async (pageIndex: number, targetCanvas: HTMLCanvasElement) => {
         const ctx = targetCanvas.getContext('2d', { alpha: false });
