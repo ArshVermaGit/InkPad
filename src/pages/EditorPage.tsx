@@ -50,8 +50,6 @@ import type { HandwritingCanvasHandle } from '../components/HandwritingCanvas';
 
 
 import { useToast } from '../hooks/useToast';
-import { jsPDF } from 'jspdf';
-import JSZip from 'jszip';
 
 // Font Definitions
 const HANDWRITING_FONTS = [
@@ -78,11 +76,18 @@ const INK_COLORS = [
 
 // Paper Types with CSS backgrounds
 const PAPER_TYPES = [
-    { id: 'white', name: 'White Paper', bg: '#ffffff', pattern: 'none' },
-    { id: 'ruled', name: 'Ruled Lines', bg: '#ffffff', pattern: 'repeating-linear-gradient(transparent, transparent 27px, #e0e0e0 27px, #e0e0e0 28px)' },
+    { id: 'white', name: 'White', bg: '#ffffff', pattern: 'none' },
+    { id: 'ruled', name: 'Standard Ruled', bg: '#ffffff', pattern: 'repeating-linear-gradient(transparent, transparent 38px, #e0e0e0 38px, #e0e0e0 40px)' },
+    { id: 'college', name: 'College Ruled', bg: '#ffffff', pattern: 'repeating-linear-gradient(transparent, transparent 28px, #e0e0e0 28px, #e0e0e0 30px)' },
+    { id: 'wide', name: 'Wide Ruled', bg: '#ffffff', pattern: 'repeating-linear-gradient(transparent, transparent 48px, #e0e0e0 48px, #e0e0e0 50px)' },
     { id: 'graph', name: 'Graph Paper', bg: '#ffffff', pattern: 'linear-gradient(#e0e0e0 1px, transparent 1px), linear-gradient(90deg, #e0e0e0 1px, transparent 1px)' },
     { id: 'dotted', name: 'Dotted Paper', bg: '#ffffff', pattern: 'radial-gradient(circle, #c0c0c0 1px, transparent 1px)' },
-    { id: 'vintage', name: 'Vintage Paper', bg: '#f5f0e1', pattern: 'none' },
+    { id: 'vintage', name: 'Vintage', bg: '#f5f0e1', pattern: 'none' },
+    { id: 'aged', name: 'Aged Manuscript', bg: '#e8dcc4', pattern: 'none' },
+    { id: 'love-letter', name: 'Love Letter', bg: '#fff0f5', pattern: 'none' },
+    { id: 'birthday', name: 'Birthday', bg: '#fffbf0', pattern: 'none' },
+    { id: 'christmas', name: 'Christmas', bg: '#f0fff4', pattern: 'none' },
+    { id: 'professional', name: 'Professional', bg: '#ffffff', pattern: 'none' },
     { id: 'custom', name: 'Custom Upload', bg: '#ffffff', pattern: 'none' },
 ];
 
@@ -203,36 +208,36 @@ export default function EditorPage() {
 
     const presets = {
         homework: {
-            handwritingStyle: 'gloria',
-            inkColor: '#1e40af',
-            paperMaterial: 'ruled' as const,
+            handwritingStyle: 'gloria-hallelujah',
+            inkColor: '#0051a8',
+            paperMaterial: 'college' as const,
             fontSize: 18,
             lineHeight: 1.6,
             paperShadow: true,
             paperTilt: false,
         },
         love: {
-            handwritingStyle: 'indie',
-            inkColor: '#be123c',
-            paperMaterial: 'white' as const,
+            handwritingStyle: 'indie-flower',
+            inkColor: '#cc0000',
+            paperMaterial: 'love-letter' as const,
             fontSize: 20,
             lineHeight: 1.4,
             paperShadow: true,
             paperTilt: true,
         },
         professional: {
-            handwritingStyle: 'patrick',
-            inkColor: '#111827',
-            paperMaterial: 'white' as const,
+            handwritingStyle: 'patrick-hand',
+            inkColor: '#000000',
+            paperMaterial: 'professional' as const,
             fontSize: 16,
             lineHeight: 1.5,
             paperShadow: false,
             paperTilt: false,
         },
-        journal: {
+        history: {
             handwritingStyle: 'caveat',
-            inkColor: '#1e3a8a',
-            paperMaterial: 'vintage' as const,
+            inkColor: '#333333',
+            paperMaterial: 'aged' as const,
             fontSize: 17,
             lineHeight: 1.8,
             paperShadow: true,
