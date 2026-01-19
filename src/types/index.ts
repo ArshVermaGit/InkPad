@@ -44,6 +44,8 @@ export interface AppState {
     // UI State
     isSidebarCollapsed: boolean;
     isSettingsOpen: boolean;
+    isRendering: boolean;
+    renderingProgress: number;
     expandedPanels: string[];
 
     // Actions
@@ -82,6 +84,8 @@ export interface AppState {
     setSettingsOpen: (open: boolean) => void;
     setExpandedPanels: (panels: string[]) => void;
     togglePanel: (panel: string) => void;
+    setIsRendering: (isRendering: boolean) => void;
+    setRenderingProgress: (progress: number) => void;
     applyPreset: (settings: Partial<AppState>) => void;
 
     reset: () => void;
