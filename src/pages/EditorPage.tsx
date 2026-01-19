@@ -150,6 +150,8 @@ export default function EditorPage() {
     
     // Export State
     const [isExporting, setIsExporting] = useState(false);
+    const [exportFormat, setExportFormat] = useState<'image/png' | 'image/jpeg'>('image/png');
+    const [exportQuality, setExportQuality] = useState(1.0);
     const { addToast } = useToast();
     const canvasRef = useRef<HandwritingCanvasHandle>(null);
 
@@ -193,22 +195,30 @@ export default function EditorPage() {
     const handleExportPNG = useCallback(async () => {
         if (!canvasRef.current || isExporting) return;
         setIsExporting(true);
-        addToast('Capturing Page...');
+        const formatLabel = exportFormat === 'image/png' ? 'PNG' : 'JPEG';
+        addToast(`Capturing Page as ${formatLabel}...`);
         
         try {
-            const dataUrl = await canvasRef.current.exportPNG();
+            const dataUrl = await canvasRef.current.exportPNG(exportQuality, exportFormat);
             const link = document.createElement('a');
-            link.download = `${uploadedFileName || 'inkpad-page'}.png`;
+            link.download = `${uploadedFileName || 'inkpad-page'}.${exportFormat === 'image/png' ? 'png' : 'jpg'}`;
             link.href = dataUrl;
             link.click();
-            addToast('PNG Downloaded!');
+            addToast(`${formatLabel} Downloaded!`);
         } catch (error) {
             console.error(error);
             addToast('Export failed');
         } finally {
             setIsExporting(false);
         }
-    }, [isExporting, uploadedFileName, addToast]);
+    }, [isExporting, uploadedFileName, addToast, exportFormat, exportQuality]);
+
+    const handlePrint = useCallback(() => {
+        setIsSidebarOpen(false);
+        setTimeout(() => {
+            window.print();
+        }, 300);
+    }, []);
 
     const presets = {
         homework: {
@@ -1245,22 +1255,52 @@ export default function EditorPage() {
                                 )}
                             </button>
 
-                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-3 p-3 bg-white/50 rounded-xl border border-gray-100">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block px-1">Settings</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <select 
+                                            value={exportFormat}
+                                            onChange={(e) => setExportFormat(e.target.value as 'image/png' | 'image/jpeg')}
+                                            className="bg-white border border-gray-100 rounded-lg py-1.5 px-2 text-[10px] font-bold focus:ring-1 focus:ring-blue-500/20 outline-none"
+                                        >
+                                            <option value="image/png">PNG (Lossless)</option>
+                                            <option value="image/jpeg">JPEG (Fast)</option>
+                                        </select>
+                                        <select 
+                                            value={exportQuality.toString()}
+                                            onChange={(e) => setExportQuality(parseFloat(e.target.value))}
+                                            className="bg-white border border-gray-100 rounded-lg py-1.5 px-2 text-[10px] font-bold focus:ring-1 focus:ring-blue-500/20 outline-none"
+                                        >
+                                            <option value="1.0">Ultra (100%)</option>
+                                            <option value="0.9">High (90%)</option>
+                                            <option value="0.7">Mid (70%)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        onClick={handleExportPNG}
+                                        disabled={isExporting}
+                                        className="py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-[10px] font-bold uppercase tracking-tight hover:border-gray-300 hover:text-black transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Download size={12} /> Image
+                                    </button>
+                                    <button
+                                        onClick={handleExportZIP}
+                                        disabled={isExporting || totalPages <= 1}
+                                        className="py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-[10px] font-bold uppercase tracking-tight hover:border-gray-300 hover:text-black transition-all flex items-center justify-center gap-2 disabled:opacity-30 disabled:hover:border-gray-200"
+                                    >
+                                        <Download size={12} /> ZIP Archive
+                                    </button>
+                                </div>
+
                                 <button
-                                    onClick={handleExportPNG}
-                                    disabled={isExporting}
-                                    className="py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-[10px] font-bold uppercase tracking-tight hover:border-gray-300 hover:text-black transition-all flex items-center justify-center gap-2"
+                                    onClick={handlePrint}
+                                    className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                                 >
-                                    <Download size={12} /> PNG
+                                    <Monitor size={12} /> Print Document
                                 </button>
-                                <button
-                                    onClick={handleExportZIP}
-                                    disabled={isExporting || totalPages <= 1}
-                                    className="py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-[10px] font-bold uppercase tracking-tight hover:border-gray-300 hover:text-black transition-all flex items-center justify-center gap-2 disabled:opacity-30 disabled:hover:border-gray-200"
-                                >
-                                    <Download size={12} /> ZIP Archive
-                                </button>
-                            </div>
 
                             <button
                                 onClick={handleShare}
