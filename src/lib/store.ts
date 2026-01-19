@@ -10,7 +10,7 @@ const DEFAULT_TYPOGRAPHY = {
     wordSpacing: 4,
 };
 
-const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZoom' | 'setEditorMode' | 'setUploadedFileName' | 'setHandwritingStyle' | 'setFontSize' | 'setLetterSpacing' | 'setLineHeight' | 'setWordSpacing' | 'setPaperMaterial' | 'setPaperSize' | 'setPaperOrientation' | 'setInkColor' | 'addCustomFont' | 'removeCustomFont' | 'resetTypography' | 'setCustomPaperImage' | 'completeOnboarding' | 'completeTour' | 'setSidebarCollapsed' | 'setSettingsOpen' | 'setPaperShadow' | 'setInkBlur' | 'setResolutionQuality' | 'setPaperTilt' | 'setPaperTexture' | 'setExpandedPanels' | 'togglePanel' | 'applyPreset'> = {
+const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZoom' | 'setEditorMode' | 'setUploadedFileName' | 'setHandwritingStyle' | 'setFontSize' | 'setLetterSpacing' | 'setLineHeight' | 'setWordSpacing' | 'setPaperMaterial' | 'setPaperSize' | 'setPaperOrientation' | 'setInkColor' | 'addCustomFont' | 'removeCustomFont' | 'resetTypography' | 'setCustomPaperImage' | 'completeOnboarding' | 'completeTour' | 'setSidebarCollapsed' | 'setSettingsOpen' | 'setPaperShadow' | 'setInkBlur' | 'setResolutionQuality' | 'setPaperTilt' | 'setPaperTexture' | 'setExpandedPanels' | 'togglePanel' | 'applyPreset' | 'setIsRendering' | 'setRenderingProgress'> = {
     text: '',
     lastSaved: null,
     zoom: 1,
@@ -37,6 +37,8 @@ const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZo
     hasSeenTour: false,
     isSidebarCollapsed: false,
     isSettingsOpen: false,
+    isRendering: false,
+    renderingProgress: 0,
     expandedPanels: ['handwriting', 'typography', 'paper', 'effects'],
 };
 
@@ -83,6 +85,8 @@ export const useStore = create<AppState>()(
                     ? state.expandedPanels.filter(p => p !== panel)
                     : [...state.expandedPanels, panel]
             })),
+            setIsRendering: (isRendering) => set({ isRendering }),
+            setRenderingProgress: (renderingProgress) => set({ renderingProgress }),
             applyPreset: (settings) => set((state) => ({ ...state, ...settings })),
 
             reset: () => set(() => initialState),
