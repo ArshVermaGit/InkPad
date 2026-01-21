@@ -114,12 +114,12 @@ export const getAvailableFonts = (state: AppState) => {
     const defaultFonts: FontPreference[] = [
         { id: 'caveat', name: 'Caveat', family: 'Caveat', type: 'google' },
         { id: 'dancing', name: 'Dancing Script', family: 'Dancing Script', type: 'google' },
-        { id: 'indie', name: 'Indie Flower', family: 'Indie Flower', type: 'google' },
-        { id: 'shadows', name: 'Shadows Into Light', family: 'Shadows Into Light', type: 'google' },
-        { id: 'patrick', name: 'Patrick Hand', family: 'Patrick Hand', type: 'google' },
+        { id: 'indie-flower', name: 'Indie Flower', family: 'Indie Flower', type: 'google' },
+        { id: 'shadows-into-light', name: 'Shadows Into Light', family: 'Shadows Into Light', type: 'google' },
+        { id: 'patrick-hand', name: 'Patrick Hand', family: 'Patrick Hand', type: 'google' },
         { id: 'kalam', name: 'Kalam', family: 'Kalam', type: 'google' },
-        { id: 'marker', name: 'Permanent Marker', family: 'Permanent Marker', type: 'google' },
-        { id: 'gloria', name: 'Gloria Hallelujah', family: 'Gloria Hallelujah', type: 'google' },
+        { id: 'permanent-marker', name: 'Permanent Marker', family: 'Permanent Marker', type: 'google' },
+        { id: 'gloria-hallelujah', name: 'Gloria Hallelujah', family: 'Gloria Hallelujah', type: 'google' },
     ];
     return [...defaultFonts, ...state.customFonts];
 };
