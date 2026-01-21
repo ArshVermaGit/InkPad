@@ -5,7 +5,7 @@
 
 @import "tailwindcss";
 
-@theme {
+:root {
   /* Colors */
   --color-white: #FFFFFF;
   --color-black: #000000;
@@ -56,15 +56,15 @@
 
   /* Animations */
   --animate-float: float 3s ease-in-out infinite;
+}
 
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
   }
 }
 
