@@ -7,7 +7,13 @@ export default {
   theme: {
     extend: {
       colors: {
+        paper: {
+          DEFAULT: 'var(--color-paper)',
+          dark: 'var(--color-paper-dark)',
+        },
         ink: {
+          DEFAULT: 'var(--color-ink)',
+          light: 'var(--color-ink-light)',
           50: '#f9fafb',
           100: '#f3f4f6',
           200: '#e5e7eb',
@@ -19,6 +25,10 @@ export default {
           800: '#1f2937',
           900: '#111827',
           950: '#030712',
+        },
+        accent: {
+          DEFAULT: 'var(--color-accent)',
+          light: 'var(--color-accent-light)',
         },
       },
       fontFamily: {
