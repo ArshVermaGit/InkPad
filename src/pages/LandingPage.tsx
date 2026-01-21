@@ -5,10 +5,8 @@ import {
     Layers,
     Download,
     Zap,
-    CheckCircle2,
     ArrowRight
 } from 'lucide-react';
-import RippleButton from '../components/ui/RippleButton';
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -17,21 +15,6 @@ export default function LandingPage() {
     const yParallaxMedium = useTransform(scrollYProgress, [0, 1], [0, -150]);
     const yParallaxSlow = useTransform(scrollYProgress, [0, 1], [0, -50]);
 
-    const headlineVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.05
-            }
-        }
-    };
-
-    const letterVariants = {
-        hidden: { opacity: 0, y: 10 },
-        visible: { opacity: 1, y: 0 }
-    };
-
     const features = [
         {
             title: 'Precision Rendering',
@@ -39,7 +22,7 @@ export default function LandingPage() {
             icon: <PenTool className="w-6 h-6" />
         },
         {
-            title: 'Monochromatic Design',
+            title: 'Stationery Design',
             desc: 'A focused, distraction-free interface designed for modern document creation.',
             icon: <Layers className="w-6 h-6" />
         },
@@ -63,133 +46,157 @@ export default function LandingPage() {
     ];
 
     return (
-        <div className="relative">
+        <div className="relative paper-texture overflow-hidden">
             {/* Hero Section */}
-            <section className="section-padding flex flex-col items-center justify-center min-h-[90vh] text-center bg-white">
+            <section className="section-padding flex flex-col items-center justify-center min-h-screen text-center relative z-10">
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                    className="max-w-4xl"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                    className="max-w-5xl"
                 >
-                    <div className="inline-block px-4 py-1.5 mb-8 border border-black/10 rounded-full">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">The Future of Digital Ink</span>
-                    </div>
-
-                    <motion.h1
-                        variants={headlineVariants}
-                        initial="hidden"
-                        animate="visible"
-                        className="text-6xl md:text-8xl font-display mb-8 tracking-tighter leading-tight font-extrabold"
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                        className="inline-flex items-center gap-2 px-4 py-1.5 mb-10 glass rounded-full border border-black/5"
                     >
-                        {"Transform Text into".split("").map((char, i) => (
-                            <motion.span key={i} variants={letterVariants}>{char}</motion.span>
-                        ))}
-                        <br />
-                        <motion.span
-                            initial={{ fontFamily: 'var(--font-display)' }}
-                            animate={{
-                                fontFamily: ['var(--font-display)', 'var(--font-handwriting)'],
-                                color: ['#000000', '#333333']
-                            }}
-                            transition={{ duration: 2, delay: 1.5, ease: "easeInOut" }}
-                            className="relative inline-block"
-                        >
-                            Perfect Handwriting
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: '100%' }}
-                                transition={{ duration: 1.5, delay: 2.5 }}
-                                className="absolute -bottom-2 left-0 h-1 bg-black/10"
-                            />
-                        </motion.span>
-                    </motion.h1>
+                        <div className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
+                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-ink/60">New: Advanced Ink Simulation 2.0</span>
+                    </motion.div>
 
-                    <p className="text-xl md:text-2xl text-gray-500 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
-                        The minimalist tool to generate beautiful, professional handwritten pages from digital text instantly.
-                    </p>
+                    <h1 className="text-7xl md:text-9xl mb-10 tracking-tight leading-[0.9] font-black text-ink">
+                        <span className="block overflow-hidden">
+                            <motion.span
+                                initial={{ y: "100%" }}
+                                animate={{ y: 0 }}
+                                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                                className="inline-block"
+                            >
+                                Rewrite the
+                            </motion.span>
+                        </span>
+                        <span className="block overflow-hidden">
+                            <motion.span
+                                initial={{ y: "100%" }}
+                                animate={{ y: 0 }}
+                                transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                                className="block italic font-serif hero-text-shimmer"
+                            >
+                                Digital Experience
+                            </motion.span>
+                        </span>
+                    </h1>
 
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <RippleButton
-                            className="text-sm tracking-widest uppercase flex items-center gap-3 cta-pulse bg-black text-white hover:bg-gray-800"
+                    <motion.p 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.8 }}
+                        className="text-xl md:text-2xl text-ink/60 mb-16 max-w-2xl mx-auto leading-relaxed font-medium"
+                    >
+                        Experience the soulful warmth of traditional handwriting combined with the raw power of modern AI. Elevate your digital notes into timeless art.
+                    </motion.p>
+
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1 }}
+                        className="flex flex-col sm:flex-row gap-6 justify-center"
+                    >
+                        <button
+                            className="btn-premium rounded-xl text-xs py-5 px-10 group"
                             onClick={() => navigate('/editor')}
                         >
-                            Start Writing <ArrowRight size={16} />
-                        </RippleButton>
-                        <RippleButton
-                            variant="secondary"
-                            className="text-sm tracking-widest uppercase"
+                            Start Your Journey 
+                            <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-1" />
+                        </button>
+                        <button
+                            className="btn-premium-outline rounded-xl text-xs py-5 px-10 glass"
                             onClick={() => navigate('/gallery')}
                         >
-                            View Showcase
-                        </RippleButton>
-                    </div>
+                            Explore Styles
+                        </button>
+                    </motion.div>
                 </motion.div>
 
                 {/* Animated Scroll Indicator */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 3, duration: 1 }}
-                    className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+                    transition={{ delay: 2, duration: 1 }}
+                    className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
                 >
-                    <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Scroll</span>
-                    <div className="w-5 h-8 border-2 border-gray-200 rounded-full relative">
-                        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1 h-1.5 bg-gray-400 rounded-full scroll-indicator-dot" />
+                    <span className="text-[10px] uppercase tracking-[0.4em] font-black text-ink/30 translate-x-[0.2em]">Scroll</span>
+                    <div className="w-6 h-10 border border-ink/10 rounded-full relative bg-ink/5">
+                        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-1 h-2 bg-accent rounded-full scroll-indicator-dot" />
                     </div>
                 </motion.div>
 
-                {/* Floating Handwriting Animation (Multilayered Parallax) */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden select-none -z-10">
+                {/* Background Floating Elements */}
+                <div className="absolute inset-0 pointer-events-none select-none -z-10 overflow-hidden">
                     <motion.div
                         style={{ y: yParallaxSlow }}
-                        className="absolute inset-0 opacity-[0.03] animate-gradient-shift bg-linear-to-br from-gray-100 via-white to-gray-200"
+                        className="absolute inset-0 opacity-[0.02] bg-[radial-gradient(circle_at_center,var(--color-accent)_0%,transparent_70%)]"
                     />
 
                     <motion.div
                         style={{ y: yParallaxMedium }}
-                        className="font-handwriting text-[20vw] absolute -top-10 -left-10 opacity-5 transform -rotate-12 drift-slow"
+                        className="font-handwriting text-[25vw] absolute -top-10 -left-20 text-ink/5 italic -rotate-12"
                     >
-                        authenticity
+                        soulful
                     </motion.div>
 
                     <motion.div
-                        style={{ y: yParallaxFast }}
-                        className="font-script text-[15vw] absolute top-1/2 -right-20 opacity-5 transform rotate-12 drift-medium"
+                        style={{ y: yParallaxFast, rotate: 8 }}
+                        className="font-script text-[18vw] absolute top-1/2 -right-20 text-ink/5"
                     >
                         human
                     </motion.div>
 
                     <motion.div
-                        style={{ y: yParallaxSlow }}
-                        className="font-print text-[10vw] absolute bottom-20 left-10 opacity-5 transform -rotate-6 drift-slow"
+                        style={{ y: yParallaxSlow, rotate: -5 }}
+                        className="font-serif italic text-[12vw] absolute bottom-20 left-10 text-ink/5"
                     >
-                        craft
+                        craftsmanship
                     </motion.div>
                 </div>
             </section>
 
             {/* Features Grid */}
-            <section className="section-padding bg-white">
+            <section className="section-padding relative z-10">
                 <div className="max-w-7xl mx-auto">
-                    <div className="mb-24 text-center">
-                        <h2 className="text-4xl md:text-5xl mb-6">Built for Excellence.</h2>
-                        <div className="w-12 h-1 bg-black mx-auto" />
+                    <div className="mb-32 text-center">
+                        <motion.h2 
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="text-5xl md:text-6xl font-display font-black text-ink mb-6"
+                        >
+                            Engineered for <br /><span className="text-accent italic font-serif">Absolute Authenticity.</span>
+                        </motion.h2>
+                        <motion.div 
+                            initial={{ width: 0 }}
+                            whileInView={{ width: 80 }}
+                            viewport={{ once: true }}
+                            className="h-1 bg-accent mx-auto rounded-full" 
+                        />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {features.map((feature, i) => (
                             <motion.div
                                 key={feature.title}
-                                initial={{ opacity: 0, y: 20 }}
+                                initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                transition={{ delay: i * 0.1 }}
-                                className="card-premium h-full"
+                                transition={{ delay: i * 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                                className="card-premium group"
                             >
-                                <div className="mb-6 p-3 inline-block bg-gray-100">{feature.icon}</div>
-                                <h3 className="text-xl mb-4 uppercase tracking-tighter">{feature.title}</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed font-medium">
+                                <div className="mb-8 w-14 h-14 glass rounded-2xl flex items-center justify-center text-accent transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110 border border-black/5">
+                                    {feature.icon}
+                                </div>
+                                <h3 className="text-xl font-display font-black text-ink mb-4 tracking-tight uppercase">{feature.title}</h3>
+                                <p className="text-ink/50 text-sm leading-relaxed font-medium">
                                     {feature.desc}
                                 </p>
                             </motion.div>
@@ -199,26 +206,49 @@ export default function LandingPage() {
             </section>
 
             {/* Use Cases Section */}
-            <section className="section-padding bg-black text-white">
-                <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-24">
+            <section className="section-padding relative overflow-hidden">
+                {/* Background Decoration */}
+                <div className="absolute inset-0 bg-ink pointer-events-none -z-10" />
+                <div className="absolute top-0 right-0 w-1/2 h-full bg-[radial-gradient(circle_at_top_right,var(--color-ink-light)_0%,transparent_70%)] opacity-30 -z-10" />
+
+                <div className="max-w-7xl mx-auto relative z-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-32 items-center">
                         <div>
-                            <h2 className="text-5xl md:text-7xl mb-12 tracking-tighter leading-none">A New Way <br />to Think.</h2>
-                            <p className="text-gray-400 text-xl leading-relaxed">
-                                InkPad isn't just a tool; it's a bridge between the digital convenience of today and the timeless warmth of traditional writing.
-                            </p>
+                            <motion.h2 
+                                initial={{ opacity: 0, x: -30 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                viewport={{ once: true }}
+                                className="text-6xl md:text-8xl font-display font-black text-white mb-10 tracking-tighter leading-none"
+                            >
+                                A Heritage <br /><span className="text-accent italic font-serif">of Ink.</span>
+                            </motion.h2>
+                            <motion.p 
+                                initial={{ opacity: 0, x: -30 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.2 }}
+                                className="text-white/40 text-xl leading-relaxed max-w-lg font-medium"
+                            >
+                                InkPad bridges the gap between digital efficiency and the timeless warmth of traditional writing.
+                            </motion.p>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-12">
-                            {useCases.map((item) => (
-                                <div key={item.title}>
-                                    <h4 className="flex items-center gap-3 text-lg font-bold uppercase tracking-widest mb-4">
-                                        <CheckCircle2 size={18} className="text-white" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-16">
+                            {useCases.map((item, i) => (
+                                <motion.div 
+                                    key={item.title}
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    whileInView={{ opacity: 1, scale: 1 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: i * 0.1 }}
+                                >
+                                    <h4 className="flex items-center gap-4 text-xs font-black text-white uppercase tracking-[0.3em] mb-6">
+                                        <div className="w-8 h-px bg-accent" />
                                         {item.title}
                                     </h4>
-                                    <p className="text-gray-400 text-sm leading-relaxed">
+                                    <p className="text-white/50 text-sm leading-relaxed font-medium">
                                         {item.desc}
                                     </p>
-                                </div>
+                                </motion.div>
                             ))}
                         </div>
                     </div>
@@ -226,21 +256,29 @@ export default function LandingPage() {
             </section>
 
             {/* CTA Section */}
-            <section className="section-padding bg-white text-center border-t border-gray-100">
-                <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    whileInView={{ scale: 1, opacity: 1 }}
-                    viewport={{ once: true }}
-                    className="max-w-3xl mx-auto"
-                >
-                    <h2 className="text-5xl md:text-7xl mb-12 tracking-tighter">Ready to create?</h2>
-                    <RippleButton
-                        className="px-12 py-5 text-lg tracking-widest uppercase bg-black text-white hover:bg-gray-800"
-                        onClick={() => navigate('/editor')}
+            <section className="section-padding relative text-center">
+                <div className="max-w-4xl mx-auto">
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        whileInView={{ scale: 1, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                        className="glass p-20 rounded-[3rem] border border-black/5 shadow-2xl overflow-hidden relative"
                     >
-                        Initialize Workspace
-                    </RippleButton>
-                </motion.div>
+                        <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-accent to-transparent opacity-30" />
+                        
+                        <h2 className="text-5xl md:text-7xl font-display font-black text-ink mb-8 tracking-tighter italic">Ready to create?</h2>
+                        <p className="text-ink/40 text-lg mb-12 max-w-xl mx-auto font-medium">
+                            Join thousands who are rediscovering the beauty of handwriting in the digital age.
+                        </p>
+                        <button
+                            className="btn-premium rounded-2xl px-16 py-6 text-sm tracking-[0.2em] shadow-2xl shadow-ink/20 hover:scale-105 active:scale-95 transition-all mx-auto"
+                            onClick={() => navigate('/editor')}
+                        >
+                            Initialize Workspace
+                        </button>
+                    </motion.div>
+                </div>
             </section>
         </div>
     );
