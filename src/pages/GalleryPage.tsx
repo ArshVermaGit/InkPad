@@ -5,8 +5,8 @@ export default function GalleryPage() {
     const templates = [
         { name: 'Heritage Lined', icon: <FileText className="w-10 h-10" />, desc: 'Standard ruled paper with a vintage soul.' },
         { name: 'Ivory Parchment', icon: <Square className="w-10 h-10" />, desc: 'Smooth, unlined surface for pure expression.' },
-        { name: 'Blueprint Grid', icon: <Grid className="w-10 h-10" />, desc: 'Precision graph for architectural notes.' },
-        { name: 'Artisan Mosaic', icon: <LayoutGrid className="w-10 h-10" />, desc: 'Multi-column layout for diverse content.' },
+        { name: 'Blueprint Paper', icon: <Grid className="w-10 h-10" />, desc: 'Simple graph paper for your drawings and plans.' },
+        { name: 'Classic Journal', icon: <LayoutGrid className="w-10 h-10" />, desc: 'A clean layout for your daily thoughts and notes.' },
     ];
 
     return (
@@ -26,7 +26,7 @@ export default function GalleryPage() {
                         Manuscript <br /><span className="italic font-serif hero-text-shimmer">Gallery.</span>
                     </h1>
                     <p className="text-ink/40 text-xl font-medium leading-relaxed max-w-xl">
-                        Explore our selection of premium paper stocks, meticulously engineered for digital ink.
+                        A collection of beautiful papers, hand-picked to make your writing feel personal and authentic.
                     </p>
                 </div>
 
