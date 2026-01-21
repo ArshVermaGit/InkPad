@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Edit3, Image, Settings } from 'lucide-react';
+import { Home, Edit3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function MobileNav() {
@@ -11,8 +11,6 @@ export default function MobileNav() {
     const navItems = [
         { name: 'Home', path: '/', icon: Home },
         { name: 'Editor', path: '/editor', icon: Edit3 },
-        { name: 'Gallery', path: '/gallery', icon: Image },
-        { name: 'Styles', path: '/styles', icon: Settings },
     ];
 
     return (
