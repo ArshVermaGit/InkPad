@@ -881,58 +881,95 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
 
     // Simplified effect for rendering - actual logic moved to worker/progressive effect
     useEffect(() => {
+        let timeoutId: NodeJS.Timeout;
         const setupWorker = () => {
             if (!workerRef.current) {
-                // In a real Vite project, we use ?worker or new Worker(new URL(...))
-                workerRef.current = new Worker(new URL('../workers/layout.worker.ts', import.meta.url), { type: 'module' });
-                workerRef.current.onmessage = async (e) => {
-                    if (e.data.type === 'LAYOUT_COMPLETE') {
-                        const tokens = e.data.tokens;
-                        const cacheKey = `${text}-${handwritingStyle}-${fontSize}-${paperMaterial}`;
-                        
-                        // We would ideally calculate total pages here by doing a dry-run layout
-                        // For now we'll simulate progressive rendering of the current page
-                        const canvas = internalCanvasRef.current;
-                        if (!canvas) return;
-                        const ctx = canvas.getContext('2d', { alpha: false });
-                        if (!ctx) return;
-                        
-                        const dpr = (window.devicePixelRatio || 1) * 2;
-                        canvas.width = baseWidth * dpr;
-                        canvas.height = baseHeight * dpr;
-                        ctx.scale(dpr, dpr);
-                        
-                        setIsRendering(true);
-                        setRenderingProgress(0.1);
-                        
-                        // Progressive simulation
-                        for (let i = 1; i <= 10; i++) {
-                            setRenderingProgress(i / 10);
-                            await new Promise(r => setTimeout(r, 50)); // Artificial lag for UX
-                        }
-
-                        const totalP = await renderContent(ctx, currentPage, false, tokens);
-                        
-                        // Cache the result
-                        const bitmap = await createImageBitmap(canvas);
-                        cacheRef.current.set(`${cacheKey}-p${currentPage}`, bitmap);
-                        
-                        if (totalP && totalP !== totalPages) {
-                            setTotalPages(totalP);
-                            onRenderComplete?.(totalP);
-                        }
+                try {
+                    // In a real Vite project, we use ?worker or new Worker(new URL(...))
+                    workerRef.current = new Worker(new URL('../workers/layout.worker.ts', import.meta.url), { type: 'module' });
+                    
+                    workerRef.current.onerror = (e) => {
+                        console.error('Worker Error:', e);
                         setIsRendering(false);
-                    }
-                };
+                        // Fallback: render without tokens if worker fails
+                        const canvas = internalCanvasRef.current;
+                         if (canvas) {
+                             const ctx = canvas.getContext('2d', { alpha: false });
+                             if (ctx) {
+                                  const dpr = (window.devicePixelRatio || 1) * 2;
+                                  canvas.width = baseWidth * dpr;
+                                  canvas.height = baseHeight * dpr;
+                                  ctx.scale(dpr, dpr);
+                                  renderContent(ctx, currentPage, false, []); // Empty tokens fallback
+                             }
+                         }
+                    };
+
+                    workerRef.current.onmessage = async (e) => {
+                        clearTimeout(timeoutId);
+                        if (e.data.type === 'LAYOUT_COMPLETE') {
+                            const tokens = e.data.tokens;
+                            const cacheKey = `${text}-${handwritingStyle}-${fontSize}-${paperMaterial}`;
+                            
+                            // We would ideally calculate total pages here by doing a dry-run layout
+                            // For now we'll simulate progressive rendering of the current page
+                            const canvas = internalCanvasRef.current;
+                            if (!canvas) { setIsRendering(false); return; }
+                            const ctx = canvas.getContext('2d', { alpha: false });
+                            if (!ctx) { setIsRendering(false); return; }
+                            
+                            const dpr = (window.devicePixelRatio || 1) * 2;
+                            canvas.width = baseWidth * dpr;
+                            canvas.height = baseHeight * dpr;
+                            ctx.scale(dpr, dpr);
+                            
+                            setIsRendering(true);
+                            setRenderingProgress(0.1);
+                            
+                            // Progressive simulation
+                            for (let i = 1; i <= 5; i++) { // Reduced lag
+                                setRenderingProgress(i / 5);
+                                await new Promise(r => setTimeout(r, 20));
+                            }
+
+                            const totalP = await renderContent(ctx, currentPage, false, tokens);
+                            
+                            // Cache the result
+                            try {
+                                const bitmap = await createImageBitmap(canvas);
+                                cacheRef.current.set(`${cacheKey}-p${currentPage}`, bitmap);
+                            } catch (err) { console.warn('Cache failed', err); }
+                            
+                            if (totalP && totalP !== totalPages) {
+                                setTotalPages(totalP);
+                                onRenderComplete?.(totalP);
+                            }
+                            setIsRendering(false);
+                        }
+                    };
+                } catch (err) {
+                    console.error('Worker Init Failed:', err);
+                    setIsRendering(false);
+                }
             }
             return workerRef.current;
         };
 
         const worker = setupWorker();
-        worker.postMessage({ type: 'LAYOUT', text });
+        if (worker) {
+            worker.postMessage({ type: 'LAYOUT', text });
+            // Fallback timeout in case worker hangs
+            timeoutId = setTimeout(() => {
+                console.warn('Worker Layout Timeout');
+                setIsRendering(false);
+            }, 5000);
+        } else {
+             setIsRendering(false);
+        }
 
         const currentCache = cacheRef.current;
         return () => {
+            clearTimeout(timeoutId);
             // Memory cleanup: Close all ImageBitmaps in cache
             if (currentCache) {
                 currentCache.forEach(bitmap => bitmap.close());
