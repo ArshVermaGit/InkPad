@@ -44,23 +44,29 @@ export interface HandwritingCanvasHandle {
 // Font family mapping
 const fontFamilies: Record<string, string> = {
     'caveat': 'Caveat',
-    'gloria': 'Gloria Hallelujah',
-    'indie': 'Indie Flower',
-    'shadows': 'Shadows Into Light',
-    'patrick': 'Patrick Hand',
-    'marker': 'Permanent Marker',
-    'kalam': 'Kalam'
+    'gloria-hallelujah': 'Gloria Hallelujah',
+    'indie-flower': 'Indie Flower',
+    'shadows-into-light': 'Shadows Into Light',
+    'patrick-hand': 'Patrick Hand',
+    'permanent-marker': 'Permanent Marker',
+    'kalam': 'Kalam',
+    'homemade-apple': 'Homemade Apple',
+    'reenie-beanie': 'Reenie Beanie',
+    'nothing-you-could-do': 'Nothing You Could Do'
 };
 
 // Baseline offsets (Ratio of font size to shift UP to sit ON the line)
 const BASELINE_OFFSETS: Record<string, number> = {
     'caveat': 0.05,
-    'gloria': 0.12,
-    'indie': 0.08,
-    'shadows': 0.15,
-    'patrick': 0.10,
-    'marker': 0.05,
-    'kalam': 0.10
+    'gloria-hallelujah': 0.12,
+    'indie-flower': 0.08,
+    'shadows-into-light': 0.15,
+    'patrick-hand': 0.10,
+    'permanent-marker': 0.05,
+    'kalam': 0.10,
+    'homemade-apple': 0.15,
+    'reenie-beanie': 0.20,
+    'nothing-you-could-do': 0.10
 };
 
 export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, HandwritingCanvasProps>(({ 
@@ -680,56 +686,56 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
                         const wordMetrics = ctx.measureText(word);
                         const wordWidth = wordMetrics.width + (word.length * letterSpacing);
                         
-                        // Intelligent Word Wrapping
-                        if (currentX + wordWidth > baseWidth - marginR) {
-                            // Can we break the word? (Syllable-based or character-based if too long)
-                            if (wordWidth > usableWidth) {
-                                // Hyphenation for words longer than the entire line
-                                const chars = word.split('');
-                                for (const char of chars) {
-                                    const charWidth = ctx.measureText(char).width + letterSpacing;
-                                    
-                                    if (currentX + charWidth > baseWidth - marginR) {
-                                        // Draw Hyphen
-                                        if (pageNum === targetPage) {
-                                            ctx.save();
-                                            ctx.fillStyle = inkColor;
-                                            ctx.fillText('-', currentX, currentBaselineY);
-                                            ctx.restore();
-                                        }
-
-                                        // Move to next line
-                                        if (currentLineIndex >= linesPerPage) { 
-                                            pageNum++; 
-                                            currentLineIndex = 1;
-                                        } else {
-                                            currentLineIndex++;
-                                        }
-                                        currentBaselineY = marginT + (lineH * currentLineIndex);
-                                        currentX = textStartX + currentIndent;
-                                    }
-
-                                    if (pageNum === targetPage) {
-                                        const w = drawCharWithEffects(char, currentX, currentBaselineY, baseFSize, bold, italic, underline);
-                                        currentX += w;
-                                    } else {
-                                        currentX += charWidth;
-                                    }
-                                }
-                                prevWordEndedWith = word.endsWith('.') ? '.' : (word.endsWith(',') ? ',' : '');
-                                continue; 
-                            } else {
-                                // Word fits on a line but not the current one - move to next line
-                                if (currentLineIndex >= linesPerPage) {
-                                    pageNum++;
-                                    currentLineIndex = 1;
-                                } else {
-                                    currentLineIndex++;
-                                }
-                                currentBaselineY = marginT + (lineH * currentLineIndex);
-                                currentX = textStartX + currentIndent;
+            // Natural spacing and word wrapping
+            if (currentX + wordWidth > baseWidth - marginR) {
+                // If it doesn't fit, move to the next line
+                if (wordWidth > usableWidth) {
+                    // Break extremely long words
+                    const chars = word.split('');
+                    for (const char of chars) {
+                        const charWidth = ctx.measureText(char).width + letterSpacing;
+                        
+                        if (currentX + charWidth > baseWidth - marginR) {
+                            // Add a small hyphen
+                            if (pageNum === targetPage) {
+                                ctx.save();
+                                ctx.fillStyle = inkColor;
+                                ctx.fillText('-', currentX, currentBaselineY);
+                                ctx.restore();
                             }
+
+                            // New line
+                            if (currentLineIndex >= linesPerPage) { 
+                                pageNum++; 
+                                currentLineIndex = 1;
+                            } else {
+                                currentLineIndex++;
+                            }
+                            currentBaselineY = marginT + (lineH * currentLineIndex);
+                            currentX = textStartX + currentIndent;
                         }
+
+                        if (pageNum === targetPage) {
+                            const w = drawCharWithEffects(char, currentX, currentBaselineY, baseFSize, bold, italic, underline);
+                            currentX += w;
+                        } else {
+                            currentX += charWidth;
+                        }
+                    }
+                    prevWordEndedWith = word.endsWith('.') ? '.' : (word.endsWith(',') ? ',' : '');
+                    continue; 
+                } else {
+                    // Standard word wrap
+                    if (currentLineIndex >= linesPerPage) {
+                        pageNum++;
+                        currentLineIndex = 1;
+                    } else {
+                        currentLineIndex++;
+                    }
+                    currentBaselineY = marginT + (lineH * currentLineIndex);
+                    currentX = textStartX + currentIndent;
+                }
+            }
 
                         // Draw Word Normally
                         if (pageNum === targetPage) {
@@ -786,8 +792,8 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Handwriting
         });
         if (!ctx) return;
 
-        // A4 at 300 DPI is 2480x3508. Double for Retina/Professional grade.
-        const scaleFactor = 2; 
+        // High resolution for clean, sharp edges.
+        const scaleFactor = 2.5; 
         targetCanvas.width = baseWidth * scaleFactor;
         targetCanvas.height = baseHeight * scaleFactor;
         
