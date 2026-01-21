@@ -256,59 +256,59 @@ export default function EditorPage() {
 
 
     const SectionHeader = ({ icon, title }: { icon: React.ReactNode, title: string }) => (
-        <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 bg-blue-50 text-blue-500 rounded-lg">
+        <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-accent/10 text-accent rounded-xl shadow-inner-paper">
                 {icon}
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-black/80">{title}</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-ink/60">{title}</span>
         </div>
     );
 
     const HelpModal = () => (
         <AnimatePresence>
             {isHelpModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setIsHelpModalOpen(false)}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm" 
+                        className="fixed inset-0 bg-ink/40 backdrop-blur-md" 
                     />
                     <motion.div 
-                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                        initial={{ scale: 0.95, opacity: 0, y: 20 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                        className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden p-8"
+                        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                        className="relative w-full max-w-lg glass border border-white/50 rounded-[2.5rem] shadow-2xl overflow-hidden p-10"
                     >
-                        <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-3">
-                            <Zap className="text-blue-500" fill="currentColor" /> Quick Guide
+                        <h2 className="text-3xl font-display font-black text-ink mb-8 flex items-center gap-4">
+                            <Sparkles className="text-accent" fill="currentColor" /> Mastery Guide
                         </h2>
                         
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 bg-gray-50 rounded-2xl">
-                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-2">Shortcuts</h3>
-                                    <ul className="space-y-2 text-xs font-bold">
-                                        <li className="flex justify-between"><span>Generate</span> <span className="text-gray-400">Ctrl+G</span></li>
-                                        <li className="flex justify-between"><span>PNG Export</span> <span className="text-gray-400">Ctrl+D</span></li>
-                                        <li className="flex justify-between"><span>Clear Editor</span> <span className="text-gray-400">Ctrl+K</span></li>
+                        <div className="space-y-8">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="p-6 bg-paper rounded-4xl border border-black/5 shadow-inner-paper">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mb-4">Shortcuts</h3>
+                                    <ul className="space-y-3 text-xs font-bold text-ink/70">
+                                        <li className="flex justify-between"><span>Generate</span> <span className="text-accent/60">Ctrl+G</span></li>
+                                        <li className="flex justify-between"><span>PNG Export</span> <span className="text-accent/60">Ctrl+D</span></li>
+                                        <li className="flex justify-between"><span>Clear Editor</span> <span className="text-accent/60">Ctrl+K</span></li>
                                     </ul>
                                 </div>
-                                <div className="p-4 bg-gray-50 rounded-2xl">
-                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-2">Modes</h3>
-                                    <p className="text-[10px] text-gray-500 leading-relaxed font-bold">
-                                        Switch to <span className="text-black">Rich Mode</span> for Bold, Italic, Headings, and Image insertion.
+                                <div className="p-6 bg-paper rounded-4xl border border-black/5 shadow-inner-paper">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mb-4">Modes</h3>
+                                    <p className="text-[11px] text-ink/60 leading-relaxed font-bold">
+                                        Use <span className="text-ink">Rich Mode</span> for structural formatting, bolding, and image integration.
                                     </p>
                                 </div>
                             </div>
                             
-                            <div className="space-y-3">
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Pro Tips</h3>
-                                <div className="flex gap-4 items-start p-3 border-2 border-dashed border-gray-100 rounded-2xl">
-                                    <Monitor size={20} className="text-gray-400 shrink-0" />
-                                    <p className="text-[10px] text-gray-400 font-bold leading-relaxed">
-                                        Use <span className="text-black">Presets</span> to instantly apply curated styles for assignments, letters, or journaling.
+                            <div className="space-y-4">
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-ink/30">Artisan Tips</h3>
+                                <div className="flex gap-4 items-start p-5 border-2 border-dashed border-black/5 rounded-3xl bg-paper/50">
+                                    <Monitor size={20} className="text-accent shrink-0" />
+                                    <p className="text-[11px] text-ink/50 font-bold leading-relaxed">
+                                        Leverage <span className="text-ink">Presets</span> to instantly achieve professional results across various document types.
                                     </p>
                                 </div>
                             </div>
@@ -316,9 +316,9 @@ export default function EditorPage() {
 
                         <button 
                             onClick={() => setIsHelpModalOpen(false)}
-                            className="w-full mt-8 py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all"
+                            className="w-full mt-10 btn-premium rounded-2xl py-5"
                         >
-                            Got it, thanks!
+                            Understood
                         </button>
                     </motion.div>
                 </div>
@@ -327,84 +327,85 @@ export default function EditorPage() {
     );
 
     const WorkspaceHeader = () => (
-        <header className="h-16 flex items-center justify-between px-6 border-b border-gray-100 bg-white z-30 shrink-0">
-            <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2 group cursor-pointer" onClick={() => resetStore()}>
-                    <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                        <Zap size={18} className="text-white" fill="currentColor" />
+        <header className="h-20 flex items-center justify-between px-8 border-b border-black/5 bg-paper/80 backdrop-blur-md z-30 shrink-0">
+            <div className="flex items-center gap-10">
+                <div className="flex items-center gap-3 group cursor-pointer" onClick={() => resetStore()}>
+                    <div className="w-9 h-9 bg-ink rounded-xl flex items-center justify-center group-hover:bg-accent transition-all duration-500 shadow-lg shadow-ink/10 group-hover:scale-110">
+                        <span className="text-white font-display font-black text-xl italic leading-none">I</span>
                     </div>
-                    <h1 className="text-xl font-black tracking-tighter uppercase italic">InkPad</h1>
+                    <h1 className="text-2xl font-display font-bold tracking-tight text-ink uppercase">InkPad</h1>
                 </div>
                 
-                <div className="h-6 w-px bg-gray-100" />
+                <div className="h-8 w-px bg-black/5" />
                 
                 <div className="flex flex-col">
-                    <div className="flex items-center gap-2 group">
+                    <div className="flex items-center gap-3 group">
                         <input 
                             type="text"
-                            value={uploadedFileName || 'Untitled Document'}
+                            value={uploadedFileName || 'Untitled Masterpiece'}
                             onChange={(e) => setUploadedFileName(e.target.value)}
-                            className="text-sm font-bold bg-transparent border-none p-0 focus:ring-0 w-48 hover:bg-gray-50 rounded px-1 transition-colors"
+                            className="text-sm font-bold bg-transparent border-none p-0 focus:ring-0 w-64 hover:bg-black/5 rounded-lg px-2 py-1 transition-all text-ink/80"
                         />
-                        <Share2 size={14} className="text-gray-300 group-hover:text-blue-500 cursor-pointer" />
+                        <Share2 size={14} className="text-ink/20 group-hover:text-accent cursor-pointer transition-colors" />
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-2">
                         {isLoading ? (
-                            <span className="flex items-center gap-1 text-blue-500"><Loader2 size={10} className="animate-spin" /> Loading...</span>
+                            <span className="flex items-center gap-2 text-accent"><Loader2 size={10} className="animate-spin" /> Synchronizing...</span>
                         ) : (
-                            <span className="flex items-center gap-1 text-emerald-500"><CheckCircle2 size={10} /> {lastSaved ? `Autosaved ${secondsAgo}s ago` : 'Waiting...'}</span>
+                            <span className="flex items-center gap-2 text-ink/30"><CheckCircle2 size={10} className="text-accent" /> {lastSaved ? `Preserved ${secondsAgo}s ago` : 'Awaiting Input'}</span>
                         )}
                     </div>
                 </div>
             </div>
 
-            <div className="flex items-center gap-4">
-                <div className="hidden md:flex items-center gap-1 p-1 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="flex items-center gap-6">
+                <div className="hidden md:flex items-center gap-1 p-1 bg-black/5 rounded-2xl border border-black/5">
                     <button 
                         onClick={() => setEditorMode('plain')}
-                        className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${editorMode === 'plain' ? 'bg-white shadow-sm text-black border border-gray-100' : 'text-gray-400 hover:text-black'}`}
+                        className={`px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all ${editorMode === 'plain' ? 'glass shadow-sm text-ink' : 'text-ink/30 hover:text-ink'}`}
                     >
                         Plain
                     </button>
                     <button 
                         onClick={() => setEditorMode('rich')}
-                        className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${editorMode === 'rich' ? 'bg-white shadow-sm text-black border border-gray-100' : 'text-gray-400 hover:text-black'}`}
+                        className={`px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all ${editorMode === 'rich' ? 'glass shadow-sm text-ink' : 'text-ink/30 hover:text-ink'}`}
                     >
                         Rich
                     </button>
                 </div>
 
-                <div className="h-6 w-px bg-gray-100" />
+                <div className="h-8 w-px bg-black/5" />
 
                 <button
                     onClick={handleExportPDF}
                     disabled={isExporting}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-black text-white hover:bg-gray-800 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-black/10 disabled:opacity-50"
+                    className="btn-premium rounded-2xl py-3 px-8 text-[10px] shadow-xl shadow-ink/10"
                 >
                     {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                    Export PDF
+                    Export Master PDF
                 </button>
 
-                <div className="h-10 w-10 flex items-center justify-center bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors border border-gray-100 cursor-pointer">
-                    <User size={20} className="text-gray-600" />
+                <div className="w-11 h-11 flex items-center justify-center glass hover:bg-white rounded-2xl transition-all border border-black/5 cursor-pointer group shadow-sm">
+                    <User size={20} className="text-ink/40 group-hover:text-ink transition-colors" />
                 </div>
             </div>
         </header>
     );
 
     const SlimActionBar = () => (
-        <aside className="w-16 flex flex-col items-center py-6 gap-6 border-r border-gray-100 bg-white z-20 shrink-0">
+        <aside className="w-20 flex flex-col items-center py-8 gap-8 border-r border-black/5 bg-paper/50 z-20 shrink-0">
             <button 
                 onClick={() => setIsPresetsOpen(!isPresetsOpen)}
-                className={`p-3 rounded-2xl transition-all group ${isPresetsOpen ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50 text-gray-400 hover:text-black'}`}
+                className={`p-4 rounded-2xl transition-all group relative ${isPresetsOpen ? 'bg-accent text-white shadow-xl shadow-accent/20 scale-110' : 'hover:bg-black/5 text-ink/30 hover:text-ink'}`}
                 title="Themes & Presets"
             >
                 <LayoutTemplate size={24} />
+                {isPresetsOpen && <motion.div layoutId="sidebar-accent" className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-6 bg-accent rounded-full" />}
             </button>
             
             <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="p-3 rounded-2xl hover:bg-gray-50 text-gray-400 hover:text-black transition-all group"
+                className="p-4 rounded-2xl hover:bg-black/5 text-ink/30 hover:text-ink transition-all group scale-100 hover:scale-110"
                 title="Import Text"
             >
                 <Upload size={24} />
@@ -412,24 +413,25 @@ export default function EditorPage() {
 
             <button 
                 onClick={() => setActiveTab('export')}
-                className={`p-3 rounded-2xl transition-all group ${activeTab === 'export' ? 'bg-emerald-50 text-emerald-600' : 'hover:bg-gray-50 text-gray-400 hover:text-black'}`}
+                className={`p-4 rounded-2xl transition-all group relative ${activeTab === 'export' ? 'bg-accent text-white shadow-xl shadow-accent/20 scale-110' : 'hover:bg-black/5 text-ink/30 hover:text-ink'}`}
                 title="Export Center"
             >
                 <Download size={24} />
+                {activeTab === 'export' && <motion.div layoutId="sidebar-accent" className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-6 bg-accent rounded-full" />}
             </button>
 
-            <div className="mt-auto flex flex-col gap-4">
+            <div className="mt-auto flex flex-col gap-6">
                 <button 
                     onClick={() => setIsHelpModalOpen(true)}
-                    className="p-3 rounded-2xl hover:bg-gray-50 text-gray-400 transition-all"
+                    className="p-4 rounded-2xl hover:bg-black/5 text-ink/20 hover:text-ink transition-all"
                     title="Documentation"
                 >
                     <HelpCircle size={24} />
                 </button>
                 <button 
                     onClick={() => resetStore()}
-                    className="p-3 rounded-2xl hover:bg-red-50 text-gray-300 hover:text-red-500 transition-all border border-transparent hover:border-red-100"
-                    title="Reset Everything"
+                    className="p-4 rounded-2xl hover:bg-red-50 text-ink/10 hover:text-red-500 transition-all border border-transparent hover:border-red-100"
+                    title="Reset Master"
                 >
                     <Trash2 size={24} />
                 </button>
@@ -440,16 +442,16 @@ export default function EditorPage() {
     const RightSettingsSidebar = () => (
         <aside className="w-80 h-full border-l border-gray-100 bg-white flex flex-col overflow-hidden z-20 shrink-0">
             {/* Tab Switcher */}
-            <div className="px-6 pt-6 mb-8">
-                <div className="flex p-1 bg-gray-50 rounded-2xl border border-gray-100">
+            <div className="px-8 pt-8 mb-10">
+                <div className="flex p-1 bg-black/5 rounded-2xl border border-black/5">
                     {(['style', 'paper', 'export'] as const).map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all ${
                                 activeTab === tab 
-                                ? 'bg-white shadow-sm text-black border border-gray-100' 
-                                : 'text-gray-400 hover:text-black'
+                                ? 'glass shadow-sm text-ink' 
+                                : 'text-ink/30 hover:text-ink'
                             }`}
                         >
                             {tab}
@@ -471,22 +473,27 @@ export default function EditorPage() {
                             <div className="space-y-4">
                                 <SectionHeader icon={<Type size={14} />} title="Typography" />
                                 <div className="relative group">
-                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-accent transition-colors" />
                                     <input 
                                         type="text"
                                         placeholder="Find your style..."
                                         value={fontSearch}
                                         onChange={(e) => setFontSearch(e.target.value)}
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2.5 pl-9 pr-4 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all shadow-sm shadow-blue-500/5 placeholder:font-bold"
+                                        className="w-full bg-black/5 border border-black/5 rounded-2xl py-3 pl-11 pr-4 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-accent/10 transition-all shadow-inner-paper placeholder:text-ink/20"
                                     />
                                 </div>
-                                <select 
-                                    value={handwritingStyle}
-                                    onChange={(e) => setHandwritingStyle(e.target.value)}
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-xl py-3 px-4 text-xs font-bold focus:ring-2 focus:ring-blue-500/20 outline-none appearance-none cursor-pointer"
-                                >
-                                    {filteredFonts.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                                </select>
+                                <div className="relative">
+                                    <select 
+                                        value={handwritingStyle}
+                                        onChange={(e) => setHandwritingStyle(e.target.value)}
+                                        className="w-full bg-black/5 border border-black/5 rounded-2xl py-3 px-5 text-xs font-bold focus:ring-2 focus:ring-accent/20 outline-none appearance-none cursor-pointer text-ink/80"
+                                    >
+                                        {filteredFonts.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-ink/20 shadow-inner-paper">
+                                        <ChevronRight size={14} className="rotate-90" />
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="space-y-6">
@@ -501,15 +508,15 @@ export default function EditorPage() {
                                     { label: 'Word Gap', value: wordSpacing, min: 0, max: 20, step: 0.5, setter: setWordSpacing },
                                     { label: 'Line Height', value: lineHeight, min: 1, max: 3, step: 0.1, setter: setLineHeight },
                                 ].map((item) => (
-                                    <div key={item.label} className="space-y-3">
-                                        <div className="flex justify-between items-center text-[10px] font-bold">
-                                            <span className="text-gray-900">{item.label}</span>
-                                            <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">{item.value === -2 ? 0 : item.value}{item.label.includes('Size') ? 'px' : ''}</span>
+                                    <div key={item.label} className="space-y-4">
+                                        <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.1em]">
+                                            <span className="text-ink/60">{item.label}</span>
+                                            <span className="text-accent bg-accent/10 px-2 py-0.5 rounded shadow-inner-paper">{item.value === -2 ? 0 : item.value}{item.label.includes('Size') ? 'px' : ''}</span>
                                         </div>
                                         <input 
                                             type="range" min={item.min} max={item.max} step={item.step} value={item.value}
                                             onChange={(e) => item.setter(parseFloat(e.target.value))}
-                                            className="w-full h-1 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-black"
+                                            className="w-full h-1 bg-black/5 rounded-full appearance-none cursor-pointer accent-accent"
                                         />
                                     </div>
                                 ))}
@@ -683,7 +690,7 @@ export default function EditorPage() {
     );
 
     const CenterStage = () => (
-        <section className="flex-1 bg-[#f8f9fa] relative flex flex-col overflow-hidden">
+        <section className="flex-1 bg-paper-dark/30 relative flex flex-col overflow-hidden">
             {/* Floating Presets Menu */}
             <AnimatePresence>
                 {isPresetsOpen && (
