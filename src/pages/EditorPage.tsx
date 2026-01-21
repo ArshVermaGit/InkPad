@@ -282,7 +282,7 @@ export default function EditorPage() {
                         className="relative w-full max-w-lg glass border border-white/50 rounded-[2.5rem] shadow-2xl overflow-hidden p-10"
                     >
                         <h2 className="text-3xl font-display font-black text-ink mb-8 flex items-center gap-4">
-                            <Sparkles className="text-accent" fill="currentColor" /> Help Guide
+                            <Sparkles className="text-accent" fill="currentColor" /> How-to Guide
                         </h2>
                         
                         <div className="space-y-8">
@@ -298,17 +298,17 @@ export default function EditorPage() {
                                 <div className="p-6 bg-paper rounded-4xl border border-black/5 shadow-inner-paper">
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mb-4">Modes</h3>
                                     <p className="text-[11px] text-ink/60 leading-relaxed font-bold">
-                                        Use <span className="text-ink">Rich Mode</span> for structural formatting, bolding, and image integration.
+                                        Use <span className="text-ink">Rich Mode</span> for more control, bold text, and images.
                                     </p>
                                 </div>
                             </div>
                             
                             <div className="space-y-4">
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-ink/30">Tips</h3>
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-ink/30">Pro Tips</h3>
                                 <div className="flex gap-4 items-start p-5 border-2 border-dashed border-black/5 rounded-3xl bg-paper/50">
                                     <Monitor size={20} className="text-accent shrink-0" />
                                     <p className="text-[11px] text-ink/50 font-bold leading-relaxed">
-                                        Use <span className="text-ink">Presets</span> to instantly get the right look for different types of notes.
+                                        Use <span className="text-ink">Themes</span> to instantly get the right look.
                                     </p>
                                 </div>
                             </div>
@@ -318,7 +318,7 @@ export default function EditorPage() {
                             onClick={() => setIsHelpModalOpen(false)}
                             className="w-full mt-10 btn-premium rounded-2xl py-5"
                         >
-                            Understood
+                            Got it
                         </button>
                     </motion.div>
                 </div>
@@ -342,7 +342,7 @@ export default function EditorPage() {
                     <div className="flex items-center gap-3 group">
                         <input 
                             type="text"
-                            value={uploadedFileName || 'My Document'}
+                            value={uploadedFileName || 'New Document'}
                             onChange={(e) => setUploadedFileName(e.target.value)}
                             className="text-sm font-bold bg-transparent border-none p-0 focus:ring-0 w-64 hover:bg-black/5 rounded-lg px-2 py-1 transition-all text-ink/80"
                         />
@@ -509,7 +509,7 @@ export default function EditorPage() {
                                     { label: 'Line Height', value: lineHeight, min: 1, max: 3, step: 0.1, setter: setLineHeight },
                                 ].map((item) => (
                                     <div key={item.label} className="space-y-4">
-                                        <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.1em]">
+                                        <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
                                             <span className="text-ink/60">{item.label}</span>
                                             <span className="text-accent bg-accent/10 px-2 py-0.5 rounded shadow-inner-paper">{item.value === -2 ? 0 : item.value}{item.label.includes('Size') ? 'px' : ''}</span>
                                         </div>
@@ -576,12 +576,12 @@ export default function EditorPage() {
                             </div>
 
                             <div className="space-y-4 pt-6 border-t border-gray-50">
-                                <SectionHeader icon={<Settings2 size={14} />} title="Natural details" />
+                                <SectionHeader icon={<Settings2 size={14} />} title="Authentic Feel" />
                                 <div className="grid grid-cols-1 gap-3">
                                     {[
                                         { id: 'shadow', label: 'Cast Shadows', icon: <Layers size={14} />, active: paperShadow, toggle: () => setPaperShadow(!paperShadow), bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100', activeBg: 'bg-blue-500', iconBg: 'bg-blue-100' },
                                         { id: 'grain', label: 'Paper Texture', icon: <Sparkles size={14} />, active: paperTexture, toggle: () => setPaperTexture(!paperTexture), bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', activeBg: 'bg-emerald-500', iconBg: 'bg-emerald-100' },
-                                        { id: 'tilt', label: 'Writing Slant', icon: <RotateCcw size={14} />, active: paperTilt, toggle: () => setStorePaperTilt(!paperTilt), bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100', activeBg: 'bg-amber-500', iconBg: 'bg-amber-100' },
+                                        { id: 'tilt', label: 'Handwriting Slant', icon: <RotateCcw size={14} />, active: paperTilt, toggle: () => setStorePaperTilt(!paperTilt), bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100', activeBg: 'bg-amber-500', iconBg: 'bg-amber-100' },
                                     ].map((effect) => (
                                         <button
                                             key={effect.id}
@@ -665,7 +665,7 @@ export default function EditorPage() {
                                     >
                                         <div className="flex items-center gap-3">
                                             <FileImage size={18} className="text-blue-500" />
-                                            <span className="text-xs font-bold">Download Current</span>
+                                            <span className="text-xs font-bold">Download Page</span>
                                         </div>
                                         <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-500" />
                                     </button>
@@ -701,7 +701,7 @@ export default function EditorPage() {
                         className="absolute left-4 top-4 z-40 w-64 bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-white/50 overflow-hidden"
                     >
                         <div className="p-4 border-b border-gray-50">
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-500">Quick Themes</h3>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-500">Instant Styles</h3>
                         </div>
                         <div className="p-2 space-y-1 max-h-[400px] overflow-y-auto scrollbar-hide">
                             {Object.entries(presets).map(([key, preset]) => (
@@ -710,7 +710,7 @@ export default function EditorPage() {
                                     onClick={() => {
                                         applyStorePreset(preset);
                                         setIsPresetsOpen(false);
-                                        addToast(`Applied ${key} theme!`);
+                                        addToast(`Applied ${key} style!`);
                                     }}
                                     className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 rounded-xl transition-all group text-left"
                                 >
@@ -776,7 +776,7 @@ export default function EditorPage() {
                                 onClick={() => loadSampleText()}
                                 className="text-[10px] font-black uppercase tracking-widest text-blue-500 hover:underline"
                             >
-                                Sample
+                                Try a Sample
                             </button>
                         </div>
 
@@ -785,7 +785,7 @@ export default function EditorPage() {
                                 <textarea
                                     value={text}
                                     onChange={handleTextChange}
-                                    placeholder="Start typing your handwriting masterpiece..."
+                                    placeholder="Start writing here..."
                                     className="flex-1 w-full p-6 bg-gray-50/50 rounded-3xl border-2 border-transparent focus:border-blue-100 focus:bg-white resize-none outline-none text-sm font-medium leading-relaxed transition-all placeholder:text-gray-300 scrollbar-hide shadow-inner"
                                 />
                             ) : (
@@ -825,7 +825,7 @@ export default function EditorPage() {
                                 <Loader2 className="w-10 h-10 text-black/10 animate-spin" />
                                 <div className="flex flex-col items-center gap-2">
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-300">
-                                        {isRendering ? `Writing... ${Math.round(renderingProgress * 100)}%` : 'Opening InkPad'}
+                                        {isRendering ? `Writing... ${Math.round(renderingProgress * 100)}%` : 'Loading Editor'}
                                     </span>
                                     {isRendering && renderingProgress > 0 && (
                                         <div className="w-48 h-1 bg-gray-100 rounded-full overflow-hidden">
