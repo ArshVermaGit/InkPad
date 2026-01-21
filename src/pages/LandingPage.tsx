@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
     PenTool,
@@ -10,10 +10,6 @@ import {
 
 export default function LandingPage() {
     const navigate = useNavigate();
-    const { scrollYProgress } = useScroll();
-    const yParallaxFast = useTransform(scrollYProgress, [0, 1], [0, -300]);
-    const yParallaxMedium = useTransform(scrollYProgress, [0, 1], [0, -150]);
-    const yParallaxSlow = useTransform(scrollYProgress, [0, 1], [0, -50]);
 
     const features = [
         {
@@ -48,111 +44,75 @@ export default function LandingPage() {
     return (
         <div className="relative paper-texture overflow-hidden">
             {/* Hero Section */}
-            <section className="section-padding flex flex-col items-center justify-center min-h-screen text-center relative z-10">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="max-w-5xl"
-                >
+            <section className="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden pt-20">
+                <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
                     <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 }}
-                        className="inline-flex items-center gap-2 px-4 py-1.5 mb-10 glass rounded-full border border-black/5"
-                    >
-                        <div className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
-                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-ink/60">New: Our Best Ink Yet</span>
-                    </motion.div>
-
-                    <h1 className="text-7xl md:text-9xl mb-10 tracking-tight leading-[0.9] font-black text-ink">
-                        <span className="block overflow-hidden">
-                            <motion.span
-                                initial={{ y: "100%" }}
-                                animate={{ y: 0 }}
-                                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                                className="inline-block"
-                            >
-                                Make it
-                            </motion.span>
-                        </span>
-                        <span className="block overflow-hidden">
-                            <motion.span
-                                initial={{ y: "100%" }}
-                                animate={{ y: 0 }}
-                                transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                                className="block italic font-serif hero-text-shimmer"
-                            >
-                                Personal.
-                            </motion.span>
-                        </span>
-                    </h1>
-
-                    <motion.p 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.8 }}
-                        className="text-xl md:text-2xl text-ink/60 mb-16 max-w-2xl mx-auto leading-relaxed font-medium"
-                    >
-                        Turn your notes into handwritten documents. Get the feel of real ink with the ease of digital editing.
-                    </motion.p>
-
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 1 }}
-                        className="flex flex-col sm:flex-row gap-6 justify-center"
-                    >
-                        <button
-                            className="btn-premium rounded-xl text-xs py-5 px-10 group"
-                            onClick={() => navigate('/editor')}
-                        >
-                            Start Writing 
-                            <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-1" />
-                        </button>
-
-                    </motion.div>
-                </motion.div>
-
-                {/* Animated Scroll Indicator */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 2, duration: 1 }}
-                    className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
-                >
-                    <span className="text-[10px] uppercase tracking-[0.4em] font-black text-ink/30 translate-x-[0.2em]">Scroll</span>
-                    <div className="w-6 h-10 border border-ink/10 rounded-full relative bg-ink/5">
-                        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-1 h-2 bg-accent rounded-full scroll-indicator-dot" />
-                    </div>
-                </motion.div>
-
-                {/* Background Floating Elements */}
-                <div className="absolute inset-0 pointer-events-none select-none -z-10 overflow-hidden">
-                    <motion.div
-                        style={{ y: yParallaxSlow }}
-                        className="absolute inset-0 opacity-[0.02] bg-[radial-gradient(circle_at_center,var(--color-accent)_0%,transparent_70%)]"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.4 }}
+                        transition={{ duration: 2 }}
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/5 rounded-full blur-3xl"
                     />
+                    {/* Floating Ambient Text - Subtler */}
+                    <div className="absolute inset-0">
+                        <motion.span
+                            initial={{ opacity: 0, x: -50 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 1.5, delay: 0.5 }}
+                            className="absolute top-[15%] left-[10%] font-handwriting text-4xl text-ink/5 rotate-[-10deg] blur-sm"
+                        >
+                            soulful
+                        </motion.span>
+                        <motion.span
+                            initial={{ opacity: 0, x: 50 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 1.5, delay: 0.8 }}
+                            className="absolute bottom-[20%] right-[15%] font-handwriting text-5xl text-ink/5 rotate-12 blur-sm"
+                        >
+                            expressive
+                        </motion.span>
+                    </div>
+                </div>
 
+                <div className="max-w-5xl mx-auto text-center px-6 relative z-10">
                     <motion.div
-                        style={{ y: yParallaxMedium }}
-                        className="font-handwriting text-[25vw] absolute -top-10 -left-20 text-ink/2 italic -rotate-12 blur-3xl select-none"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     >
-                        type
-                    </motion.div>
+                        <span className="inline-block py-1 px-3 rounded-full bg-accent/10 text-accent text-xs font-black tracking-widest uppercase mb-8 border border-accent/20">
+                            New: Our Best Ink Yet
+                        </span>
+                        
+                        <h1 className="text-7xl md:text-9xl font-display font-black text-ink tracking-tighter mb-8 leading-[0.9]">
+                            Make it <br />
+                            <span className="italic font-serif text-accent">Personal.</span>
+                        </h1>
 
-                    <motion.div
-                        style={{ y: yParallaxFast, rotate: 8 }}
-                        className="font-script text-[18vw] absolute top-1/2 -right-20 text-ink/2 blur-2xl select-none"
-                    >
-                        write
-                    </motion.div>
+                        <p className="text-xl md:text-2xl text-ink/50 max-w-2xl mx-auto font-medium leading-relaxed mb-12">
+                            The simple joy of writing by hand, reimagined for the digital age. 
+                            Experience the flow of real ink on paper.
+                        </p>
 
-                    <motion.div
-                        style={{ y: yParallaxSlow, rotate: -5 }}
-                        className="font-serif italic text-[12vw] absolute bottom-20 left-10 text-ink/2 blur-3xl select-none"
-                    >
-                        create
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                            <button
+                                className="group relative px-10 py-5 bg-ink text-white rounded-2xl overflow-hidden shadow-2xl shadow-ink/20 hover:scale-105 active:scale-95 transition-all duration-300"
+                                onClick={() => navigate('/editor')}
+                            >
+                                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                                <span className="relative flex items-center gap-3 text-sm font-black tracking-[0.2em] uppercase">
+                                    Start Writing <ArrowRight size={16} />
+                                </span>
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    const el = document.getElementById('features');
+                                    el?.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                                className="px-10 py-5 bg-transparent text-ink border border-ink/10 rounded-2xl hover:bg-white hover:border-transparent hover:shadow-xl transition-all duration-300 text-sm font-black tracking-[0.2em] uppercase"
+                            >
+                                How it works
+                            </button>
+                        </div>
                     </motion.div>
                 </div>
             </section>
@@ -200,44 +160,36 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Use Cases Section */}
-            <section className="section-padding relative overflow-hidden">
+            {/* Use Cases Section - FIXED VISIBILITY */}
+            <section className="section-padding relative overflow-hidden bg-[#1A1F2C] text-white">
                 {/* Background Decoration */}
-                <div className="absolute inset-0 bg-ink pointer-events-none -z-10" />
-                <div className="absolute top-0 right-0 w-1/2 h-full bg-[radial-gradient(circle_at_top_right,var(--color-ink-light)_0%,transparent_70%)] opacity-30 -z-10" />
+                <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.05)_0%,transparent_60%)] pointer-events-none" />
 
                 <div className="max-w-7xl mx-auto relative z-10">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-32 items-center">
                         <div>
                             <motion.h2 
-                                initial={{ opacity: 0, x: -30 }}
+                                initial={{ opacity: 0, x: -20 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 viewport={{ once: true }}
-                                className="text-6xl md:text-8xl font-display font-black text-white mb-10 tracking-tighter leading-none"
+                                className="text-6xl md:text-8xl font-display font-black mb-10 tracking-tighter leading-none"
                             >
                                 Dedicated to <br /><span className="text-accent italic font-serif">Writing.</span>
                             </motion.h2>
-                            <motion.p 
-                                initial={{ opacity: 0, x: -30 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: 0.2 }}
-                                className="text-white/40 text-xl leading-relaxed max-w-lg font-medium"
-                            >
-                                InkPad brings back the simple joy of writing by hand in a digital world.
-                            </motion.p>
+                            <p className="text-white/60 text-xl leading-relaxed max-w-lg font-medium">
+                                InkPad brings back the simple joy of writing by hand in a digital world. No distractions, just you and your thoughts.
+                            </p>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-16">
                             {useCases.map((item, i) => (
                                 <motion.div 
                                     key={item.title}
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    whileInView={{ opacity: 1, scale: 1 }}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: i * 0.1 }}
                                 >
-                                    <h4 className="flex items-center gap-4 text-xs font-black text-white uppercase tracking-[0.3em] mb-6">
-                                        <div className="w-8 h-px bg-accent" />
+                                    <h4 className="flex items-center gap-4 text-xs font-black text-accent uppercase tracking-[0.3em] mb-4">
                                         {item.title}
                                     </h4>
                                     <p className="text-white/50 text-sm leading-relaxed font-medium">
