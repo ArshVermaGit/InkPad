@@ -2,7 +2,7 @@ import { Github, Linkedin, Twitter } from 'lucide-react';
 
 export default function Footer() {
     return (
-        <footer className="bg-paper border-t border-black/5 py-24 px-6 md:px-12 lg:px-24 relative overflow-hidden">
+        <footer className="bg-[#F2F0E9] border-t border-black/5 py-24 px-6 md:px-12 lg:px-24 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-accent to-transparent opacity-20" />
             
             <div className="max-w-7xl mx-auto relative z-10">
