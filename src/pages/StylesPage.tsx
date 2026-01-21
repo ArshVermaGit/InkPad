@@ -22,14 +22,14 @@ export default function StylesPage() {
                         className="inline-flex items-center gap-2 px-4 py-1.5 mb-8 glass rounded-full border border-black/5"
                     >
                         <div className="w-1.5 h-1.5 bg-accent rounded-full" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-ink/60">The Typography Collection</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-ink/60">Writing Styles</span>
                     </motion.div>
                     
                     <h1 className="text-6xl md:text-8xl font-display font-black text-ink mb-10 tracking-tight leading-none">
-                        Engineered <br /><span className="italic font-serif hero-text-shimmer">Handwriting.</span>
+                        Real <br /><span className="italic font-serif hero-text-shimmer">Handwriting.</span>
                     </h1>
                     <p className="text-ink/40 text-xl font-medium leading-relaxed max-w-xl">
-                        Discover the perfect handwriting engine for your digital documents, carefully optimized for authentic rendering.
+                        Find the writing style that fits you best. Each one is designed to look like real handwriting.
                     </p>
                 </div>
 
@@ -46,7 +46,7 @@ export default function StylesPage() {
                         >
                             <div className="flex-1 w-full">
                                 <span className="text-[10px] font-black text-accent uppercase tracking-[0.4em] block mb-6 px-1">
-                                    {font.type === 'custom' ? 'Exclusive Signature' : `Proprietary Engine №${i + 1}`}
+                                    {font.type === 'custom' ? 'Your Signature' : `Style №${i + 1}`}
                                 </span>
                                 <h2 className="text-4xl md:text-5xl mb-8 group-hover:translate-x-3 transition-transform duration-700 font-display font-black text-ink uppercase tracking-tight">{font.name}</h2>
                                 <div className="flex items-center gap-6">
@@ -57,7 +57,7 @@ export default function StylesPage() {
                                     {handwritingStyle === font.id && (
                                         <span className="flex items-center gap-2 text-[9px] font-black text-accent uppercase tracking-[0.2em] animate-pulse">
                                             <div className="w-1.5 h-1.5 bg-accent rounded-full" />
-                                            Active Engine
+                                            Selected Style
                                         </span>
                                     )}
                                 </div>
@@ -69,7 +69,7 @@ export default function StylesPage() {
                                     className="text-3xl md:text-5xl text-ink select-none pointer-events-none text-center leading-relaxed"
                                     style={{ fontFamily: font.family }}
                                 >
-                                    The artistic expression of digital ink flows through every stroke.
+                                    Smooth, organic writing that looks exactly like real ink.
                                 </span>
                             </div>
                         </motion.div>
