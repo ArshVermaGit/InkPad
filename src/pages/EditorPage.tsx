@@ -13,6 +13,7 @@ import type { PaperMaterial } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
 import { useToast } from '../hooks/useToast';
 import { useAuth } from '../context/AuthContext';
+import { TimeAgo } from '../components/ui/TimeAgo';
 import logo from '../assets/logo.png';
 
 // --- CONSTANTS & CONFIG ---
@@ -103,10 +104,10 @@ export default function EditorPage() {
     // Page State
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [secondsAgo, setSecondsAgo] = useState(0);
 
     // Render & Export State
-    const [isLoading, setIsLoading] = useState(true);
+    // Render & Export State
+    const [isLoading, setIsLoading] = useState(false); // No artificial delay
     const debouncedText = useDebounce(text, 300);
     const debouncedFontFamily = useDebounce(handwritingStyle, 300);
     const debouncedPaperMaterial = useDebounce(paperMaterial, 300);
@@ -121,16 +122,6 @@ export default function EditorPage() {
     const wordCount = useMemo(() => text.replace(/<[^>]*>/g, ' ').trim().split(/\s+/).filter(Boolean).length, [text]);
     const charCount =  text.replace(/<[^>]*>/g, '').length;
     const filteredFonts = useMemo(() => HANDWRITING_FONTS.filter(f => f.name.toLowerCase().includes(fontSearch.toLowerCase())), [fontSearch]);
-
-    // --- EFFECTS ---
-
-    useEffect(() => { setTimeout(() => setIsLoading(false), 800); }, []);
-
-    useEffect(() => {
-        if (!lastSaved) return;
-        const i = setInterval(() => setSecondsAgo(Math.floor((new Date().getTime() - lastSaved.getTime()) / 1000)), 1000);
-        return () => clearInterval(i);
-    }, [lastSaved]);
 
     useEffect(() => {
         if (text !== debouncedText || handwritingStyle !== debouncedFontFamily || paperMaterial !== debouncedPaperMaterial) setIsRendering(true);
@@ -305,7 +296,7 @@ export default function EditorPage() {
                             placeholder="Name your file..."
                         />
                         <span className="text-[9px] font-black uppercase tracking-widest text-ink/30">
-                            {isRendering ? 'Refining Ink...' : lastSaved ? `Saved ${secondsAgo}s ago` : 'Ready'}
+                            {isRendering ? 'Refining Ink...' : <TimeAgo date={lastSaved} />}
                         </span>
                     </div>
                 </div>
@@ -431,7 +422,6 @@ export default function EditorPage() {
 
                             {/* Canvas - ALWAYS RENDERED */}
                             <motion.div 
-                                layout
                                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                                 animate={{ opacity: 1, scale: zoom, y: 0 }}
                                 transition={{ type: "spring", stiffness: 200, damping: 25 }}
@@ -474,7 +464,7 @@ export default function EditorPage() {
                         
                         {/* STYLE TAB */}
                         {activePanel === 'style' && (
-                            <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                            <div className="space-y-8">
                                 
                                 {/* Presets */}
                                 <div className="space-y-3">
@@ -564,7 +554,7 @@ export default function EditorPage() {
 
                         {/* PAPER TAB */}
                         {activePanel === 'paper' && (
-                            <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                            <div className="space-y-8">
                                 <div className="grid grid-cols-2 gap-3">
                                     {PAPER_TYPES.map(p => (
                                         <button 
@@ -602,7 +592,7 @@ export default function EditorPage() {
 
                         {/* EXPORT TAB */}
                         {activePanel === 'export' && (
-                            <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                            <div className="space-y-8">
                                 <div className="space-y-4">
                                      <SectionLabel icon={<Settings2 size={14}/>} title="Format" />
                                      <div className="flex bg-black/5 p-1 rounded-xl">
