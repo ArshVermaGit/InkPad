@@ -22,8 +22,16 @@ export interface Token {
     content?: string;
 }
 
+export interface HistoryItem {
+    id: string;
+    timestamp: number;
+    text: string;
+}
+
 export interface AppState {
     text: string;
+    // History
+    history: HistoryItem[];
     lastSaved: Date | null;
     zoom: number;
     editorMode: 'plain' | 'rich';
@@ -95,6 +103,7 @@ export interface AppState {
     setIsRendering: (isRendering: boolean) => void;
     setRenderingProgress: (progress: number) => void;
     applyPreset: (settings: Partial<AppState>) => void;
+    addToHistory: (item: HistoryItem) => void;
 
     reset: () => void;
 }
