@@ -33,10 +33,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Show modal on first entry if not logged in
     useEffect(() => {
         if (!user) {
-            const timer = setTimeout(() => setAuthModalOpen(true), 1000);
-            return () => clearTimeout(timer);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setAuthModalOpen(true);
         }
-    }, []);
+    }, [user, setAuthModalOpen]);
 
     const login = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
