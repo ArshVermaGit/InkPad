@@ -10,7 +10,13 @@ const DEFAULT_TYPOGRAPHY = {
     wordSpacing: 4,
 };
 
-const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZoom' | 'setEditorMode' | 'setUploadedFileName' | 'setHandwritingStyle' | 'setFontSize' | 'setLetterSpacing' | 'setLineHeight' | 'setWordSpacing' | 'setPaperMaterial' | 'setPaperSize' | 'setPaperOrientation' | 'setInkColor' | 'addCustomFont' | 'removeCustomFont' | 'resetTypography' | 'setCustomPaperImage' | 'completeOnboarding' | 'completeTour' | 'setSidebarCollapsed' | 'setSettingsOpen' | 'setPaperShadow' | 'setInkBlur' | 'setResolutionQuality' | 'setPaperTilt' | 'setPaperTexture' | 'setExpandedPanels' | 'togglePanel' | 'applyPreset' | 'setIsRendering' | 'setRenderingProgress'> = {
+export interface HistoryItem {
+    id: string;
+    timestamp: number;
+    text: string;
+}
+
+const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZoom' | 'setEditorMode' | 'setUploadedFileName' | 'setHandwritingStyle' | 'setFontSize' | 'setLetterSpacing' | 'setLineHeight' | 'setWordSpacing' | 'setPaperMaterial' | 'setPaperSize' | 'setPaperOrientation' | 'setInkColor' | 'addCustomFont' | 'removeCustomFont' | 'resetTypography' | 'setCustomPaperImage' | 'completeOnboarding' | 'completeTour' | 'setSidebarCollapsed' | 'setSettingsOpen' | 'setPaperShadow' | 'setInkBlur' | 'setResolutionQuality' | 'setPaperTilt' | 'setPaperTexture' | 'setExpandedPanels' | 'togglePanel' | 'applyPreset' | 'setIsRendering' | 'setRenderingProgress' | 'addToHistory'> = {
     text: '',
     lastSaved: null,
     zoom: 1,
@@ -40,6 +46,7 @@ const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZo
     isRendering: false,
     renderingProgress: 0,
     expandedPanels: ['handwriting', 'typography', 'paper', 'effects'],
+    history: [],
 };
 
 export const useStore = create<AppState>()(
@@ -88,6 +95,9 @@ export const useStore = create<AppState>()(
             setIsRendering: (isRendering) => set({ isRendering }),
             setRenderingProgress: (renderingProgress) => set({ renderingProgress }),
             applyPreset: (settings) => set((state) => ({ ...state, ...settings })),
+            addToHistory: (item) => set((state) => ({ 
+                history: [item, ...state.history].slice(0, 50) // Keep last 50 items
+            })),
 
             reset: () => set(() => initialState),
         }),
