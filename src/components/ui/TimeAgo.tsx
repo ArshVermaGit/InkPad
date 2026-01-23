@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 export function TimeAgo({ date }: { date: Date | null }) {
-    const [tick, setTick] = useState(0);
+    const [, setTick] = useState(0);
 
     useEffect(() => {
         if (!date) return;
