@@ -206,12 +206,7 @@ export default function EditorPage() {
         }
     };
 
-    const loadSampleText = () => {
-        setTimeout(() => {
-            setText(`<h1>Hello, Creator!</h1><p>Welcome to your new <b>digital desk</b>. This space is designed to feel as warm and natural as real paper, but with the power of digital tools.</p><h3>Why InkPad?</h3><p>Because writing should feel <i>good</i>. We've added subtle imperfections, ink spread, and paper textures to make your documents look authentically hand-crafted.</p><ul><li>Export to high-res PDF</li><li>Customize every stroke</li><li>Enjoy the process</li></ul>`);
-            setEditorMode('rich');
-        }, 500);
-    };
+
 
     const handleExportPDF = useCallback(async () => { 
         if(!canvasRef.current || isExporting) return; 
@@ -338,29 +333,21 @@ export default function EditorPage() {
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
-                            {text ? (
-                                editorMode === 'plain' ? (
-                                    <textarea 
-                                        value={text} 
-                                        onChange={handleTextChange} 
-                                        className="w-full h-full bg-transparent border-none resize-none focus:ring-0 p-0 text-sm leading-relaxed text-ink/80 placeholder:text-ink/20 font-medium"
-                                        placeholder="Start typing your masterpiece..." 
-                                    />
-                                ) : (
-                                    <div 
-                                        ref={richTextRef}
-                                        contentEditable
-                                        onInput={handleRichTextChange}
-                                        className="prose prose-sm max-w-none outline-none text-ink/80"
-                                        dangerouslySetInnerHTML={{ __html: text }}
-                                    />
-                                )
+                            {editorMode === 'plain' ? (
+                                <textarea 
+                                    value={text} 
+                                    onChange={handleTextChange} 
+                                    className="w-full h-full bg-transparent border-none resize-none focus:ring-0 focus:outline-none p-0 text-sm leading-relaxed text-ink/80 placeholder:text-ink/30 font-medium"
+                                    placeholder="Start typing your masterpiece..." 
+                                />
                             ) : (
-                                <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
-                                    <FileText size={48} className="mb-4 text-ink/20" />
-                                    <p className="text-sm font-bold">Your desk is empty.</p>
-                                    <button onClick={loadSampleText} className="mt-4 text-xs font-black uppercase tracking-widest text-accent hover:underline">Write a Sample</button>
-                                </div>
+                                <div 
+                                    ref={richTextRef}
+                                    contentEditable
+                                    onInput={handleRichTextChange}
+                                    className="prose prose-sm max-w-none outline-none text-ink/80 min-h-full"
+                                    dangerouslySetInnerHTML={{ __html: text || '<p>Start typing...</p>' }}
+                                />
                             )}
                         </div>
 
