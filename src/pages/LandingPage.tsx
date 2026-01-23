@@ -1,273 +1,268 @@
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import {
-    PenTool,
-    Layers,
-    Download,
-    Zap
+import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { useNavigate, type NavigateFunction } from 'react-router-dom';
+import { 
+    PenTool, Download, Type, Sparkles, ArrowRight
 } from 'lucide-react';
+import React from 'react';
 
 export default function LandingPage() {
     const navigate = useNavigate();
 
-    const features = [
-        {
-            title: 'Real Feel',
-            desc: 'Captures the rhythm of a real pen, making your writing feel alive.',
-            icon: <PenTool className="w-6 h-6" />
-        },
-        {
-            title: 'Your Space',
-            desc: 'A simple, clean place for you to just write.',
-            icon: <Layers className="w-6 h-6" />
-        },
-        {
-            title: 'Looks Like Paper',
-            desc: 'Exports that look exactly like a scanned letter.',
-            icon: <Download className="w-6 h-6" />
-        },
-        {
-            title: 'Instant Ink',
-            desc: 'See your words appear instantly as you type.',
-            icon: <Zap className="w-6 h-6" />
-        }
-    ];
-
-    const useCases = [
-        { title: 'Students', desc: 'Turn your typed notes into realistic handwritten assignments.' },
-        { title: 'Journaling', desc: 'Keep the personal feel of a diary in a digital format.' },
-        { title: 'Letters', desc: 'Create notes that feel personal and sincere.' },
-        { title: 'Professional', desc: 'Add a human touch to your digital signatures and memos.' }
-    ];
-
     return (
-        <div className="relative paper-texture overflow-hidden">
-            {/* Hero Section V3 - Living Canvas / Creative Desk */}
-            <section className="relative min-h-screen flex items-start justify-center overflow-hidden bg-[#F2F0E9] pt-32 lg:pt-40">
-                {/* Paper Texture Overlay */}
-                <div className="absolute inset-0 opacity-40 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] pointer-events-none mix-blend-multiply" />
-                
-                {/* Ambient Background Blobs (Warm & Organic) */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div 
-                        className="absolute -top-[20%] -right-[10%] w-[800px] h-[800px] bg-orange-200/20 rounded-full blur-[100px]" 
-                    />
-                    <div 
-                        className="absolute -bottom-[20%] -left-[10%] w-[600px] h-[600px] bg-amber-200/20 rounded-full blur-[100px]" 
-                    />
-                </div>
+        <div className="bg-[#FAF9F6] min-h-screen overflow-x-hidden selection:bg-accent/30">
+            
+            {/* --- HERO SECTION --- */}
+            <HeroSection navigate={navigate} />
 
-                <div className="max-w-7xl mx-auto px-6 relative z-10 w-full">
-                    <div className="flex flex-col lg:flex-row items-center justify-between gap-16">
-                        
-                        {/* Left: Text Content */}
-                        <motion.div 
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, ease: "easeOut" }}
-                            className="text-center lg:text-left relative"
+            {/* --- SOCIAL PROOF MARQUEE --- */}
+            <MarqueeSection />
+
+            {/* --- BENTO GRID FEATURES --- */}
+            <section className="py-32 px-6 bg-white relative">
+                 <div className="absolute inset-0 bg-[#F2F0E9]/30" />
+                 <div className="max-w-7xl mx-auto relative z-10">
+                    <div className="mb-20 text-center max-w-2xl mx-auto">
+                        <motion.span 
+                            initial={{ opacity: 0, y: 10 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            className="text-accent font-bold tracking-widest uppercase text-xs mb-4 block"
                         >
-                            <motion.div
-                                initial={{ rotate: -5, opacity: 0 }}
-                                animate={{ rotate: -2, opacity: 1 }}
-                                transition={{ delay: 0.2, duration: 0.6 }}
-                                className="inline-block mb-6 relative"
-                            >
-                                <div className="absolute inset-0 bg-yellow-200/50 transform rotate-2 rounded-sm blur-sm" />
-                                <span className="relative font-handwriting text-2xl text-ink/70 font-bold block px-2">
-                                    Notes that feel real.
-                                </span>
-                            </motion.div>
-
-                            <h1 className="text-7xl md:text-9xl font-display font-black text-ink tracking-tighter mb-8 leading-[0.85] relative">
-                                <span className="block text-transparent bg-clip-text bg-linear-to-br from-ink to-ink/70">Creative</span>
-                                <span className="block italic font-serif text-accent relative">
-                                    InkPad
-                                    <svg className="absolute w-full h-3 -bottom-1 left-0 text-accent opacity-40" viewBox="0 0 100 10" preserveAspectRatio="none">
-                                        <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="2" fill="none" />
-                                    </svg>
-                                </span>
-                            </h1>
-
-                            <p className="text-xl md:text-2xl text-ink/60 mb-10 max-w-lg mx-auto lg:mx-0 font-medium leading-relaxed font-serif italic">
-                                "The warmth of paper, captured in pixels."
-                            </p>
-
-                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
-                                <button
-                                    className="group relative px-8 py-4 bg-ink text-white rounded-2xl overflow-hidden shadow-2xl shadow-ink/20 hover:-translate-y-1 transition-all duration-300"
-                                    onClick={() => navigate('/editor')}
-                                >
-                                    <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                                    <span className="relative flex items-center gap-3 text-sm font-black tracking-[0.2em] uppercase">
-                                        Start Creating <PenTool size={16} />
-                                    </span>
-                                </button>
-                                <motion.div 
-                                    whileHover={{ scale: 1.05, rotate: 2 }}
-                                    className="px-6 py-4 bg-white/50 backdrop-blur-sm border border-black/5 rounded-2xl text-ink text-sm font-bold shadow-sm cursor-pointer"
-                                >
-                                    ✍️ No signup needed
-                                </motion.div>
-                            </div>
-                        </motion.div>
-
-                        {/* Right: Creative Desk Composition */}
-                        <div className="relative w-full max-w-lg lg:max-w-xl aspect-square">
-                             {/* Main Paper Sheet */}
-                            <motion.div
-                                initial={{ opacity: 0, rotate: 5, y: 50 }}
-                                animate={{ opacity: 1, rotate: -3, y: 0 }}
-                                transition={{ duration: 1, delay: 0.2 }}
-                                className="absolute inset-4 bg-white shadow-2xl shadow-ink/10 rounded-sm p-8 flex flex-col items-center justify-center text-center transform origin-bottom-right transition-transform hover:rotate-0 hover:scale-[1.02] duration-500"
-                            >
-                                <div className="w-full h-full border border-black/5 p-6 flex flex-col items-center justify-center bg-[radial-gradient(#00000003_1px,transparent_1px)] bg-size-[16px_16px]">
-                                    <p className="font-handwriting text-5xl text-ink mb-2">Hello World!</p>
-                                    <p className="font-handwriting text-2xl text-accent/80">This is digital ink.</p>
-                                    <div className="mt-8 w-32 h-1 bg-black/5 rounded-full" />
-                                </div>
-                            </motion.div>
-
-                            {/* Sticky Note */}
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{ opacity: 1, scale: 1, rotate: 12 }}
-                                transition={{ duration: 0.6, delay: 0.8, type: "spring" }}
-                                className="absolute -top-4 -right-4 w-40 h-40 bg-yellow-200 shadow-lg shadow-yellow-500/10 p-4 flex items-center justify-center transform hover:rotate-6 transition-transform"
-                            >
-                                <p className="font-handwriting text-xl text-ink/70 leading-tight">Don't forget to write today!</p>
-                                <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-12 h-4 bg-yellow-300/50 blur-[1px]" />
-                            </motion.div>
-
-                            {/* Polaroid Photo */}
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{ opacity: 1, scale: 1, rotate: -15 }}
-                                transition={{ duration: 0.6, delay: 1, type: "spring" }}
-                                className="absolute -bottom-8 -left-8 bg-white p-3 pb-8 shadow-xl shadow-black/10 transform hover:rotate-[-10deg] transition-transform w-48"
-                            >
-                                <div className="w-full h-32 bg-gray-100 overflow-hidden relative">
-                                    <div className="absolute inset-0 bg-accent/20" />
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <Layers size={32} className="text-white drop-shadow-md" />
-                                    </div>
-                                </div>
-                            </motion.div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Features Grid */}
-            <section className="section-padding relative z-10">
-                <div className="max-w-7xl mx-auto">
-                    <div className="mb-32 text-center">
+                            Why InkPad?
+                        </motion.span>
                         <motion.h2 
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            className="text-5xl md:text-6xl font-display font-black text-ink mb-6"
+                            transition={{ delay: 0.1 }}
+                            className="text-5xl md:text-6xl font-display font-bold text-ink mb-6"
                         >
-                            Made for <br /><span className="text-accent italic font-serif">Writers.</span>
+                            More than just <br/>
+                            <span className="italic font-serif text-ink/70">pixels on a screen.</span>
                         </motion.h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 grid-rows-2 h-auto md:h-[600px]">
+                        {/* Large Card */}
                         <motion.div 
-                            initial={{ width: 0 }}
-                            whileInView={{ width: 80 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            className="h-1 bg-accent mx-auto rounded-full" 
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {features.map((feature, i) => (
-                            <motion.div
-                                key={feature.title}
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                                className="card-premium group"
-                            >
-                                <div className="mb-8 w-14 h-14 bg-white rounded-xl border border-black/5 shadow-sm flex items-center justify-center text-accent transition-transform duration-500 group-hover:rotate-6 group-hover:scale-110">
-                                    {feature.icon}
-                                </div>
-                                <h3 className="text-xl font-display font-black text-ink mb-4 tracking-tight uppercase">{feature.title}</h3>
-                                <p className="text-ink/50 text-sm leading-relaxed font-medium">
-                                    {feature.desc}
-                                </p>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Use Cases Section - FIXED VISIBILITY */}
-            <section className="section-padding relative overflow-hidden bg-[#1A1F2C] text-white">
-                {/* Background Decoration */}
-                <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.05)_0%,transparent_60%)] pointer-events-none" />
-
-                <div className="max-w-7xl mx-auto relative z-10">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-32 items-center">
-                        <div>
-                            <motion.h2 
-                                initial={{ opacity: 0, x: -20 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
-                                className="text-6xl md:text-8xl font-display font-black mb-10 tracking-tighter leading-none"
-                            >
-                                Dedicated to <br /><span className="text-accent italic font-serif">Writing.</span>
-                            </motion.h2>
-                            <p className="text-white/60 text-xl leading-relaxed max-w-lg font-medium">
-                                InkPad brings back the simple joy of writing by hand in a digital world. No distractions, just you and your thoughts.
-                            </p>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-16">
-                            {useCases.map((item, i) => (
-                                <motion.div 
-                                    key={item.title}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: i * 0.1 }}
-                                >
-                                    <h4 className="flex items-center gap-4 text-xs font-black text-accent uppercase tracking-[0.3em] mb-4">
-                                        {item.title}
-                                    </h4>
-                                    <p className="text-white/50 text-sm leading-relaxed font-medium">
-                                        {item.desc}
-                                    </p>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* CTA Section */}
-            <section className="section-padding relative text-center">
-                <div className="max-w-4xl mx-auto">
-                    <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        whileInView={{ scale: 1, opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                        className="bg-white p-20 rounded-[3rem] border border-black/5 shadow-2xl shadow-ink/10 overflow-hidden relative"
-                    >
-                        <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-accent to-transparent opacity-20" />
-                        
-                        <h2 className="text-5xl md:text-7xl font-display font-black text-ink mb-8 tracking-tighter italic">Ready to create?</h2>
-                        <p className="text-ink/40 text-lg mb-12 max-w-xl mx-auto font-medium">
-                            Rediscover the simple beauty of a pen on paper.
-                        </p>
-                        <button
-                            className="btn-premium rounded-2xl px-16 py-6 text-sm tracking-[0.2em] shadow-2xl shadow-ink/20 hover:scale-105 active:scale-95 transition-all mx-auto"
-                            onClick={() => navigate('/editor')}
+                            className="md:col-span-2 md:row-span-2 bg-[#F5F5F7] rounded-4xl p-10 relative overflow-hidden group border border-black/5"
                         >
-                            Open Editor
-                        </button>
+                            <div className="relative z-10">
+                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                                    <PenTool className="text-accent" />
+                                </div>
+                                <h3 className="text-3xl font-bold mb-4">Hyper-Realistic Ink Engine</h3>
+                                <p className="text-ink/60 text-lg max-w-md leading-relaxed">
+                                    Our proprietary rendering engine mimics the physics of real ink. 
+                                    It simulates pressure, variable stroke width, and even the subtle bleed of ink into paper fibers.
+                                </p>
+                            </div>
+                            
+                            {/* Visual Decoration */}
+                            <div className="absolute right-0 bottom-0 w-2/3 h-2/3 translate-x-12 translate-y-12 transition-transform duration-700 group-hover:-translate-x-4 group-hover:-translate-y-4">
+                                <div className="w-full h-full bg-white rounded-tl-[3rem] shadow-2xl p-6 border border-black/5 -rotate-6 group-hover:-rotate-3 transition-all duration-500">
+                                    <div className="w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[16px_16px] p-8 font-handwriting text-3xl text-ink leading-loose">
+                                        "The details are not the details. <br/> They make the design."
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Top Right Card */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.1 }}
+                            className="bg-[#1A1F2C] text-white rounded-4xl p-8 relative overflow-hidden group"
+                        >
+                             <div className="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
+                             <div className="relative z-10">
+                                <Download className="mb-4 text-accent" />
+                                <h3 className="text-xl font-bold mb-2">Export Anywhere</h3>
+                                <p className="text-white/50 text-sm">Download as high-res PDF, PNG, or even create a ZIP archive of your notebook.</p>
+                             </div>
+                        </motion.div>
+
+                        {/* Bottom Right Card */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.2 }}
+                            className="bg-white border border-black/5 rounded-4xl p-8 relative overflow-hidden group hover:shadow-xl transition-all duration-500"
+                        >
+                            <div className="relative z-10">
+                                <Type className="mb-4 text-accent" />
+                                <h3 className="text-xl font-bold mb-2">10+ Unique Hands</h3>
+                                <p className="text-ink/60 text-sm">From messy scrawls to elegant cursive, find a voice that matches yours.</p>
+                            </div>
+                        </motion.div>
+                    </div>
+                 </div>
+            </section>
+
+            {/* --- CALL TO ACTION --- */}
+            <section className="py-32 px-6 relative overflow-hidden">
+                <div className="max-w-4xl mx-auto text-center relative z-10">
+                    <motion.div
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        whileInView={{ scale: 1, opacity: 1 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ duration: 0.6 }}
+                        className="bg-ink text-white rounded-[3rem] p-12 md:p-24 shadow-2xl relative overflow-hidden"
+                    >
+                         {/* Abstract BG */}
+                         <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/20 rounded-full blur-[120px]" />
+
+                         <div className="relative z-10">
+                            <h2 className="text-5xl md:text-7xl font-display font-bold mb-8 tracking-tight">
+                                Start your <br/>
+                                <span className="font-serif italic text-accent">masterpiece.</span>
+                            </h2>
+                            <p className="text-lg md:text-xl text-white/60 mb-12 max-w-xl mx-auto">
+                                No signup required for basic use. Jump right in and feel the difference.
+                            </p>
+                            <button
+                                onClick={() => navigate('/editor')}
+                                className="px-10 py-5 bg-white text-ink rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center gap-3 mx-auto shadow-[0_0_50px_-10px_rgba(255,255,255,0.3)]"
+                            >
+                                Launch Editor <ArrowRight size={20} />
+                            </button>
+                         </div>
                     </motion.div>
                 </div>
             </section>
+
         </div>
+    );
+}
+
+function HeroSection({ navigate }: { navigate: NavigateFunction }) {
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        const { clientX, clientY, currentTarget } = e;
+        const { width, height, left, top } = currentTarget.getBoundingClientRect();
+        mouseX.set((clientX - left) / width - 0.5);
+        mouseY.set((clientY - top) / height - 0.5);
+    };
+
+    const rotateX = useTransform(mouseY, [-0.5, 0.5], [5, -5]);
+    const rotateY = useTransform(mouseX, [-0.5, 0.5], [-5, 5]);
+
+    return (
+        <section 
+            onMouseMove={handleMouseMove}
+            className="relative min-h-[110vh] flex flex-col items-center justify-center pt-32 pb-20 px-4 perspective-1000 overflow-hidden"
+        >
+            {/* Ambient Background - Optimized */}
+            <div className="absolute inset-0 bg-[#FBFBFB]">
+                <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-rose-100/30 rounded-full blur-[100px]" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-indigo-100/30 rounded-full blur-[100px]" />
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-size-[64px_64px]" />
+            </div>
+
+            <div className="relative z-10 text-center max-w-5xl mx-auto mb-20">
+                <div className="animate-fade-in-up">
+                    <div className="flex items-center justify-center gap-2 mb-8">
+                        <span className="px-3 py-1 rounded-full bg-white border border-black/5 shadow-sm text-[10px] font-black uppercase tracking-widest text-ink/40 flex items-center gap-2">
+                             <Sparkles size={12} className="text-accent" /> V2.0 Now Live
+                        </span>
+                    </div>
+
+                    <h1 className="text-7xl md:text-9xl font-display font-bold text-ink tracking-tighter leading-[0.85] mb-8">
+                        Digital notes <br className="hidden md:block"/>
+                        <span className="relative inline-block">
+                             <span className="relative z-10 italic font-serif text-transparent bg-clip-text bg-linear-to-r from-ink to-ink/70">reimagined.</span>
+                             <svg className="absolute w-[110%] h-[20%] -bottom-2 -left-[5%] text-accent opacity-60 z-0" viewBox="0 0 100 10" preserveAspectRatio="none">
+                                <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="4" fill="none" />
+                             </svg>
+                        </span>
+                    </h1>
+
+                    <p className="text-xl md:text-2xl text-ink/50 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
+                        Embrace the imperfection. InkPad brings the tactile soul of handwriting to your digital workflow.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <button 
+                            onClick={() => navigate('/editor')}
+                            className="px-8 py-4 bg-ink text-white rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-ink/30 hover:-translate-y-1 transition-all flex items-center gap-2 group"
+                        >
+                            Start Writing Now <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform"/>
+                        </button>
+                        <button className="px-8 py-4 bg-white border border-black/5 text-ink rounded-full font-bold text-lg hover:bg-gray-50 transition-colors">
+                            See Examples
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* 3D TILT SHOWCASE */}
+            <motion.div 
+                style={{ rotateX, rotateY }}
+                className="relative w-full max-w-5xl mx-auto perspective-1000"
+            >
+                <div className="relative aspect-16/10 bg-white rounded-xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border border-black/5 p-2 md:p-4 transition-transform duration-200 ease-out">
+                     {/* Window Controls */}
+                     <div className="absolute top-6 left-6 flex gap-2 z-20">
+                        <div className="w-3 h-3 rounded-full bg-red-400" />
+                        <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                        <div className="w-3 h-3 rounded-full bg-green-400" />
+                     </div>
+
+                     {/* Content Simulation */}
+                     <div className="w-full h-full bg-[#FAFAFA] rounded-md overflow-hidden relative">
+                        <div className="absolute inset-0 flex">
+                            {/* Sidebar Mockup */}
+                            <div className="w-16 md:w-64 bg-white border-r border-black/5 hidden md:block p-6 space-y-4">
+                                <div className="w-full h-8 bg-black/5 rounded-md" />
+                                <div className="space-y-2">
+                                    {[1,2,3,4].map(i => <div key={i} className="w-full h-4 bg-black/5 rounded-sm opacity-50" />)}
+                                </div>
+                            </div>
+                            {/* Canvas Mockup */}
+                            <div className="flex-1 p-8 md:p-16 flex items-center justify-center bg-[radial-gradient(#00000005_1px,transparent_1px)] bg-size-[16px_16px]">
+                                <div className="bg-white shadow-xl -rotate-2 p-8 md:p-12 max-w-2xl w-full border border-black/5">
+                                    <h3 style={{fontFamily: 'Caveat, cursive'}} className="text-4xl md:text-6xl text-ink mb-6">Hello World!</h3>
+                                    <p style={{fontFamily: 'Caveat, cursive'}} className="text-2xl md:text-3xl text-ink/70 leading-relaxed">
+                                        This is what digital notes should feel like. <span className="text-accent">Messy, human, and real.</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                     </div>
+                </div>
+            </motion.div>
+        </section>
+    );
+}
+
+function MarqueeSection() {
+    return (
+        <section className="py-20 bg-white border-y border-black/5 overflow-hidden">
+            <div className="flex relative w-full">
+                <motion.div 
+                    animate={{ x: ["0%", "-50%"] }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="flex gap-16 whitespace-nowrap px-8"
+                >
+                    {[1,2,3,4,5,6].map(i => (
+                        <span key={i} className="text-6xl md:text-8xl font-handwriting text-ink/10 font-bold select-none">
+                            Notes with soul.
+                        </span>
+                    ))}
+                    {[1,2,3,4,5,6].map(i => (
+                        <span key={`dup-${i}`} className="text-6xl md:text-8xl font-handwriting text-ink/10 font-bold select-none">
+                            Notes with soul.
+                        </span>
+                    ))}
+                </motion.div>
+            </div>
+        </section>
     );
 }
