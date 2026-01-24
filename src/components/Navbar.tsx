@@ -95,12 +95,6 @@ export default function Navbar() {
                                 <UserMenu />
                             ) : (
                                 <>
-                                    <button 
-                                        onClick={() => setAuthModalOpen(true)}
-                                        className="text-sm font-bold text-neutral-500 hover:text-neutral-900 transition-colors px-2"
-                                    >
-                                        Log In
-                                    </button>
                                     <button
                                         onClick={() => setAuthModalOpen(true)}
                                         className="relative overflow-hidden px-6 py-2.5 bg-neutral-900 text-white rounded-full text-sm font-bold shadow-lg shadow-neutral-900/20 hover:shadow-xl hover:scale-105 active:scale-95 transition-all group"
@@ -174,15 +168,9 @@ export default function Navbar() {
                                     <div className="flex flex-col gap-4">
                                         <button 
                                             onClick={() => { setAuthModalOpen(true); setIsMobileMenuOpen(false); }}
-                                            className="w-full py-4 rounded-xl bg-white border border-black/5 text-ink font-bold shadow-sm"
+                                            className="w-full py-4 rounded-xl bg-neutral-900 text-white font-bold shadow-xl shadow-neutral-900/20"
                                         >
-                                            Log In
-                                        </button>
-                                        <button 
-                                            onClick={() => { setAuthModalOpen(true); setIsMobileMenuOpen(false); }}
-                                            className="w-full py-4 rounded-xl bg-ink text-white font-bold shadow-xl shadow-ink/20"
-                                        >
-                                            Sign Up for Free
+                                            Get Started
                                         </button>
                                     </div>
                                 )}
