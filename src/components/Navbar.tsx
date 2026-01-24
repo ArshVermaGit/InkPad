@@ -56,10 +56,10 @@ export default function Navbar() {
                                 <img 
                                     src={logo} 
                                     alt="InkPad" 
-                                    className="w-10 h-10 object-contain relative z-10" 
+                                    className="w-14 h-14 object-contain relative z-10" 
                                 />
                             </div>
-                            <span className="text-xl font-display font-bold text-neutral-900 tracking-tight hidden sm:block">InkPad</span>
+                            <span className="text-3xl font-display font-bold text-neutral-900 tracking-tight hidden sm:block">InkPad</span>
                         </Link>
 
                         {/* Desktop Navigation */}
