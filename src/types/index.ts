@@ -63,6 +63,7 @@ export interface AppState {
     isRendering: boolean;
     renderingProgress: number;
     expandedPanels: string[];
+    isNavbarVisible: boolean;
     
     // Editor Refinements
     jitter: number;
@@ -116,6 +117,7 @@ export interface AppState {
     togglePanel: (panel: string) => void;
     setIsRendering: (isRendering: boolean) => void;
     setRenderingProgress: (progress: number) => void;
+    setNavbarVisible: (visible: boolean) => void;
     
     // Editor Refinement Actions
     setJitter: (value: number) => void;
