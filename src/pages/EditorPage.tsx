@@ -196,7 +196,7 @@ const PAPERS = [
 export default function EditorPage() {
     const { addToast } = useToast();
     const sourceRef = useRef<HTMLTextAreaElement>(null);
-    const { user } = useAuth();
+    const { user, setAuthModalOpen } = useAuth();
     
     // Global Store State
     const { 
@@ -223,6 +223,20 @@ export default function EditorPage() {
     const [exportStatus, setExportStatus] = useState<'idle' | 'processing' | 'complete' | 'error'>('idle');
     const [isHumanizing, setIsHumanizing] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const [pendingAction, setPendingAction] = useState<{ type: 'export', format: 'pdf' | 'zip' } | null>(null);
+
+    // Initial Login Pop-up (Handled by AuthContext, but we ensure persistence of intent)
+    useEffect(() => {
+        if (user && pendingAction) {
+            if (pendingAction.type === 'export') {
+                setExportFormat(pendingAction.format);
+                setExportStatus('idle');
+                setIsExportModalOpen(true);
+                setProgress(0);
+            }
+            setPendingAction(null);
+        }
+    }, [user, pendingAction]);
 
     const deferredText = useDeferredValue(text);
 
@@ -345,6 +359,11 @@ export default function EditorPage() {
     };
 
     const handleStartExport = (format: 'pdf' | 'zip') => {
+        if (!user) {
+            setPendingAction({ type: 'export', format });
+            setAuthModalOpen(true);
+            return;
+        }
         setExportFormat(format);
         setExportStatus('idle');
         setIsExportModalOpen(true);
