@@ -19,10 +19,10 @@ export default function Footer() {
                     </div>
                     <a 
                         href="/editor" 
-                        className="group flex items-center gap-4 px-8 py-5 bg-ink text-white rounded-full font-bold text-lg hover:scale-105 transition-all duration-300 shadow-xl shadow-ink/20"
+                        className="group flex items-center gap-4 px-8 py-5 bg-neutral-900 text-white rounded-full font-bold text-lg hover:scale-105 transition-all duration-300 shadow-xl shadow-neutral-900/20"
                     >
                         Open Editor
-                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white group-hover:text-ink transition-colors">
+                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white group-hover:text-neutral-900 transition-colors">
                             <ArrowUpRight size={18} />
                         </div>
                     </a>
@@ -31,8 +31,8 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 lg:gap-24 py-16">
                     <div className="md:col-span-2">
                         <div className="flex items-center gap-3 mb-6">
-                             <img src={logo} alt="InkPad" className="w-10 h-10 object-contain" />
-                             <span className="font-display font-bold text-2xl tracking-tight text-ink">InkPad.</span>
+                             <img src={logo} alt="InkPad" className="w-14 h-14 object-contain" />
+                             <span className="font-display font-bold text-3xl tracking-tight text-ink">InkPad.</span>
                         </div>
                         <p className="text-ink/60 leading-relaxed max-w-sm text-sm font-medium">
                             A digital sanctuary for your thoughts. We blend the nostalgia of analog writing with the power of modern technology.
