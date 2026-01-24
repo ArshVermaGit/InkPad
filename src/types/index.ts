@@ -63,6 +63,20 @@ export interface AppState {
     isRendering: boolean;
     renderingProgress: number;
     expandedPanels: string[];
+    
+    // Editor Refinements
+    jitter: number;
+    pressure: number;
+    smudge: number;
+    baseline: number;
+    textAlign: 'left' | 'center' | 'right' | 'justify';
+    marginTop: number;
+    marginBottom: number;
+    marginLeft: number;
+    marginRight: number;
+    showPageNumbers: boolean;
+    showHeader: boolean;
+    headerText: string;
 
     // Actions
     setText: (text: string) => void;
@@ -102,6 +116,16 @@ export interface AppState {
     togglePanel: (panel: string) => void;
     setIsRendering: (isRendering: boolean) => void;
     setRenderingProgress: (progress: number) => void;
+    
+    // Editor Refinement Actions
+    setJitter: (value: number) => void;
+    setPressure: (value: number) => void;
+    setSmudge: (value: number) => void;
+    setBaseline: (value: number) => void;
+    setTextAlign: (align: 'left' | 'center' | 'right' | 'justify') => void;
+    setMargins: (margins: { top?: number; bottom?: number; left?: number; right?: number }) => void;
+    setPageOptions: (options: { showPageNumbers?: boolean; showHeader?: boolean; headerText?: string }) => void;
+    
     applyPreset: (settings: Partial<AppState>) => void;
     addToHistory: (item: HistoryItem) => void;
 
