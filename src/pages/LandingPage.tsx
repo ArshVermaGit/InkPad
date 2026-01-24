@@ -248,7 +248,7 @@ function HeroSection() {
                         className="flex flex-col items-center"
                     >
                         <h1 
-                            className="text-7xl sm:text-9xl lg:text-[12rem] font-display font-bold leading-[1.1] tracking-tight text-neutral-900 mb-2"
+                            className="text-6xl sm:text-9xl lg:text-[12rem] font-display font-bold leading-[1.1] tracking-tight text-neutral-900 mb-2"
                         >
                             Handwritten.
                         </h1>
