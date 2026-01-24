@@ -18,14 +18,14 @@ export default function LandingPage() {
             <MarqueeSection />
 
             {/* --- BENTO GRID FEATURES --- */}
-            <section className="py-32 px-6 bg-white relative">
+            <section className="py-24 px-6 bg-white relative">
                  <div className="absolute inset-0 bg-[#F2F0E9]/30" />
                  <div className="max-w-7xl mx-auto relative z-10">
                     <div className="mb-20 text-center max-w-2xl mx-auto">
                         <motion.span 
                             initial={{ opacity: 0, y: 10 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            className="text-accent font-bold tracking-widest uppercase text-xs mb-4 block"
+                            className="text-indigo-500 font-bold tracking-widest uppercase text-xs mb-4 block"
                         >
                             Why InkPad?
                         </motion.span>
@@ -33,10 +33,10 @@ export default function LandingPage() {
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="text-5xl md:text-6xl font-display font-bold text-ink mb-6"
+                            className="text-5xl md:text-6xl font-display font-bold text-neutral-900 mb-6"
                         >
                             More than just <br/>
-                            <span className="italic font-serif text-ink/70">pixels on a screen.</span>
+                            <span className="italic font-serif text-neutral-600">pixels on a screen.</span>
                         </motion.h2>
                     </div>
 
@@ -50,10 +50,10 @@ export default function LandingPage() {
                         >
                             <div className="relative z-10">
                                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-                                    <PenTool className="text-accent" />
+                                    <PenTool className="text-indigo-500" />
                                 </div>
-                                <h3 className="text-3xl font-bold mb-4">Hyper-Realistic Ink Engine</h3>
-                                <p className="text-ink/60 text-lg max-w-md leading-relaxed">
+                                <h3 className="text-3xl font-bold mb-4 text-neutral-900">Hyper-Realistic Ink Engine</h3>
+                                <p className="text-neutral-500 text-lg max-w-md leading-relaxed">
                                     Our proprietary rendering engine mimics the physics of real ink. 
                                     It simulates pressure, variable stroke width, and even the subtle bleed of ink into paper fibers.
                                 </p>
@@ -62,7 +62,7 @@ export default function LandingPage() {
                             {/* Visual Decoration */}
                             <div className="absolute right-0 bottom-0 w-2/3 h-2/3 translate-x-12 translate-y-12 transition-transform duration-700 group-hover:-translate-x-4 group-hover:-translate-y-4">
                                 <div className="w-full h-full bg-white rounded-tl-[3rem] shadow-2xl p-6 border border-black/5 -rotate-6 group-hover:-rotate-3 transition-all duration-500">
-                                    <div className="w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[16px_16px] p-8 font-handwriting text-3xl text-ink leading-loose">
+                                    <div className="w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[16px_16px] p-8 font-handwriting text-3xl text-neutral-900 leading-loose">
                                         "The details are not the details. <br/> They make the design."
                                     </div>
                                 </div>
@@ -77,9 +77,9 @@ export default function LandingPage() {
                             transition={{ delay: 0.1 }}
                             className="bg-[#1A1F2C] text-white rounded-4xl p-8 relative overflow-hidden group"
                         >
-                             <div className="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
+                             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
                              <div className="relative z-10">
-                                <Download className="mb-4 text-accent" />
+                                <Download className="mb-4 text-indigo-400" />
                                 <h3 className="text-xl font-bold mb-2">Export Anywhere</h3>
                                 <p className="text-white/50 text-sm">Download as high-res PDF, PNG, or even create a ZIP archive of your notebook.</p>
                              </div>
@@ -94,9 +94,9 @@ export default function LandingPage() {
                             className="bg-white border border-black/5 rounded-4xl p-8 relative overflow-hidden group hover:shadow-xl transition-all duration-500"
                         >
                             <div className="relative z-10">
-                                <Type className="mb-4 text-accent" />
-                                <h3 className="text-xl font-bold mb-2">10+ Unique Hands</h3>
-                                <p className="text-ink/60 text-sm">From messy scrawls to elegant cursive, find a voice that matches yours.</p>
+                                <Type className="mb-4 text-indigo-500" />
+                                <h3 className="text-xl font-bold mb-2 text-neutral-900">10+ Unique Hands</h3>
+                                <p className="text-neutral-500 text-sm">From messy scrawls to elegant cursive, find a voice that matches yours.</p>
                             </div>
                         </motion.div>
                     </div>
@@ -104,7 +104,7 @@ export default function LandingPage() {
             </section>
 
             {/* --- CALL TO ACTION --- */}
-            <section className="py-32 px-6 relative overflow-hidden">
+            <section className="py-24 px-6 relative overflow-hidden">
                 <div className="max-w-4xl mx-auto text-center relative z-10">
                     <motion.div
                         initial={{ scale: 0.95, opacity: 0 }}
@@ -167,31 +167,31 @@ function HeroSection({ navigate }: { navigate: NavigateFunction }) {
             </div>
 
             <div className="relative z-10 text-center max-w-5xl mx-auto mb-20">
-                <div className="animate-fade-in-up">
-                    <div className="flex items-center justify-center gap-2 mb-8">
-                        <span className="px-3 py-1 rounded-full bg-white border border-black/5 shadow-sm text-[10px] font-black uppercase tracking-widest text-ink/40 flex items-center gap-2">
-                             <Sparkles size={12} className="text-accent" /> V2.0 Now Live
+                <div>
+                    <div className="flex items-center justify-center gap-2 mb-8 animate-fade-in-up">
+                        <span className="px-3 py-1 rounded-full bg-white border border-black/5 shadow-sm text-[10px] font-black uppercase tracking-widest text-neutral-500 flex items-center gap-2">
+                             <Sparkles size={12} className="text-indigo-500" /> V2.0 Now Live
                         </span>
                     </div>
 
-                    <h1 className="text-7xl md:text-9xl font-display font-bold text-ink tracking-tighter leading-[0.85] mb-8">
+                    <h1 className="text-7xl md:text-9xl font-display font-bold text-neutral-900 tracking-tighter leading-[0.85] mb-8 animate-fade-in-up" style={{ animationDelay: '0s' }}>
                         Digital notes <br className="hidden md:block"/>
                         <span className="relative inline-block">
-                             <span className="relative z-10 italic font-serif text-transparent bg-clip-text bg-linear-to-r from-ink to-ink/70">reimagined.</span>
-                             <svg className="absolute w-[110%] h-[20%] -bottom-2 -left-[5%] text-accent opacity-60 z-0" viewBox="0 0 100 10" preserveAspectRatio="none">
+                             <span className="relative z-10 italic font-serif text-transparent bg-clip-text bg-linear-to-r from-neutral-900 to-neutral-600">reimagined.</span>
+                             <svg className="absolute w-[110%] h-[20%] -bottom-2 -left-[5%] text-indigo-500 opacity-60 z-0" viewBox="0 0 100 10" preserveAspectRatio="none">
                                 <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="4" fill="none" />
                              </svg>
                         </span>
                     </h1>
 
-                    <p className="text-xl md:text-2xl text-ink/50 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
+                    <p className="text-xl md:text-2xl text-ink/50 max-w-2xl mx-auto mb-10 leading-relaxed font-medium animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                         Embrace the imperfection. InkPad brings the tactile soul of handwriting to your digital workflow.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                         <button 
                             onClick={() => navigate('/editor')}
-                            className="px-8 py-4 bg-ink text-white rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-ink/30 hover:-translate-y-1 transition-all flex items-center gap-2 group"
+                            className="px-8 py-4 bg-neutral-900 text-white rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-neutral-900/30 hover:-translate-y-1 transition-all flex items-center gap-2 group"
                         >
                             Start Writing Now <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform"/>
                         </button>
