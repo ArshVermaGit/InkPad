@@ -32,11 +32,11 @@ export default function LandingPage() {
             <HeroSection onStartClick={scrollToEditor} />
 
             {/* --- REAL EDITOR SECTION --- */}
-            <section ref={editorRef} id="editor" className="relative z-20 py-28">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="mb-16 text-center">
+            <section ref={editorRef} id="editor" className="relative z-20 py-12 sm:py-16 md:py-28">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                    <div className="mb-8 sm:mb-12 md:mb-16 text-center">
                         <span className="text-indigo-500 font-black tracking-[0.3em] uppercase text-[10px] mb-4 block">The Workshop</span>
-                        <h2 className="text-4xl md:text-5xl font-display font-bold text-neutral-900">Your Digital Canvas</h2>
+                        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-neutral-900">Your Digital Canvas</h2>
                     </div>
                      <motion.div
                         initial={{ opacity: 0, y: 40, scale: 0.95 }}
@@ -51,13 +51,13 @@ export default function LandingPage() {
 
 
             {/* --- BENTO GRID FEATURES --- */}
-            <section className="py-28 px-6 relative">
-                    <div className="mb-20 text-center max-w-2xl mx-auto">
+            <section className="py-12 sm:py-16 md:py-28 px-4 sm:px-6 relative">
+                    <div className="mb-10 sm:mb-16 md:mb-20 text-center max-w-2xl mx-auto">
                         <span className="text-indigo-500 font-bold tracking-widest uppercase text-xs mb-4 block">
                             Why Handwritten?
                         </span>
-                        <h2 className="text-5xl md:text-6xl font-display font-bold text-neutral-900 mb-6">
-                            More than just <br/>
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold text-neutral-900 mb-6">
+                            More than just <br className="hidden sm:block"/>
                             <span className="italic font-serif text-neutral-600">pixels on a screen.</span>
                         </h2>
                     </div>
@@ -75,7 +75,7 @@ export default function LandingPage() {
                                 }
                             }
                         }}
-                        className="grid grid-cols-1 md:grid-cols-3 gap-6 grid-rows-2 h-auto md:h-[600px]"
+                        className="grid grid-cols-1 md:grid-cols-3 gap-6 md:grid-rows-2 h-auto"
                     >
                         {/* Large Card */}
                         <motion.div 
@@ -83,21 +83,21 @@ export default function LandingPage() {
                                 hidden: { opacity: 0, y: 40 },
                                 visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
                             }}
-                            className="md:col-span-2 md:row-span-2 bg-[#F5F5F7] rounded-3xl p-10 relative overflow-hidden group border border-black/5 shadow-xl transition-all duration-500"
+                            className="md:col-span-2 md:row-span-2 bg-[#F5F5F7] rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 relative overflow-hidden group border border-black/5 shadow-xl transition-all duration-500"
                             whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 300, damping: 20 } }}
                         >
                             <div className="relative z-10">
                                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform">
                                     <PenTool className="text-indigo-500" />
                                 </div>
-                                <h3 className="text-3xl font-bold mb-4 text-neutral-900">Advanced Simulation Engine</h3>
-                                <p className="text-neutral-500 text-lg max-w-md leading-relaxed">
+                                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 text-neutral-900">Advanced Simulation Engine</h3>
+                                <p className="text-neutral-500 text-sm sm:text-base md:text-lg max-w-md leading-relaxed">
                                     Total control over your handwriting's soul. Fine-tune organic **Jitter**, **Pressure**, and **Smudge** levels to create a document that looks indistinguishable from paper.
                                 </p>
                             </div>
                             
                             {/* Visual Decoration */}
-                            <div className="absolute right-0 bottom-0 w-2/3 h-2/3 translate-x-12 translate-y-12 transition-transform duration-700 group-hover:-translate-x-4 group-hover:-translate-y-4">
+                            <div className="absolute right-0 bottom-0 w-2/3 h-2/3 translate-x-12 translate-y-12 transition-transform duration-700 group-hover:-translate-x-4 group-hover:-translate-y-4 hidden sm:block">
                                 <div className="w-full h-full bg-white rounded-tl-[3rem] shadow-2xl p-6 border border-black/5 -rotate-6 group-hover:-rotate-3 transition-all duration-500">
                                     <div className="w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[16px_16px] p-8 font-handwriting text-3xl text-neutral-900 leading-loose">
                                         "The details are not the details. <br/> They make the design."
@@ -113,7 +113,7 @@ export default function LandingPage() {
                                 visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
                             }}
                             whileHover={{ scale: 1.05, transition: { type: "spring", stiffness: 300, damping: 20 } }}
-                            className="bg-[#1A1F2C] text-white rounded-3xl p-8 relative overflow-hidden group shadow-xl transition-all duration-500"
+                            className="bg-[#1A1F2C] text-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 md:p-8 relative overflow-hidden group shadow-xl transition-all duration-500"
                         >
                              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
                              <div className="relative z-10">
@@ -130,7 +130,7 @@ export default function LandingPage() {
                                 visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
                             }}
                             whileHover={{ scale: 1.05, transition: { type: "spring", stiffness: 300, damping: 20 } }}
-                            className="bg-white border border-black/5 rounded-3xl p-8 relative overflow-hidden group shadow-xl transition-all duration-500"
+                            className="bg-white border border-black/5 rounded-2xl sm:rounded-3xl p-5 sm:p-6 md:p-8 relative overflow-hidden group shadow-xl transition-all duration-500"
                         >
                             <div className="relative z-10">
                                 <Type className="mb-4 text-indigo-500 group-hover:scale-110 transition-transform" />
@@ -145,7 +145,7 @@ export default function LandingPage() {
             <AboutSection />
 
             {/* --- CALL TO ACTION --- */}
-            <section className="py-20 px-6 relative overflow-hidden">
+            <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 relative overflow-hidden">
                 <div className="max-w-4xl mx-auto text-center relative z-10">
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0, y: 40 }}
@@ -157,15 +157,15 @@ export default function LandingPage() {
                             damping: 20,
                             duration: 0.7 
                         }}
-                        className="bg-neutral-900 text-white rounded-3xl p-10 md:p-16 shadow-2xl relative overflow-hidden group/cta"
+                        className="bg-neutral-900 text-white rounded-2xl sm:rounded-3xl p-6 sm:p-10 md:p-16 shadow-2xl relative overflow-hidden group/cta"
                     >
                          {/* Abstract BG */}
                          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] group-hover/cta:scale-110 transition-transform duration-1000" />
                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/20 rounded-full blur-[120px]" />
 
                          <div className="relative z-10">
-                            <h2 className="text-4xl md:text-6xl font-display font-bold mb-6 tracking-tight">
-                                Start your <br/>
+                            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-display font-bold mb-4 sm:mb-6 tracking-tight">
+                                Start your <br className="hidden sm:block"/>
                                 <span className="font-serif italic text-accent">masterpiece.</span>
                             </h2>
                             <p className="text-base md:text-lg text-white/60 mb-8 max-w-xl mx-auto">
@@ -176,7 +176,7 @@ export default function LandingPage() {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                                className="px-10 py-5 bg-white text-neutral-900 rounded-full font-bold text-lg hover:shadow-[0_0_50px_-5px_rgba(255,255,255,0.4)] transition-all flex items-center gap-3 mx-auto group"
+                                className="px-6 sm:px-8 md:px-10 py-4 sm:py-5 bg-white text-neutral-900 rounded-full font-bold text-base sm:text-lg hover:shadow-[0_0_50px_-5px_rgba(255,255,255,0.4)] transition-all flex items-center gap-2 sm:gap-3 mx-auto group"
                             >
                                 <span className="flex items-center gap-2">
                                     Launch Editor <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -210,7 +210,7 @@ function HeroSection({ onStartClick }: { onStartClick: () => void }) {
     return (
         <section 
             onMouseMove={handleMouseMove}
-            className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden perspective-1000"
+            className="relative min-h-screen-safe flex flex-col items-center justify-center px-4 sm:px-6 overflow-hidden perspective-1000"
         >
             {/* 3D Background Plane */}
             <motion.div 
@@ -271,27 +271,27 @@ function HeroSection({ onStartClick }: { onStartClick: () => void }) {
                 <div className="text-center transform-style-3d">
                     <motion.h1 
                         style={{ transform: "translateZ(60px)" }}
-                        className="text-8xl md:text-[12rem] font-display font-medium leading-[0.8] tracking-tight text-neutral-900 mb-2 drop-shadow-xl"
+                        className="text-4xl sm:text-6xl md:text-8xl lg:text-[12rem] font-display font-medium leading-[0.8] tracking-tight text-neutral-900 mb-2 drop-shadow-xl"
                     >
                         Handwritten.
                     </motion.h1>
 
                     <motion.p 
                         style={{ transform: "translateZ(40px)" }}
-                        className="font-script text-5xl md:text-7xl mt-6 bg-linear-to-r from-purple-600 to-indigo-500 bg-clip-text text-transparent pb-4"
+                        className="font-script text-2xl sm:text-3xl md:text-5xl lg:text-7xl mt-4 sm:mt-6 text-indigo-600/80 pb-4"
                     >
                         Text to Handwriting Converter
                     </motion.p>
                     
                     <motion.div
                         style={{ transform: "translateZ(80px)" }}
-                        className="mt-16"
+                        className="mt-8 sm:mt-12 md:mt-16"
                     >
                         <motion.button
                             onClick={onStartClick}
                             whileHover={{ scale: 1.1, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)" }}
                             whileTap={{ scale: 0.95 }}
-                            className="px-14 py-6 bg-neutral-900 text-white rounded-full font-bold text-xl shadow-2xl hover:bg-black transition-all flex items-center gap-4 mx-auto"
+                            className="px-8 sm:px-10 md:px-14 py-4 sm:py-5 md:py-6 bg-neutral-900 text-white rounded-full font-bold text-base sm:text-lg md:text-xl shadow-2xl hover:bg-black transition-all flex items-center gap-2 sm:gap-3 md:gap-4 mx-auto"
                         >
                             <span>Start Writing</span>
                             <ArrowRight size={24} />
@@ -321,12 +321,12 @@ function AboutSection() {
         <section 
             id="about"
             onMouseMove={handleMouseMove}
-            className="relative py-28 px-6 perspective-1000 overflow-hidden"
+            className="relative py-16 sm:py-20 md:py-28 px-4 sm:px-6 perspective-1000 overflow-hidden"
         >
              <div className="max-w-7xl mx-auto relative z-10">
                 <div className="mb-20 text-center max-w-2xl mx-auto">
                     <span className="text-indigo-500 font-bold tracking-widest uppercase text-xs mb-4 block">The Creator</span>
-                    <h2 className="text-5xl font-display font-bold text-neutral-900">Behind the Ink</h2>
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-neutral-900">Behind the Ink</h2>
                 </div>
 
                 <motion.div 
@@ -337,16 +337,16 @@ function AboutSection() {
                     style={{ rotateX, rotateY }}
                     className="relative w-full max-w-6xl mx-auto perspective-1000"
                 >
-                    <div className="relative bg-white rounded-3xl shadow-2xl border border-black/5 p-2 md:p-4 transition-transform duration-200 ease-out">
+                    <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-black/5 p-2 md:p-4 transition-transform duration-200 ease-out">
                          <div className="absolute top-6 left-6 flex gap-2 z-20">
                             <div className="w-3 h-3 rounded-full bg-red-400" />
                             <div className="w-3 h-3 rounded-full bg-yellow-400" />
                             <div className="w-3 h-3 rounded-full bg-green-400" />
                          </div>
 
-                         <div className="w-full bg-[#FAFAFA] rounded-md overflow-hidden relative min-h-[500px] flex flex-col md:flex-row">
-                            <div className="w-full md:w-1/3 bg-white border-r border-black/5 p-8 flex flex-col items-center pt-20">
-                                <div className="relative w-48 h-48 mb-8">
+                         <div className="w-full bg-[#FAFAFA] rounded-md overflow-hidden relative min-h-[400px] sm:min-h-[500px] flex flex-col md:flex-row">
+                                <div className="w-full md:w-1/3 bg-white border-b md:border-b-0 md:border-r border-black/5 p-6 sm:p-8 flex flex-col items-center pt-10 sm:pt-16 md:pt-20">
+                                    <div className="relative w-28 h-28 sm:w-36 sm:h-36 md:w-48 md:h-48 mb-4 sm:mb-6 md:mb-8">
                                     <div className="absolute inset-0 bg-accent/10 rounded-full blur-2xl transform translate-y-4" />
                                     <img src={photo} alt="Arsh Verma" className="w-full h-full object-cover rounded-full border-4 border-white shadow-xl relative z-10" />
                                     <div className="absolute bottom-4 right-4 z-20 bg-white p-2 rounded-full shadow-md"><span className="text-2xl">👋</span></div>
@@ -402,9 +402,9 @@ function SocialLink({ href, icon: Icon }: { href: string, icon: React.ElementTyp
             href={href} 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="w-10 h-10 bg-white border border-black/5 rounded-full flex items-center justify-center text-ink/60 hover:text-ink hover:bg-gray-50 transition-all shadow-xl"
+            className="w-12 h-12 bg-white border border-black/5 rounded-full flex items-center justify-center text-ink/60 hover:text-ink hover:bg-gray-50 transition-all shadow-xl"
         >
-            <Icon size={18} />
+            <Icon size={20} />
         </motion.a>
     );
 }

@@ -33,7 +33,7 @@ export default function ExportModal({
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4">
                     {/* BACKDROP */}
                     <motion.div 
                         initial={{ opacity: 0 }}
@@ -49,7 +49,7 @@ export default function ExportModal({
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="relative w-full max-w-md bg-white rounded-3xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.25)] border border-black/5 overflow-hidden p-10 flex flex-col items-center text-center"
+                        className="relative w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.25)] border border-black/5 overflow-hidden p-6 sm:p-10 flex flex-col items-center text-center max-h-[90vh] overflow-y-auto"
                     >
                         {/* CLOSE BUTTON */}
                         {(status === 'complete' || status === 'error' || status === 'idle') && (
@@ -62,7 +62,7 @@ export default function ExportModal({
                         )}
 
                         {/* ICON / PROGRESS RING */}
-                        <div className="relative w-32 h-32 mb-8 flex items-center justify-center">
+                        <div className="relative w-24 h-24 sm:w-32 sm:h-32 mb-6 sm:mb-8 flex items-center justify-center">
                             <svg className="w-full h-full transform -rotate-90">
                                 <circle
                                     cx="64"
@@ -106,10 +106,10 @@ export default function ExportModal({
                         </div>
 
                         {/* CONTENT */}
-                        <h3 className="text-2xl font-black text-neutral-900 mb-2">
+                        <h3 className="text-xl sm:text-2xl font-black text-neutral-900 mb-2">
                             {status === 'complete' ? 'Success!' : isPDF ? 'Export as PDF' : 'Export as ZIP'}
                         </h3>
-                        <p className="text-neutral-400 text-sm font-medium tracking-tight h-5 mb-8">
+                        <p className="text-neutral-400 text-xs sm:text-sm font-medium tracking-tight h-5 mb-6 sm:mb-8">
                             {getStatusMessage()}
                         </p>
 

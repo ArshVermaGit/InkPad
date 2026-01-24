@@ -1,9 +1,9 @@
 import { useState, useMemo, useDeferredValue, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
-    Settings2, FileText, RefreshCw, Type, 
+    Settings2, FileText, RefreshCw, 
     AlignLeft, AlignCenter, AlignRight, AlignJustify, 
-    Sparkles, Ruler, Zap, Download, Wand2, Clock
+    Sparkles, Download, Wand2, Clock
 } from 'lucide-react';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import html2canvas from 'html2canvas';
@@ -212,9 +212,11 @@ export default function EditorPage() {
         pressure, setPressure,
         smudge, setSmudge,
         baseline, setBaseline,
-        textAlign, setTextAlign,
         history: storeHistory, addToHistory
     } = useStore();
+
+    // Text Align state (used for layout calculations)
+    const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right' | 'justify'>('left');
 
     // Local UI State
     const [progress, setProgress] = useState(0);
@@ -225,6 +227,9 @@ export default function EditorPage() {
     const [isHumanizing, setIsHumanizing] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState<{ type: 'export', format: 'pdf' | 'zip' } | null>(null);
+    const [isDockExpanded, setIsDockExpanded] = useState(false);
+    const [activeDockTab, setActiveDockTab] = useState<'content' | 'style' | 'effects' | 'export'>('content');
+    const [isInputFocused, setIsInputFocused] = useState(false);
 
     // Initial Login Pop-up (Handled by AuthContext, but we ensure persistence of intent)
     useEffect(() => {
@@ -489,230 +494,295 @@ export default function EditorPage() {
 
     return (
         <div className="relative selection:bg-indigo-500/30 font-sans">
-            {/* MAIN WINDOW CONTAINER */}
-            <div className="w-full max-w-[1600px] h-[85vh] bg-white rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.12)] border border-black/5 flex overflow-hidden relative z-10 transition-all">
-                
-                {/* SIDEBAR */}
-                <motion.aside 
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
-                    className="w-80 bg-[#F9F9F9] border-r border-black/5 flex flex-col shrink-0 overflow-hidden"
+            {/* 
+               MASTER DOCK - The Unified Control Center
+               Sticks to the bottom-right with premium glassmorphism.
+            */}
+            <div className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-100 flex flex-col items-end gap-4">
+                {/* 1. THE DOCK PANEL */}
+                <motion.div 
+                    initial={false}
+                    animate={{ 
+                        width: isDockExpanded ? (window.innerWidth < 1024 ? 'calc(100vw - 48px)' : '420px') : '0px',
+                        height: isDockExpanded ? 'auto' : '0px',
+                        opacity: isDockExpanded ? 1 : 0,
+                        scale: isDockExpanded ? 1 : 0.9,
+                        y: isDockExpanded ? 0 : 20
+                    }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    className={`glass-premium rounded-4xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden border border-white/40 ${
+                        isDockExpanded ? 'p-0' : 'p-0 pointer-events-none'
+                    }`}
                 >
-                    {/* MACOS DOTS - Fixed Header */}
-                    <div className="px-8 pt-8 shrink-0">
-                         <div className="flex gap-2 mb-10">
-                            <div className="w-3 h-3 rounded-full bg-[#FF5F57] shadow-inner" />
-                            <div className="w-3 h-3 rounded-full bg-[#FFBD2E] shadow-inner" />
-                            <div className="w-3 h-3 rounded-full bg-[#28C840] shadow-inner" />
-                        </div>
+                    {/* MODAL HEADER / TABS */}
+                    <div className="flex px-4 pt-2 border-b border-black/5 bg-white/40">
+                        {[
+                            { id: 'content' as const, icon: FileText, label: 'Content' },
+                            { id: 'style' as const, label: 'Style', icon: Settings2 },
+                            { id: 'effects' as const, label: 'Effects', icon: Sparkles },
+                            { id: 'export' as const, label: 'Save', icon: Download }
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveDockTab(tab.id)}
+                                className={`flex-1 py-4 flex flex-col items-center gap-1.5 transition-all relative ${
+                                    activeDockTab === tab.id 
+                                        ? 'text-indigo-600' 
+                                        : 'text-neutral-400 opacity-60 hover:opacity-100'
+                                }`}
+                            >
+                                <tab.icon size={18} />
+                                <span className="text-[8px] font-black uppercase tracking-[0.15em]">{tab.label}</span>
+                                {activeDockTab === tab.id && (
+                                    <motion.div layoutId="dockTab" className="absolute bottom-0 left-4 right-4 h-1 bg-indigo-600 rounded-full" />
+                                )}
+                            </button>
+                        ))}
                     </div>
 
-                    {/* Scrollable Content */}
-                    <div className="flex-1 overflow-y-auto px-8 pb-8 custom-scrollbar">
-                        <motion.div 
-                            initial="hidden"
-                            animate="visible"
-                            variants={{
-                                visible: { transition: { staggerChildren: 0.1 } }
-                            }}
-                            className="flex flex-col gap-6"
-                        >
-                        {/* 1. DOCUMENT HEADING (Moved to Top) */}
-                        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-3"><Type size={12}/> Document Heading</label>
-                             <div className="space-y-3 p-4 bg-white border border-black/5 rounded-2xl shadow-xs">
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <input type="checkbox" checked={showHeader} onChange={e=>setPageOptions({ showHeader:e.target.checked })} className="w-4 h-4 rounded border-black/10 text-neutral-900 focus:ring-0 transition-all"/><span className="text-[11px] font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors uppercase tracking-tight">Enable Heading</span>
-                                </label>
-                                {showHeader && (
-                                    <textarea 
-                                        value={headerText} 
-                                        onChange={(e) => setPageOptions({ headerText: e.target.value })}
-                                        className="w-full h-20 p-3 bg-[#F9F9F9] border border-black/5 rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500/20 resize-none font-sans transition-all"
-                                        placeholder="Type your heading here..."
-                                    />
-                                )}
-                             </div>
-                        </motion.div>
-
-                        <div className="h-px bg-black/5 w-full my-1" />
-
-                        {/* 2. THE SOURCE */}
-                        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-3"><FileText size={12}/> The Source</label>
-                            <textarea 
-                                ref={sourceRef}
-                                value={text} 
-                                onChange={(e) => setText(normalizeInput(e.target.value))} 
-                                className="w-full h-48 p-4 bg-white border border-black/5 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/20 resize-none font-sans shadow-xs transition-all" 
-                                placeholder="Start writing..."
-                            />
-                        </motion.div>
-
-                        {/* 3. AI HUMANIZER */}
-                         <div className="relative">
-                              <motion.button 
-                                 whileHover={{ scale: 1.02 }}
-                                 whileTap={{ scale: 0.98 }}
-                                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                                 onClick={handleHumanize}
-                                 disabled={isHumanizing || !text.trim()}
-                                 className="w-full py-4 px-6 rounded-2xl bg-white border border-black/5 shadow-xs hover:shadow-lg disabled:opacity-50 disabled:translate-y-0 transition-all group overflow-hidden"
-                              >
-                                 <div className="absolute inset-0 bg-[linear-gradient(110deg,#000103,45%,#1e2631,55%,#000103)] bg-size-[200%_100%] animate-shimmer opacity-0 group-hover:opacity-5 transition-opacity" />
-                                 <div className="flex items-center justify-between relative z-10">
-                                     <div className="flex items-center gap-3">
-                                         <div className="p-2 bg-neutral-900 rounded-xl text-white">
-                                             <Wand2 size={16} className={isHumanizing ? 'animate-spin' : ''}/>
-                                         </div>
-                                         <div className="text-left leading-tight">
-                                             <div className="text-[11px] font-black uppercase tracking-widest text-neutral-900 flex items-center gap-1.5">
-                                                 AI Humanizer
-                                                 <Sparkles size={10} className="text-amber-500 animate-pulse" />
-                                             </div>
-                                             <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-tight">One-Click Organic Rewriting</div>
-                                         </div>
-                                     </div>
-                                     {isHumanizing && <RefreshCw size={14} className="animate-spin text-neutral-300" />}
-                                 </div>
-                              </motion.button>
-                         </div>
-
-                        <div className="h-px bg-black/5 w-full my-2" />
-
-                        {/* 4. PAPER & SETUP (Cleaned up) */}
-                        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4"><Ruler size={12}/> Paper & Setup</label>
-                            <div className="grid grid-cols-1 gap-2">
-                                <div className="flex p-1 bg-white border border-black/5 rounded-xl shadow-xs">
-                                     {PAPERS.map(p=>(
+                    {/* DOCK CONTENT AREA */}
+                    <div className="p-8 max-h-[60vh] overflow-y-auto scrollbar-hide space-y-8">
+                        {activeDockTab === 'content' && (
+                            <div className="space-y-6">
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Your Masterpiece</label>
                                         <button 
-                                            key={p.id} 
-                                            onClick={()=>setPaper(p)} 
-                                            className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${paper.id===p.id?'bg-neutral-900 text-white shadow-lg':'text-neutral-400 hover:text-neutral-900'}`}
+                                            onClick={handleHumanize}
+                                            disabled={isHumanizing || !text.trim()}
+                                            className="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-all disabled:opacity-30 flex items-center gap-2"
                                         >
-                                            {p.name}
+                                            <Wand2 size={10} className={isHumanizing ? 'animate-spin' : ''} />
+                                            {isHumanizing ? 'Thinking...' : 'AI Humanize'}
                                         </button>
-                                     ))}
+                                    </div>
+                                    <textarea 
+                                        value={text} 
+                                        onChange={(e) => setText(normalizeInput(e.target.value))}
+                                        onFocus={() => setIsInputFocused(true)}
+                                        onBlur={() => setIsInputFocused(false)}
+                                        className="w-full h-48 p-5 bg-white/50 border border-black/5 rounded-4xl text-sm leading-relaxed resize-none focus:outline-none focus:ring-4 focus:ring-indigo-500/5 placeholder:text-neutral-300 shadow-inner"
+                                        placeholder="Start typing your story..."
+                                    />
                                 </div>
-                                <div className="mt-4">
-                                    <label className="flex items-center gap-3 cursor-pointer group">
-                                        <input type="checkbox" checked={showPageNumbers} onChange={e=>setPageOptions({ showPageNumbers:e.target.checked })} className="w-4 h-4 rounded border-black/10 text-neutral-900 focus:ring-0 transition-all"/><span className="text-[11px] font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors uppercase tracking-tight">Show Page Numbers</span>
-                                    </label>
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4 block">Document Heading</label>
+                                    <div className="flex items-center gap-4 p-4 bg-white/40 rounded-2xl border border-black/5">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={showHeader} 
+                                            onChange={e => setPageOptions({ showHeader: e.target.checked })} 
+                                            className="w-5 h-5 rounded-lg border-black/10 text-indigo-600 focus:ring-0"
+                                        />
+                                        <input 
+                                            value={headerText} 
+                                            onChange={e => setPageOptions({ headerText: e.target.value })}
+                                            placeholder="Enter Heading..." 
+                                            className="flex-1 bg-transparent border-none text-sm font-bold focus:outline-none"
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        </motion.div>
+                        )}
 
-                        <div className="h-px bg-black/5 w-full my-2" />
+                        {activeDockTab === 'style' && (
+                            <div className="space-y-8">
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4 block">Handwriting Style</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {FONTS.map(f => (
+                                            <button 
+                                                key={f.name}
+                                                onClick={() => setFont(f.name)}
+                                                className={`p-4 rounded-2xl border transition-all text-[11px] font-bold ${
+                                                    font === f.name 
+                                                        ? 'bg-neutral-900 text-white border-neutral-900 shadow-xl' 
+                                                        : 'bg-white/50 border-black/5 text-neutral-600 hover:bg-white'
+                                                }`}
+                                            >
+                                                {f.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="space-y-6">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Alignment</span>
+                                            <div className="flex gap-1.5 p-1 bg-white/40 rounded-xl border border-black/5">
+                                                {[
+                                                    { id: 'left' as const, icon: AlignLeft },
+                                                    { id: 'center' as const, icon: AlignCenter },
+                                                    { id: 'right' as const, icon: AlignRight },
+                                                    { id: 'justify' as const, icon: AlignJustify }
+                                                ].map(opt => (
+                                                    <button 
+                                                        key={opt.id} 
+                                                        onClick={() => setTextAlign(opt.id)}
+                                                        className={`p-1.5 rounded-lg transition-all ${textAlign === opt.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-neutral-400 hover:text-neutral-600'}`}
+                                                    >
+                                                        <opt.icon size={14} />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Font Size</span>
+                                            <span className="text-xs font-bold text-indigo-600">{fontSize}px</span>
+                                        </div>
+                                        <input type="range" min="14" max="64" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="w-full h-1.5 bg-black/5 rounded-full appearance-none accent-indigo-600 cursor-pointer" />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Ink Color</span>
+                                        <div className="flex gap-3 bg-white/40 p-2 rounded-full border border-black/5">
+                                            {COLORS.map(c => (
+                                                <button 
+                                                    key={c.name} 
+                                                    onClick={() => setColor(c.value)}
+                                                    className={`w-6 h-6 rounded-full border-2 transition-all ${color === c.value ? 'border-neutral-900 scale-125 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                                    style={{ backgroundColor: c.value }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
-                        {/* 5. TYPOGRAPHY */}
-                        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4"><Settings2 size={12}/> Typography</label>
-                            <div className="space-y-4">
-                                <div className="flex bg-white border border-black/5 p-1 rounded-xl shadow-xs">
-                                    {[{id:'left', icon:AlignLeft},{id:'center', icon:AlignCenter},{id:'right', icon:AlignRight},{id:'justify', icon:AlignJustify}].map(opt=>(
-                                        <button key={opt.id} onClick={()=>setTextAlign(opt.id as 'left' | 'center' | 'right' | 'justify')} className={`flex-1 p-2 flex justify-center rounded-lg transition-all ${textAlign===opt.id?'bg-neutral-900 text-white shadow-lg':'text-neutral-400 hover:text-neutral-900'}`}><opt.icon size={14}/></button>
+                        {activeDockTab === 'effects' && (
+                            <div className="space-y-8">
+                                <div className="space-y-6">
+                                    {[
+                                        { label: 'Human Jitter', value: jitter, setter: setJitter, min: 0, max: 6, step: 0.5 },
+                                        { label: 'Pen Pressure', value: pressure, setter: setPressure, min: 0, max: 1, step: 0.1 },
+                                        { label: 'Ink Smudge', value: smudge, setter: setSmudge, min: 0, max: 2, step: 0.1 },
+                                        { label: 'Baseline Warp', value: baseline, setter: setBaseline, min: -10, max: 20, step: 1 }
+                                    ].map(ef => (
+                                        <div key={ef.label}>
+                                            <div className="flex justify-between items-center mb-3">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">{ef.label}</label>
+                                                <span className="text-xs font-bold text-indigo-600">{ef.label.includes('Pressure') ? Math.round(ef.value*100)+'%' : ef.value}</span>
+                                            </div>
+                                            <input type="range" min={ef.min} max={ef.max} step={ef.step} value={ef.value} onChange={e => ef.setter(Number(e.target.value))} className="w-full h-1.5 bg-black/5 rounded-full appearance-none accent-indigo-600 cursor-pointer" />
+                                        </div>
                                     ))}
                                 </div>
-                                <select value={font} onChange={e=>setFont(e.target.value)} className="w-full p-3 bg-white border border-black/5 rounded-xl text-[11px] font-bold text-neutral-700 shadow-xs focus:outline-none">{FONTS.map(f=><option key={f.name} value={f.name}>{f.label}</option>)}</select>
-                                <div className="space-y-4">
-                                    <div><span className="text-[10px] font-bold text-neutral-400 uppercase tracking-tighter mb-2 flex justify-between">Font Size <span>{fontSize}px</span></span><input type="range" min="14" max="64" value={fontSize} onChange={e=>setFontSize(Number(e.target.value))} className="w-full h-1 bg-black/5 rounded-full appearance-none accent-neutral-900 cursor-pointer"/></div>
-                                    <div><span className="text-[10px] font-bold text-neutral-400 uppercase tracking-tighter mb-2 flex justify-between">Line Nudge <span>{baseline}</span></span><input type="range" min="-10" max="30" value={baseline} onChange={e=>setBaseline(Number(e.target.value))} className="w-full h-1 bg-black/5 rounded-full appearance-none accent-neutral-900 cursor-pointer"/></div>
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4 block">Paper Texture</label>
+                                    <div className="flex gap-3 p-1 bg-white/40 border border-black/5 rounded-2xl">
+                                        {PAPERS.map(p => (
+                                            <button 
+                                                key={p.id} 
+                                                onClick={() => setPaper(p)}
+                                                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                                                    paper.id === p.id ? 'bg-neutral-900 text-white shadow-xl' : 'text-neutral-400 hover:text-neutral-900'
+                                                }`}
+                                            >
+                                                {p.name}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div className="flex gap-2 pt-2">{COLORS.map(c=>(<button key={c.name} onClick={()=>setColor(c.value)} className={`w-5 h-5 rounded-full border-2 ${color===c.value?'border-neutral-900 scale-110':'border-transparent'} shadow-xs transition-all`} style={{backgroundColor:c.value}}/>))}</div>
-                            </div>
-                        </motion.div>
-
-                        <div className="h-px bg-black/5 w-full my-2" />
-
-                        {/* 6. RENDERING */}
-                        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4"><Sparkles size={12}/> Rendering</label>
-                            <div className="space-y-4">
-                                 <motion.button 
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                                    onClick={() => setRandomSeed(prev => prev + 1)}
-                                    className="w-full py-3 bg-white border border-black/5 text-[10px] font-bold uppercase tracking-widest text-neutral-600 rounded-xl hover:bg-neutral-900 hover:text-white transition-all flex items-center justify-center gap-2 shadow-xs group"
-                                >
-                                    <RefreshCw size={12} className={`group-hover:rotate-180 transition-transform duration-500 ${exportStatus === 'processing' ? 'animate-spin' : ''}`}/> Re-Randomize
-                                </motion.button>
-                                <div className="space-y-4">
-                                    <div><span className="text-[10px] font-bold text-neutral-400 uppercase tracking-tighter mb-2 flex justify-between">Jitter <span>{jitter}</span></span><input type="range" min="0" max="6" step="0.5" value={jitter} onChange={(e) => setJitter(Number(e.target.value))} className="w-full h-1 bg-black/5 rounded-full appearance-none accent-neutral-900 cursor-pointer" /></div>
-                                    <div><span className="text-[10px] font-bold text-neutral-400 uppercase tracking-tighter mb-2 flex justify-between">Pressure <span>{Math.round(pressure*100)}%</span></span><input type="range" min="0" max="1" step="0.1" value={pressure} onChange={(e) => setPressure(Number(e.target.value))} className="w-full h-1 bg-black/5 rounded-full appearance-none accent-neutral-900 cursor-pointer" /></div>
-                                    <div><span className="text-[10px] font-bold text-neutral-400 uppercase tracking-tighter mb-2 flex justify-between">Smudge <span>{smudge}</span></span><input type="range" min="0" max="2" step="0.1" value={smudge} onChange={(e) => setSmudge(Number(e.target.value))} className="w-full h-1 bg-black/5 rounded-full appearance-none accent-neutral-900 cursor-pointer" /></div>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        <div className="h-px bg-black/5 w-full my-2" />
-
-                        {/* 7. EFFECTS */}
-                        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4"><Zap size={12}/> Effects</label>
-                            <div className="space-y-4">
-                                <input 
-                                    type="text" 
-                                    value={marginNote} 
-                                    onChange={(e) => setMarginNote(e.target.value)}
-                                    className="w-full p-3 bg-white border border-black/5 rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500/20 shadow-xs transition-all"
-                                    placeholder="Margin Note..."
-                                />
-                                <div className="space-y-3">
-                                    <label className="flex items-center gap-3 cursor-pointer group">
-                                        <input type="checkbox" checked={showCoffeeStain} onChange={(e) => setShowCoffeeStain(e.target.checked)} className="w-4 h-4 rounded border-black/10 text-neutral-900 focus:ring-0 transition-all"/><span className="text-[11px] font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors uppercase">Coffee Stain</span>
-                                    </label>
-                                    <label className="flex items-center gap-3 cursor-pointer group">
-                                        <input type="checkbox" checked={showStickyNote} onChange={(e) => setShowStickyNote(e.target.checked)} className="w-4 h-4 rounded border-black/10 text-neutral-900 focus:ring-0 transition-all"/><span className="text-[11px] font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors uppercase">Sticky Note</span>
-                                    </label>
+                                <div className="space-y-5">
+                                    <input 
+                                        value={marginNote} 
+                                        onChange={e => setMarginNote(e.target.value)}
+                                        placeholder="Add Margin Note..."
+                                        className="w-full p-4 bg-white/50 border border-black/5 rounded-2xl text-[11px] font-bold focus:outline-none"
+                                    />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <label className="flex items-center gap-3 p-3 bg-white/40 rounded-2xl border border-black/5 cursor-pointer">
+                                            <input type="checkbox" checked={showCoffeeStain} onChange={e => setShowCoffeeStain(e.target.checked)} className="w-4 h-4 rounded-lg border-black/10 text-indigo-600 focus:ring-0" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-neutral-600">Coffee Stain</span>
+                                        </label>
+                                        <label className="flex items-center gap-3 p-3 bg-white/40 rounded-2xl border border-black/5 cursor-pointer">
+                                            <input type="checkbox" checked={showStickyNote} onChange={e => setShowStickyNote(e.target.checked)} className="w-4 h-4 rounded-lg border-black/10 text-indigo-600 focus:ring-0" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-neutral-600">Sticky Note</span>
+                                        </label>
+                                    </div>
                                     {showStickyNote && (
                                         <textarea 
-                                            value={stickyNoteText} 
-                                            onChange={(e) => setStickyNoteText(e.target.value)}
-                                            className="w-full h-16 p-3 bg-yellow-50/50 border border-yellow-200/50 rounded-xl text-xs font-medium focus:outline-none resize-none shadow-xs transition-all"
-                                            placeholder="Note text..."
+                                            value={stickyNoteText}
+                                            onChange={e => setStickyNoteText(e.target.value)}
+                                            placeholder="Type note content..."
+                                            className="w-full h-20 p-4 bg-yellow-50/50 border border-yellow-200/50 rounded-2xl text-[11px] font-bold focus:outline-none resize-none"
                                         />
                                     )}
                                 </div>
+                                <button 
+                                    onClick={() => setRandomSeed(prev => prev + 1)}
+                                    className="w-full py-4 bg-white border border-dashed border-black/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400 hover:text-neutral-900 hover:border-black/20 transition-all flex items-center justify-center gap-3"
+                                >
+                                    <RefreshCw size={14} />
+                                    Regenerate Simulation
+                                </button>
                             </div>
-                        </motion.div>
+                        )}
 
-                        <div className="mt-6 space-y-3">
-                            <motion.button 
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                                onClick={() => handleStartExport('pdf')} 
-                                disabled={exportStatus === 'processing'} 
-                                className="w-full py-4 rounded-2xl bg-neutral-900 text-white font-bold text-sm shadow-[0_10px_20px_-5px_rgba(0,0,0,0.2)] hover:shadow-2xl active:translate-y-0 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                            >
-                                <Download size={16} />
-                                Export PDF
-                            </motion.button>
-                            <motion.button 
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                                onClick={() => handleStartExport('zip')} 
-                                disabled={exportStatus === 'processing'} 
-                                className="w-full py-3 rounded-2xl bg-white border border-black/5 text-neutral-600 font-bold text-[11px] uppercase tracking-widest hover:bg-neutral-50 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                            >
-                                <Sparkles size={14} />
-                                Export Images (ZIP)
-                            </motion.button>
-                        </div>
-                        </motion.div>
+                        {activeDockTab === 'export' && (
+                            <div className="space-y-6">
+                                <div className="p-6 bg-indigo-50/50 rounded-4xl border border-indigo-100 flex flex-col items-center text-center">
+                                    <div className="p-4 bg-white rounded-3xl text-indigo-600 shadow-xl mb-4">
+                                        <Download size={32} />
+                                    </div>
+                                    <h4 className="text-sm font-black uppercase tracking-widest text-neutral-900 mb-2">Save Document</h4>
+                                    <p className="text-[11px] font-medium text-neutral-400 leading-relaxed uppercase tracking-tighter">Your simulation will be processed into high-resolution assets.</p>
+                                </div>
+                                <div className="grid grid-cols-1 gap-3">
+                                    <button 
+                                        onClick={() => handleStartExport('pdf')}
+                                        disabled={exportStatus === 'processing'}
+                                        className="w-full py-5 bg-neutral-900 text-white rounded-4xl font-bold text-sm shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3"
+                                    >
+                                        <FileText size={18} />
+                                        Export as PDF
+                                    </button>
+                                    <button 
+                                        onClick={() => handleStartExport('zip')}
+                                        disabled={exportStatus === 'processing'}
+                                        className="w-full py-5 bg-white border border-black/5 text-neutral-600 rounded-4xl font-bold text-sm hover:bg-neutral-50 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                    >
+                                        <Sparkles size={18} />
+                                        Batch Images (ZIP)
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                </motion.aside>
+                </motion.div>
+
+                {/* 2. THE FLOATING TRIGGER BUTTON */}
+                <motion.button 
+                    initial={false}
+                    animate={{ 
+                        opacity: isInputFocused ? 0 : 1,
+                        scale: isInputFocused ? 0.8 : 1,
+                        pointerEvents: isInputFocused ? 'none' : 'auto'
+                    }}
+                    onClick={() => setIsDockExpanded(!isDockExpanded)}
+                    className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90 ${
+                        isDockExpanded 
+                            ? 'bg-neutral-900 text-white rotate-90 transform' 
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/20'
+                    }`}
+                >
+                    <Settings2 size={isDockExpanded ? 24 : 28} className="transition-transform duration-500" />
+                </motion.button>
+            </div>
+                
+            {/* MAIN WINDOW CONTAINER - Optimized for full-width layout */}
+            <div className="w-full h-dvh bg-white flex flex-col overflow-hidden relative z-10">
 
                 {/* MAIN VISUAL PREVIEW AREA */}
                 <main className="flex-1 bg-[#FAFAFA] flex flex-col relative overflow-hidden group/canvas">
                     {/* TOP BAR / BREADCRUMB STYLE */}
-                    <div className="h-14 border-b border-black/5 flex items-center px-12 justify-between bg-white/50 backdrop-blur-sm relative z-30">
-                        <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">
-                            <FileText size={12} className="text-neutral-300"/> / Documents / {headerText || 'Untitled'}
+                    <div className="h-12 sm:h-14 border-b border-black/5 flex items-center px-4 sm:px-6 lg:px-12 justify-between bg-white/50 backdrop-blur-sm relative z-30">
+                        <div className="flex items-center gap-2 sm:gap-4 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-neutral-400 truncate">
+                            <FileText size={12} className="text-neutral-300 hidden sm:block"/>
+                            <span className="hidden sm:inline">/ Documents /</span>
+                            <span className="truncate max-w-[120px] sm:max-w-none">{headerText || 'Untitled'}</span>
                             {user && (
                                 <button 
                                     onClick={() => setIsHistoryOpen(true)}
@@ -729,7 +799,7 @@ export default function EditorPage() {
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-12 md:p-24 flex flex-col items-center gap-24 custom-scrollbar relative">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 md:p-12 lg:p-24 flex flex-col items-center gap-8 sm:gap-12 md:gap-24 custom-scrollbar relative pb-24 lg:pb-12">
                         {/* THE "DESK" TEXTURE */}
                         <div className="absolute inset-0 bg-[radial-gradient(#00000003_1px,transparent_1px)] bg-size-[32px_32px] pointer-events-none" />
 
@@ -880,6 +950,7 @@ export default function EditorPage() {
                     </div>
                 </main>
             </div>
+            
 
             <ExportModal 
                 key={isExportModalOpen ? 'open' : 'closed'}

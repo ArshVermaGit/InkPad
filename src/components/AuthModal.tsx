@@ -27,31 +27,31 @@ export default function AuthModal() {
     return (
         <AnimatePresence>
             {isAuthModalOpen && (
-                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-neutral-900/40 backdrop-blur-md">
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-neutral-900/40 backdrop-blur-md">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type: "spring", duration: 0.5 }}
                         ref={modalRef}
-                        className="bg-white rounded-4xl overflow-hidden shadow-2xl max-w-sm w-full relative border border-white/20"
+                        className="bg-white rounded-3xl sm:rounded-4xl overflow-hidden shadow-2xl w-full max-w-[calc(100vw-32px)] sm:max-w-sm relative border border-white/20"
                     >
                         {/* Close Button */}
                         <button 
                             onClick={() => setAuthModalOpen(false)}
-                            className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-full transition-colors z-10"
+                            className="absolute top-3 sm:top-4 right-3 sm:right-4 p-2 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-full transition-colors z-20"
                         >
                             <X size={20} />
                         </button>
 
-                        <div className="p-8 flex flex-col items-center text-center">
-                            <div className="w-20 h-20 mb-6 bg-indigo-50 rounded-3xl flex items-center justify-center shadow-inner relative overflow-hidden group">
+                        <div className="p-6 sm:p-8 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 mb-4 sm:mb-6 bg-indigo-50 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-inner relative overflow-hidden group">
                                 <div className="absolute inset-0 bg-linear-to-br from-white/50 to-transparent opacity-50" />
-                                <img src={logo} alt="Handwritten" className="w-12 h-12 object-contain relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
+                                <img src={logo} alt="Handwritten" className="w-10 h-10 sm:w-12 sm:h-12 object-contain relative z-10 drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
                             </div>
                             
-                            <h2 className="text-3xl font-display font-bold text-neutral-900 mb-3 tracking-tight">Welcome Back</h2>
-                            <p className="text-sm text-neutral-500 mb-10 leading-relaxed max-w-[260px]">
+                            <h2 className="text-2xl sm:text-3xl font-display font-bold text-neutral-900 mb-2 sm:mb-3 tracking-tight">Welcome Back</h2>
+                            <p className="text-xs sm:text-sm text-neutral-500 mb-8 sm:mb-10 leading-relaxed max-w-[260px]">
                                 Sign in to save your masterpieces and export without limits.
                             </p>
 

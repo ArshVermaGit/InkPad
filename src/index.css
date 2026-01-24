@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #FAF9F6;
-  --color-paper-dark: #F2F0E9;
-  
+  --color-paper: #faf9f6;
+  --color-paper-dark: #f2f0e9;
+
   --color-ink: #111827;
-  --color-ink-light: #4B5563;
-  
+  --color-ink-light: #4b5563;
+
   --color-accent: #6366f1;
   --color-accent-light: #818cf8;
 
-  --font-handwriting: 'Caveat', cursive;
-  --font-script: 'Dancing Script', cursive;
-  --font-print: 'Patrick Hand', cursive;
-  --font-display: 'Playfair Display', serif;
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-serif: 'Merriweather', serif;
+  --font-handwriting: "Caveat", cursive;
+  --font-script: "Dancing Script", cursive;
+  --font-print: "Patrick Hand", cursive;
+  --font-display: "Playfair Display", serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: "Merriweather", serif;
 }
 
 html {
@@ -23,41 +23,50 @@ html {
 }
 
 :root {
-  --color-paper: #FAF9F6;
-  --color-paper-dark: #F2F0E9;
+  --color-paper: #faf9f6;
+  --color-paper-dark: #f2f0e9;
   --color-ink: #111827;
-  --color-ink-light: #4B5563;
+  --color-ink-light: #4b5563;
   --color-accent: #6366f1;
   --color-accent-light: #818cf8;
 }
 
-@layer utilities {
-  .btn-primary {
-    @apply px-6 py-3 rounded-full bg-ink text-white font-bold transition-transform hover:scale-105 active:scale-95 shadow-lg shadow-ink/20;
-  }
-  
-  .btn-secondary {
-    @apply px-6 py-3 rounded-full bg-white border border-black/5 text-ink font-bold transition-colors hover:bg-gray-50;
-  }
+@utility btn-primary {
+  @apply px-6 py-3 rounded-full bg-ink text-white font-bold transition-transform hover:scale-105 active:scale-95 shadow-lg shadow-ink/20;
+}
 
-  .paper-card {
-    @apply bg-white rounded-2xl shadow-xl shadow-ink/5 border border-black/5 p-6;
-  }
-  
-  /* Smooth Marquee Animation */
-  .animate-marquee {
-    animation: marquee 30s linear infinite;
-    will-change: transform;
-  }
+@utility btn-secondary {
+  @apply px-6 py-3 rounded-full bg-white border border-black/5 text-ink font-bold transition-colors hover:bg-gray-50;
+}
+
+@utility paper-card {
+  @apply bg-white rounded-2xl shadow-xl shadow-ink/5 border border-black/5 p-6;
+}
+
+@utility animate-marquee {
+  animation: marquee 30s linear infinite;
+  will-change: transform;
 }
 
 body {
-  @apply bg-paper text-ink antialiased;
-  font-feature-settings: "rlig" 1, "calt" 1;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings:
+    "rlig" 1,
+    "calt" 1;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  @apply font-display tracking-tight text-ink;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+  color: var(--color-ink);
 }
 
 @keyframes fadeInUp {
@@ -72,23 +81,27 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes marquee {
-  0% { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-50%, 0, 0); }
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
 }
-
 
 /* Page Stack Depth Effect */
 .paper-stack {
   position: relative;
-  box-shadow: 
-    0 1px 1px rgba(0,0,0,0.11), 
-    0 2px 2px rgba(0,0,0,0.11), 
-    0 4px 4px rgba(0,0,0,0.11), 
-    0 8px 8px rgba(0,0,0,0.11), 
-    0 16px 16px rgba(0,0,0,0.11);
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.11),
+    0 2px 2px rgba(0, 0, 0, 0.11),
+    0 4px 4px rgba(0, 0, 0, 0.11),
+    0 8px 8px rgba(0, 0, 0, 0.11),
+    0 16px 16px rgba(0, 0, 0, 0.11);
 }
 
-.paper-stack::after, .paper-stack::before {
+.paper-stack::after,
+.paper-stack::before {
   content: "";
   position: absolute;
   width: 100%;
@@ -97,7 +110,7 @@ h1, h2, h3, h4, h5, h6 {
   top: 0;
   z-index: -1;
   background: inherit;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: inherit;
   transition: transform 0.3s ease;
 }
@@ -131,4 +144,202 @@ h1, h2, h3, h4, h5, h6 {
 
 .animate-fade-in-up {
   animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* ===== RESPONSIVE UTILITIES ===== */
+
+/* Safe Area Support for iOS */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Mobile-first responsive utilities */
+@layer utilities {
+  /* Dynamic viewport height for mobile browsers */
+  .h-screen-safe {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  .min-h-screen-safe {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Touch-friendly tap targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Mobile drawer/panel animation */
+  .slide-up-enter {
+    transform: translateY(100%);
+  }
+  .slide-up-enter-active {
+    transform: translateY(0);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .slide-up-exit-active {
+    transform: translateY(100%);
+    transition: transform 0.2s ease-in;
+  }
+
+  /* Responsive text scaling */
+  .text-responsive-hero {
+    font-size: clamp(2.5rem, 8vw, 8rem);
+  }
+
+  .text-responsive-title {
+    font-size: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .text-responsive-subtitle {
+    font-size: clamp(1.25rem, 3vw, 2rem);
+  }
+}
+
+/* Mobile Panel/Drawer Styles */
+.mobile-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  max-height: 85vh;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-panel.open {
+  transform: translateY(0);
+}
+
+.mobile-panel-handle {
+  width: 40px;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  margin: 12px auto;
+}
+
+/* Mobile FAB (Floating Action Button) */
+.fab {
+  position: fixed;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 90;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.fab:active {
+  transform: scale(0.95);
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase tap targets on touch devices */
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+
+  /* Disable hover effects that might cause issues */
+  .no-touch-hover:hover {
+    transform: none !important;
+  }
+}
+
+/* Tablet breakpoint styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tablet-sidebar {
+    width: 280px;
+  }
+}
+
+/* Desktop enhancements */
+@media (min-width: 1024px) {
+  .desktop-only {
+    display: block;
+  }
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: block;
+  }
+}
+
+/* Editor-specific responsive fixes */
+@media (max-width: 767px) {
+  .editor-container {
+    flex-direction: column;
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .editor-sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    border-radius: 24px 24px 0 0;
+    z-index: 50;
+  }
+
+  .editor-canvas-area {
+    width: 100%;
+    padding: 16px;
+    padding-bottom: 100px;
+  }
+}
+
+/* Ensure modals work on mobile */
+@media (max-width: 640px) {
+  .modal-container {
+    margin: 16px;
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+  }
 }

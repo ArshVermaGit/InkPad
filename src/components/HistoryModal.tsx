@@ -90,24 +90,24 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-neutral-900/40 backdrop-blur-md">
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-2 sm:p-4 bg-neutral-900/40 backdrop-blur-md">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         ref={modalRef}
-                        className="bg-white rounded-[2.5rem] overflow-hidden shadow-2xl max-w-xl w-full relative flex flex-col max-h-[85vh] border border-white/20"
+                        className="bg-white rounded-2xl sm:rounded-[2.5rem] overflow-hidden shadow-2xl max-w-xl w-full relative flex flex-col max-h-[90vh] sm:max-h-[85vh] border border-white/20"
                     >
                         {/* Header */}
-                        <div className="p-8 border-b border-neutral-100 flex items-center justify-between bg-white relative z-10">
-                            <div className="flex items-center gap-4">
+                        <div className="p-4 sm:p-6 md:p-8 border-b border-neutral-100 flex items-center justify-between bg-white relative z-10">
+                            <div className="flex items-center gap-3 sm:gap-4">
                                 <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600">
                                     <Clock size={24} />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-display font-bold text-neutral-900 leading-tight">Export History</h2>
-                                    <div className="flex items-center gap-2 mt-1">
+                                    <h2 className="text-lg sm:text-xl md:text-2xl font-display font-bold text-neutral-900 leading-tight">Export History</h2>
+                                    <div className="items-center gap-2 mt-1 hidden sm:flex">
                                         <ShieldCheck size={12} className="text-emerald-500" />
                                         <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-widest">
                                             Saved locally on your device
@@ -124,7 +124,7 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                         </div>
 
                         {/* List Content */}
-                        <div className="overflow-y-auto p-6 space-y-3 flex-1 scrollbar-hide">
+                        <div className="overflow-y-auto p-3 sm:p-4 md:p-6 space-y-2 sm:space-y-3 flex-1 scrollbar-hide">
                             {isLoading ? (
                                 <div className="flex flex-col items-center justify-center py-20 opacity-20">
                                     <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
@@ -147,9 +147,9 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                                         key={file.id}
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        className="group p-5 rounded-3xl border border-neutral-100 hover:border-indigo-100 hover:bg-indigo-50/30 transition-all flex items-center justify-between gap-4"
+                                        className="group p-3 sm:p-4 md:p-5 rounded-2xl sm:rounded-3xl border border-neutral-100 hover:border-indigo-100 hover:bg-indigo-50/30 transition-all flex items-center justify-between gap-2 sm:gap-4"
                                     >
-                                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
                                             <div className={`p-3 rounded-2xl shrink-0 ${
                                                 file.type === 'pdf' ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500'
                                             }`}>
@@ -181,7 +181,7 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                                             </button>
                                             <button 
                                                 onClick={() => handleDelete(file.id)}
-                                                className="p-3 rounded-xl bg-white border border-neutral-200 text-neutral-400 hover:text-rose-600 hover:border-rose-200 hover:shadow-sm transition-all opacity-0 group-hover:opacity-100"
+                                                className="p-2 sm:p-3 rounded-xl bg-white border border-neutral-200 text-neutral-400 hover:text-rose-600 hover:border-rose-200 hover:shadow-sm transition-all sm:opacity-0 sm:group-hover:opacity-100"
                                                 title="Delete from History"
                                             >
                                                 <Trash2 size={18} />
@@ -193,7 +193,7 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                         </div>
 
                         {/* Footer Info */}
-                        <div className="p-6 bg-neutral-50 border-t border-neutral-100">
+                        <div className="p-3 sm:p-4 md:p-6 bg-neutral-50 border-t border-neutral-100">
                             <p className="text-[9px] text-center text-neutral-400 uppercase tracking-[0.2em] font-black">
                                 Private Local Storage • No Data Leaves This Browser
                             </p>
