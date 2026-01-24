@@ -338,17 +338,20 @@ export default function EditorPage() {
                 addToast('Text Humanized!', 'success');
             }
         } catch (e: unknown) {
-            const err = e as { message?: string };
-            console.error('Humanize Detailed Error:', err);
-            let errorMsg = 'AI Error';
+            const err = e as { message?: string; status?: number };
+            console.error('Humanize Full Error Object:', err);
             
-            const message = err.message || '';
+            let errorMsg = 'AI Error';
+            const message = err.message || 'Unknown network error';
             
             if (message.includes('429')) errorMsg = 'Rate Limit Reached (Free Tier)';
             else if (message.includes('SAFETY')) errorMsg = 'Content Filtered';
             else if (message.includes('API key')) errorMsg = 'Invalid API Key';
-            else if (message.includes('fetch')) errorMsg = 'Check your connection';
-            else errorMsg = `Error: ${message.substring(0, 30)}...`;
+            else if (message.toLowerCase().includes('fetch') || message.toLowerCase().includes('network')) {
+                errorMsg = 'Connection Blocked - Check Ad-blockers or Region';
+            } else {
+                errorMsg = message.length > 50 ? message.substring(0, 50) + '...' : message;
+            }
             
             addToast(errorMsg, 'error');
         } finally {
