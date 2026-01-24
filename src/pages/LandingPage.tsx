@@ -5,9 +5,9 @@ import {
 } from 'lucide-react';
 import React, { useRef, useEffect, Suspense, lazy } from 'react';
 import { useStore } from '../lib/store';
+import photo from '../assets/arsh.jpg';
 
 const EditorPage = lazy(() => import('./EditorPage'));
-import photo from '../assets/arsh.jpg';
 
 export default function LandingPage() {
     const editorRef = useRef<HTMLDivElement>(null);
