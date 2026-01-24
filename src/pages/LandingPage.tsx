@@ -1,18 +1,27 @@
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { motion, useMotionValue, useTransform, useInView } from 'framer-motion';
 import { 
     PenTool, Download, Type, ArrowRight,
     Mail, Github, Linkedin, Twitter
 } from 'lucide-react';
-import React, { useRef } from 'react';
+import { useRef, useEffect } from 'react';
+import { useStore } from '../lib/store';
 import EditorPage from './EditorPage';
 import photo from '../assets/arsh.jpg';
 
 export default function LandingPage() {
     const editorRef = useRef<HTMLDivElement>(null);
+    const isEditorInView = useInView(editorRef, { amount: 0.25, margin: "0px 0px -100px 0px" });
+    const { setNavbarVisible } = useStore();
+
+    useEffect(() => {
+        setNavbarVisible(!isEditorInView);
+        return () => setNavbarVisible(true); // Reset on unmount
+    }, [isEditorInView, setNavbarVisible]);
+
     const scrollToEditor = () => editorRef.current?.scrollIntoView({ behavior: 'smooth' });
 
     return (
-        <div className="bg-gradient-to-br from-purple-50 via-indigo-50 to-violet-100 min-h-screen overflow-x-hidden selection:bg-accent/30 relative">
+        <div className="bg-linear-to-br from-purple-50 via-indigo-50 to-violet-100 min-h-screen overflow-x-hidden selection:bg-accent/30 relative">
             {/* Global Page Background Grid & Soft Glows */}
             <div className="fixed inset-0 pointer-events-none z-0">
                 <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-purple-200/20 rounded-full blur-[120px]" />
@@ -25,21 +34,15 @@ export default function LandingPage() {
             {/* --- REAL EDITOR SECTION --- */}
             <section ref={editorRef} id="editor" className="relative z-20 py-28">
                 <div className="max-w-7xl mx-auto px-6">
-                    <motion.div 
-                        initial={{ opacity: 0, y: 50 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: false, amount: 0.3 }}
-                        transition={{ duration: 0.6, ease: "easeOut" }}
-                        className="mb-16 text-center"
-                    >
+                    <div className="mb-16 text-center">
                         <span className="text-indigo-500 font-black tracking-[0.3em] uppercase text-[10px] mb-4 block">The Workshop</span>
                         <h2 className="text-4xl md:text-5xl font-display font-bold text-neutral-900">Your Digital Canvas</h2>
-                    </motion.div>
+                    </div>
                      <motion.div
                         initial={{ opacity: 0, y: 40, scale: 0.95 }}
                         whileInView={{ opacity: 1, y: 0, scale: 1 }}
                         viewport={{ once: false, amount: 0.2 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                      >
                         <EditorPage />
                      </motion.div>
@@ -49,40 +52,42 @@ export default function LandingPage() {
 
             {/* --- BENTO GRID FEATURES --- */}
             <section className="py-28 px-6 relative">
-                 <div className="max-w-7xl mx-auto relative z-10">
                     <div className="mb-20 text-center max-w-2xl mx-auto">
-                        <motion.span 
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: false, amount: 0.5 }}
-                            transition={{ duration: 0.5, ease: "easeOut" }}
-                            className="text-indigo-500 font-bold tracking-widest uppercase text-xs mb-4 block"
-                        >
+                        <span className="text-indigo-500 font-bold tracking-widest uppercase text-xs mb-4 block">
                             Why Handwritten?
-                        </motion.span>
-                        <motion.h2 
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: false, amount: 0.5 }}
-                            transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
-                            className="text-5xl md:text-6xl font-display font-bold text-neutral-900 mb-6"
-                        >
+                        </span>
+                        <h2 className="text-5xl md:text-6xl font-display font-bold text-neutral-900 mb-6">
                             More than just <br/>
                             <span className="italic font-serif text-neutral-600">pixels on a screen.</span>
-                        </motion.h2>
+                        </h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 grid-rows-2 h-auto md:h-[600px]">
+                    <motion.div 
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: false, amount: 0.1 }}
+                        variants={{
+                            hidden: { opacity: 0 },
+                            visible: {
+                                opacity: 1,
+                                transition: {
+                                    staggerChildren: 0.1
+                                }
+                            }
+                        }}
+                        className="grid grid-cols-1 md:grid-cols-3 gap-6 grid-rows-2 h-auto md:h-[600px]"
+                    >
                         {/* Large Card */}
                         <motion.div 
-                            initial={{ opacity: 0, y: 40 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: false, amount: 0.2 }}
-                            transition={{ duration: 0.7, ease: "easeOut" }}
-                            className="md:col-span-2 md:row-span-2 bg-[#F5F5F7] rounded-3xl p-10 relative overflow-hidden group border border-black/5 shadow-xl"
+                            variants={{
+                                hidden: { opacity: 0, y: 40 },
+                                visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+                            }}
+                            className="md:col-span-2 md:row-span-2 bg-[#F5F5F7] rounded-3xl p-10 relative overflow-hidden group border border-black/5 shadow-xl transition-all duration-500"
+                            whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 300, damping: 20 } }}
                         >
                             <div className="relative z-10">
-                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform">
                                     <PenTool className="text-indigo-500" />
                                 </div>
                                 <h3 className="text-3xl font-bold mb-4 text-neutral-900">Advanced Simulation Engine</h3>
@@ -103,15 +108,16 @@ export default function LandingPage() {
 
                         {/* Top Right Card */}
                         <motion.div 
-                            initial={{ opacity: 0, y: 40 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: false, amount: 0.3 }}
-                            transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
-                            className="bg-[#1A1F2C] text-white rounded-3xl p-8 relative overflow-hidden group shadow-xl"
+                            variants={{
+                                hidden: { opacity: 0, y: 40 },
+                                visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+                            }}
+                            whileHover={{ scale: 1.05, transition: { type: "spring", stiffness: 300, damping: 20 } }}
+                            className="bg-[#1A1F2C] text-white rounded-3xl p-8 relative overflow-hidden group shadow-xl transition-all duration-500"
                         >
                              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
                              <div className="relative z-10">
-                                <Download className="mb-4 text-indigo-400" />
+                                <Download className="mb-4 text-indigo-400 group-hover:scale-110 transition-transform" />
                                 <h3 className="text-xl font-bold mb-2">Export Anywhere</h3>
                                 <p className="text-white/50 text-sm">Convert your handwritten work into high-fidelity PDF documents or individual PNGs in a single ZIP archive.</p>
                              </div>
@@ -119,20 +125,20 @@ export default function LandingPage() {
 
                         {/* Bottom Right Card */}
                         <motion.div 
-                            initial={{ opacity: 0, y: 40 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: false, amount: 0.3 }}
-                            transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
-                            className="bg-white border border-black/5 rounded-3xl p-8 relative overflow-hidden group shadow-xl hover:shadow-2xl transition-all duration-500"
+                            variants={{
+                                hidden: { opacity: 0, y: 40 },
+                                visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+                            }}
+                            whileHover={{ scale: 1.05, transition: { type: "spring", stiffness: 300, damping: 20 } }}
+                            className="bg-white border border-black/5 rounded-3xl p-8 relative overflow-hidden group shadow-xl transition-all duration-500"
                         >
                             <div className="relative z-10">
-                                <Type className="mb-4 text-indigo-500" />
+                                <Type className="mb-4 text-indigo-500 group-hover:scale-110 transition-transform" />
                                 <h3 className="text-xl font-bold mb-2 text-neutral-900">AI Humanizer</h3>
                                 <p className="text-neutral-500 text-sm">Tap into the power of Gemini to rewrite your notes into organic, natural human prose with one click.</p>
                             </div>
                         </motion.div>
-                    </div>
-                 </div>
+                    </motion.div>
             </section>
 
             {/* --- ABOUT SECTION --- */}
@@ -145,11 +151,16 @@ export default function LandingPage() {
                         initial={{ scale: 0.9, opacity: 0, y: 40 }}
                         whileInView={{ scale: 1, opacity: 1, y: 0 }}
                         viewport={{ once: false, amount: 0.3 }}
-                        transition={{ duration: 0.7, ease: "easeOut" }}
-                        className="bg-neutral-900 text-white rounded-3xl p-10 md:p-16 shadow-2xl relative overflow-hidden"
+                        transition={{ 
+                            type: "spring",
+                            stiffness: 260,
+                            damping: 20,
+                            duration: 0.7 
+                        }}
+                        className="bg-neutral-900 text-white rounded-3xl p-10 md:p-16 shadow-2xl relative overflow-hidden group/cta"
                     >
                          {/* Abstract BG */}
-                         <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+                         <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] group-hover/cta:scale-110 transition-transform duration-1000" />
                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/20 rounded-full blur-[120px]" />
 
                          <div className="relative z-10">
@@ -160,12 +171,17 @@ export default function LandingPage() {
                             <p className="text-base md:text-lg text-white/60 mb-8 max-w-xl mx-auto">
                                 No signup required for basic use. Jump right in and feel the difference.
                             </p>
-                            <button
+                            <motion.button
                                 onClick={scrollToEditor}
-                                className="px-10 py-5 bg-white text-neutral-900 rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center gap-3 mx-auto shadow-[0_0_50px_-10px_rgba(255,255,255,0.3)]"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                                className="px-10 py-5 bg-white text-neutral-900 rounded-full font-bold text-lg hover:shadow-[0_0_50px_-5px_rgba(255,255,255,0.4)] transition-all flex items-center gap-3 mx-auto group"
                             >
-                                Launch Editor <ArrowRight size={20} />
-                            </button>
+                                <span className="flex items-center gap-2">
+                                    Launch Editor <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            </motion.button>
                          </div>
                     </motion.div>
                 </div>
@@ -182,8 +198,22 @@ function HeroSection({ onStartClick }: { onStartClick: () => void }) {
             {/* Floating Sticky Decorations */}
             <motion.div
                 initial={{ opacity: 0, rotate: -15, y: 20 }}
-                animate={{ opacity: 1, rotate: -12, y: 0 }}
-                transition={{ delay: 0.5, duration: 1 }}
+                animate={{ 
+                    opacity: 1, 
+                    rotate: -12, 
+                    y: [0, -10, 0],
+                }}
+                transition={{ 
+                    opacity: { delay: 0.5, duration: 1 },
+                    rotate: { delay: 0.5, duration: 1 },
+                    y: { 
+                        delay: 0,
+                        duration: 5,
+                        repeat: Infinity,
+                        repeatType: "mirror",
+                        ease: "easeInOut"
+                    }
+                }}
                 className="absolute top-32 left-8 md:left-24 hidden md:block"
             >
                 <div className="bg-yellow-200 w-32 h-32 rounded-2xl shadow-xl p-4 -rotate-6">
@@ -193,8 +223,22 @@ function HeroSection({ onStartClick }: { onStartClick: () => void }) {
             
             <motion.div
                 initial={{ opacity: 0, rotate: 10, y: 20 }}
-                animate={{ opacity: 1, rotate: 6, y: 0 }}
-                transition={{ delay: 0.7, duration: 1 }}
+                animate={{ 
+                    opacity: 1, 
+                    rotate: 6, 
+                    y: [0, 10, 0],
+                }}
+                transition={{ 
+                    opacity: { delay: 0.7, duration: 1 },
+                    rotate: { delay: 0.7, duration: 1 },
+                    y: { 
+                        delay: 0.5,
+                        duration: 6,
+                        repeat: Infinity,
+                        repeatType: "mirror",
+                        ease: "easeInOut"
+                    }
+                }}
                 className="absolute top-48 right-8 md:right-20 hidden md:block"
             >
                 <div className="bg-pink-200 w-28 h-28 rounded-2xl shadow-xl p-3 rotate-3">
@@ -204,8 +248,22 @@ function HeroSection({ onStartClick }: { onStartClick: () => void }) {
             
             <motion.div
                 initial={{ opacity: 0, rotate: -5, y: 20 }}
-                animate={{ opacity: 1, rotate: -3, y: 0 }}
-                transition={{ delay: 0.9, duration: 1 }}
+                animate={{ 
+                    opacity: 1, 
+                    rotate: -3, 
+                    y: [0, -8, 0],
+                }}
+                transition={{ 
+                    opacity: { delay: 0.9, duration: 1 },
+                    rotate: { delay: 0.9, duration: 1 },
+                    y: { 
+                        delay: 1,
+                        duration: 5.5,
+                        repeat: Infinity,
+                        repeatType: "mirror",
+                        ease: "easeInOut"
+                    }
+                }}
                 className="absolute bottom-40 left-12 md:left-32 hidden md:block"
             >
                 <div className="bg-blue-200 w-36 h-24 rounded-2xl shadow-xl p-4 -rotate-2">
@@ -215,8 +273,22 @@ function HeroSection({ onStartClick }: { onStartClick: () => void }) {
             
             <motion.div
                 initial={{ opacity: 0, rotate: 8, y: 20 }}
-                animate={{ opacity: 1, rotate: 4, y: 0 }}
-                transition={{ delay: 1.1, duration: 1 }}
+                animate={{ 
+                    opacity: 1, 
+                    rotate: 4, 
+                    y: [0, 12, 0],
+                }}
+                transition={{ 
+                    opacity: { delay: 1.1, duration: 1 },
+                    rotate: { delay: 1.1, duration: 1 },
+                    y: { 
+                        delay: 1.5,
+                        duration: 7,
+                        repeat: Infinity,
+                        repeatType: "mirror",
+                        ease: "easeInOut"
+                    }
+                }}
                 className="absolute bottom-32 right-16 md:right-28 hidden md:block"
             >
                 <div className="bg-green-200 w-32 h-28 rounded-2xl shadow-xl p-3 rotate-2">
@@ -229,11 +301,14 @@ function HeroSection({ onStartClick }: { onStartClick: () => void }) {
                 
                 {/* Website Name with Black-Gray Gradient */}
                 <motion.h1 
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
                     viewport={{ once: false, amount: 0.3 }}
-                    transition={{ duration: 0.8 }}
-                    className="text-7xl md:text-[10rem] font-sans font-black leading-[0.9] tracking-tighter bg-gradient-to-b from-neutral-900 to-neutral-500 bg-clip-text text-transparent"
+                    transition={{ 
+                        duration: 1, 
+                        ease: [0.34, 1.56, 0.64, 1] // Custom backOut-style springy ease
+                    }}
+                    className="text-7xl md:text-[10rem] font-sans font-black leading-[0.9] tracking-tighter bg-linear-to-b from-neutral-900 to-neutral-500 bg-clip-text text-transparent"
                 >
                     Handwritten
                 </motion.h1>
@@ -243,8 +318,8 @@ function HeroSection({ onStartClick }: { onStartClick: () => void }) {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: false, amount: 0.3 }}
-                    transition={{ delay: 0.3, duration: 0.8 }}
-                    className="font-handwriting text-4xl md:text-6xl mt-4 bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent"
+                    transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+                    className="font-handwriting text-4xl md:text-6xl mt-4 bg-linear-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent"
                 >
                     Text to Handwriting Converter
                 </motion.p>
@@ -254,15 +329,20 @@ function HeroSection({ onStartClick }: { onStartClick: () => void }) {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: false, amount: 0.3 }}
-                    transition={{ delay: 0.6, duration: 0.8 }}
+                    transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
                     className="mt-12"
                 >
-                    <button
+                    <motion.button
                         onClick={onStartClick}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
                         className="px-10 py-5 bg-neutral-900 text-white rounded-full font-bold text-lg hover:bg-black transition-all shadow-xl flex items-center gap-3 group"
                     >
-                        Start Writing <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                    </button>
+                        <span className="flex items-center gap-3 group-hover:gap-4 transition-all duration-300">
+                            Start Writing <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                        </span>
+                    </motion.button>
                 </motion.div>
             </div>
         </section>
@@ -290,16 +370,10 @@ function AboutSection() {
             className="relative py-28 px-6 perspective-1000 overflow-hidden"
         >
              <div className="max-w-7xl mx-auto relative z-10">
-                <motion.div 
-                    initial={{ opacity: 0, y: 50 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: false, amount: 0.3 }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    className="mb-20 text-center max-w-2xl mx-auto"
-                >
+                <div className="mb-20 text-center max-w-2xl mx-auto">
                     <span className="text-indigo-500 font-bold tracking-widest uppercase text-xs mb-4 block">The Creator</span>
                     <h2 className="text-5xl font-display font-bold text-neutral-900">Behind the Ink</h2>
-                </motion.div>
+                </div>
 
                 <motion.div 
                     initial={{ opacity: 0, y: 60, scale: 0.95 }}
@@ -333,22 +407,30 @@ function AboutSection() {
                                 </div>
                             </div>
 
-                            <div className="flex-1 p-8 md:p-16 bg-[radial-gradient(#00000005_1px,transparent_1px)] bg-size-[16px_16px]">
-                                 <div className="max-w-2xl mx-auto space-y-8">
-                                    <div className="bg-white p-8 rounded-3xl shadow-xl border border-black/5 rotate-1 hover:rotate-0 transition-transform duration-300">
-                                        <h4 className="font-bold text-ink mb-4 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-accent" /> About Me</h4>
-                                        <p className="text-ink/70 leading-relaxed font-serif text-lg">
-                                            I'm a student at <span className="font-bold text-ink">VIT Bhopal</span> with a passion for building digital experiences. Whether it's developing games in Unity or creating tools like Handwritten, I love turning ideas into reality.
-                                        </p>
-                                    </div>
-                                    <div className="bg-white p-8 rounded-3xl shadow-xl border border-black/5 -rotate-1 hover:rotate-0 transition-transform duration-300">
-                                        <h4 className="font-bold text-ink mb-4 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-rose-400" /> Philosophy</h4>
-                                        <p className="text-ink/70 leading-relaxed font-serif text-lg">
-                                            I focus on making things that look great and work even better. Coding isn't just about logic—it's about creating something that feels <span className="font-handwriting text-2xl mx-2 text-accent">human</span>.
-                                        </p>
-                                    </div>
-                                 </div>
-                            </div>
+                             <div className="flex-1 p-8 md:p-16 bg-[radial-gradient(#00000005_1px,transparent_1px)] bg-size-[16px_16px]">
+                                  <div className="max-w-2xl mx-auto space-y-8">
+                                     <motion.div 
+                                        whileHover={{ scale: 1.02, rotate: 0 }}
+                                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                                        className="bg-white p-8 rounded-3xl shadow-xl border border-black/5 rotate-1 transition-all duration-300"
+                                     >
+                                         <h4 className="font-bold text-ink mb-4 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-accent" /> About Me</h4>
+                                         <p className="text-ink/70 leading-relaxed font-serif text-lg">
+                                             I'm a student at <span className="font-bold text-ink">VIT Bhopal</span> with a passion for building digital experiences. Whether it's developing games in Unity or creating tools like Handwritten, I love turning ideas into reality.
+                                         </p>
+                                     </motion.div>
+                                     <motion.div 
+                                        whileHover={{ scale: 1.02, rotate: 0 }}
+                                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                                        className="bg-white p-8 rounded-3xl shadow-xl border border-black/5 -rotate-1 transition-all duration-300"
+                                     >
+                                         <h4 className="font-bold text-ink mb-4 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-rose-400" /> Philosophy</h4>
+                                         <p className="text-ink/70 leading-relaxed font-serif text-lg">
+                                             I focus on making things that look great and work even better. Coding isn't just about logic—it's about creating something that feels <span className="font-handwriting text-2xl mx-2 text-accent">human</span>.
+                                         </p>
+                                     </motion.div>
+                                  </div>
+                             </div>
                          </div>
                     </div>
                 </motion.div>
@@ -359,9 +441,17 @@ function AboutSection() {
 
 function SocialLink({ href, icon: Icon }: { href: string, icon: React.ElementType }) {
     return (
-        <a href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white border border-black/5 rounded-full flex items-center justify-center text-ink/60 hover:text-ink hover:bg-gray-50 hover:scale-110 transition-all shadow-xl">
+        <motion.a 
+            whileHover={{ scale: 1.1, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            href={href} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="w-10 h-10 bg-white border border-black/5 rounded-full flex items-center justify-center text-ink/60 hover:text-ink hover:bg-gray-50 transition-all shadow-xl"
+        >
             <Icon size={18} />
-        </a>
+        </motion.a>
     );
 }
 
