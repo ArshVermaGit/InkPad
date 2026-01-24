@@ -51,7 +51,7 @@ export default function Navbar() {
                                 <motion.div 
                                     animate={{ rotate: [0, 10, 0] }}
                                     transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                                    className="absolute inset-0 bg-accent/30 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
+                                    className="absolute inset-0 bg-indigo-500/30 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
                                 />
                                 <img 
                                     src={logo} 
@@ -59,7 +59,7 @@ export default function Navbar() {
                                     className="w-10 h-10 object-contain relative z-10" 
                                 />
                             </div>
-                            <span className="text-xl font-display font-bold text-ink tracking-tight hidden sm:block">InkPad</span>
+                            <span className="text-xl font-display font-bold text-neutral-900 tracking-tight hidden sm:block">InkPad</span>
                         </Link>
 
                         {/* Desktop Navigation */}
@@ -76,11 +76,11 @@ export default function Navbar() {
                                             {isActive && (
                                                 <motion.div
                                                     layoutId="nav-pill"
-                                                    className="absolute inset-0 bg-ink rounded-full"
+                                                    className="absolute inset-0 bg-neutral-900 rounded-full"
                                                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                                 />
                                             )}
-                                            <span className={`relative z-10 transition-colors ${isActive ? 'text-white' : 'text-ink/60 group-hover:text-ink'}`}>
+                                            <span className={`relative z-10 transition-colors ${isActive ? 'text-white' : 'text-neutral-500 group-hover:text-neutral-900'}`}>
                                                 {link.name}
                                             </span>
                                         </Link>
@@ -97,17 +97,17 @@ export default function Navbar() {
                                 <>
                                     <button 
                                         onClick={() => setAuthModalOpen(true)}
-                                        className="text-sm font-bold text-ink/60 hover:text-ink transition-colors px-2"
+                                        className="text-sm font-bold text-neutral-500 hover:text-neutral-900 transition-colors px-2"
                                     >
                                         Log In
                                     </button>
                                     <button
                                         onClick={() => setAuthModalOpen(true)}
-                                        className="relative overflow-hidden px-6 py-2.5 bg-ink text-white rounded-full text-sm font-bold shadow-lg shadow-ink/20 hover:shadow-xl hover:scale-105 active:scale-95 transition-all group"
+                                        className="relative overflow-hidden px-6 py-2.5 bg-neutral-900 text-white rounded-full text-sm font-bold shadow-lg shadow-neutral-900/20 hover:shadow-xl hover:scale-105 active:scale-95 transition-all group"
                                     >
                                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                                         <span className="relative flex items-center gap-2">
-                                            Get Started <Sparkles size={14} className="text-accent" />
+                                            Get Started <Sparkles size={14} className="text-indigo-400" />
                                         </span>
                                     </button>
                                 </>
