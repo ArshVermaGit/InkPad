@@ -53,7 +53,7 @@ const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZo
     jitter: 0,
     pressure: 0,
     smudge: 0,
-    baseline: 11,
+    baseline: 12,
     textAlign: 'left',
     marginTop: 60,
     marginBottom: 60,
