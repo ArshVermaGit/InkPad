@@ -8,8 +8,6 @@ import PageTransition from './components/PageTransition';
 
 // Lazy Load Pages
 const LandingPage = lazy(() => import('./pages/LandingPage'));
-const EditorPage = lazy(() => import('./pages/EditorPage'));
-const AboutPage = lazy(() => import('./pages/AboutPage'));
 
 // Loading Fallback
 const PageLoader = () => (
@@ -27,8 +25,6 @@ function InnerApp() {
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<RootLayout />}>
             <Route index element={<PageTransition><LandingPage /></PageTransition>} />
-            <Route path="editor" element={<PageTransition><EditorPage /></PageTransition>} />
-            <Route path="about" element={<PageTransition><AboutPage /></PageTransition>} />
           </Route>
         </Routes>
       </Suspense>
