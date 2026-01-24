@@ -302,8 +302,16 @@ export default function EditorPage() {
 
         setIsHumanizing(true);
         
+        // Debug: Check if key is even loaded
+        console.log('Gemini API Key loaded:', googleKey ? 'Yes (starting with ' + googleKey.substring(0, 8) + '...)' : 'No');
+
         // Strategy: Model Fallback Waterfall
-        const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-pro", "gemini-1.5-pro"];
+        const modelsToTry = [
+            "gemini-1.5-flash", 
+            "gemini-1.5-pro", 
+            "gemini-2.0-flash-exp", 
+            "gemini-pro"
+        ];
         let lastError: Error | null = null;
 
         const attemptWithModel = async (modelName: string): Promise<string> => {
@@ -312,7 +320,7 @@ export default function EditorPage() {
                 model: modelName,
                 generationConfig: {
                     temperature: 0.9,
-                    maxOutputTokens: 8192,
+                    maxOutputTokens: 2048, // Reduced for stability
                 },
                 safetySettings: [
                     { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -322,13 +330,9 @@ export default function EditorPage() {
                 ]
             });
 
-            const systemInstruction = `You are a text humanizer for a handwriting simulator. 
-            Your goal is to rewrite the input text to sound more natural, organic, and human-written.
-            - Introduce slight imperfections.
-            - Use contractions (e.g., "don't" instead of "do not").
-            - Vary sentence structure.
-            - If the input is code or technical, keep it mostly intact but add comments or slight casualness if appropriate.
-            - Output ONLY the converted text, no preamble or markdown unless part of the text.`;
+            const systemInstruction = `Rewrite the input text to sound like natural human prose for a handwriting simulator. 
+            Keep it casual, use contractions, and vary sentence length. 
+            Output ONLY the rewritten text.`;
 
             const result = await model.generateContent(`${systemInstruction}\n\nInput Text:\n${text}`);
             const response = await result.response;
@@ -340,42 +344,37 @@ export default function EditorPage() {
             
             for (const modelName of modelsToTry) {
                 try {
-                    console.log(`Attempting with model: ${modelName}`);
+                    console.log(`Trying model: ${modelName}`);
                     rewrittenText = await attemptWithModel(modelName);
-                    if (rewrittenText) break; // Success!
+                    if (rewrittenText) break;
                 } catch (e: unknown) {
                     const err = e as Error;
-                    console.warn(`Model ${modelName} failed:`, err.message);
+                    console.warn(`Model ${modelName} fail:`, err.message);
                     lastError = err;
-                    // Continue to next model if it's a 404 or similar availability error
-                    if (err.message.includes('404') || err.message.includes('not found') || err.message.includes('fetch failed')) {
-                        continue;
+                    // If it's a key/auth error, we shouldn't keep trying other models
+                    if (err.message.includes('API_KEY_INVALID') || err.message.includes('403')) {
+                        break;
                     }
-                    // If it's a permission/key error (400/403), waiting probably won't help, but we try next just in case
+                    continue; 
                 }
             }
 
             if (rewrittenText) {
                 setText(normalizeInput(rewrittenText.trim()));
-                addToast('Text Successfully Humanized!', 'success');
+                addToast('Text Humanized!', 'success');
             } else {
-                throw lastError || new Error('All models failed');
+                throw lastError || new Error('All models unavailable');
             }
 
         } catch (e: unknown) {
-            console.error('Humanize Final Error:', e);
+            console.error('AI Error:', e);
             const err = e as { message?: string };
-            const message = err.message || '';
+            const msg = err.message || '';
             
-            if (message.includes('429')) {
-                addToast('High demand. Please try again in 1 minute.', 'warning');
-            } else if (message.includes('API key')) {
-                addToast('Invalid API Key. Check .env file.', 'error');
-            } else if (message.includes('404')) {
-                addToast('Model Unavailable. Restart server if .env was changed.', 'error');
-            } else {
-                addToast('Connection failed. Please check internet.', 'error');
-            }
+            if (msg.includes('429')) addToast('Rate limit. Wait 1 min.', 'warning');
+            else if (msg.includes('403') || msg.includes('API key')) addToast('Invalid Key. check your .env', 'error');
+            else if (msg.includes('404')) addToast('Model 404. Key may be restricted.', 'error');
+            else addToast('AI unavailable. Check connection.', 'error');
         } finally {
             setIsHumanizing(false);
         }
