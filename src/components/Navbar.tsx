@@ -16,9 +16,9 @@ export default function Navbar() {
                 initial={{ y: -100 }}
                 animate={{ y: isNavbarVisible ? 0 : -150 }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
-                className="fixed top-6 left-0 right-0 z-50 px-6 flex justify-center pointer-events-none"
+                className="fixed top-8 left-0 right-0 z-50 px-6 flex justify-center pointer-events-none"
             >
-                <div className="w-full max-w-2xl bg-white/40 backdrop-blur-2xl border border-white/40 shadow-[0_4px_24px_rgba(0,0,0,0.04)] rounded-3xl sm:rounded-4xl px-4 sm:px-6 py-2 sm:py-3 flex justify-between items-center pointer-events-auto">
+                <div className="w-full max-w-2xl bg-white/60 backdrop-blur-3xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.06)] rounded-4xl px-5 sm:px-8 py-3 flex justify-between items-center pointer-events-auto ring-1 ring-black/5">
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-2 group relative">
                         <img 
@@ -26,7 +26,7 @@ export default function Navbar() {
                             alt="Handwritten" 
                             className="w-10 h-10 object-contain group-hover:rotate-12 transition-transform duration-500" 
                         />
-                        <span className="hidden sm:inline text-xl sm:text-2xl font-display font-bold text-neutral-900 tracking-tight">Handwritten.</span>
+                        <span className="hidden sm:inline text-xl sm:text-2xl font-display font-black text-neutral-900 tracking-tighter">Handwritten.</span>
                     </Link>
 
                     {/* Actions */}

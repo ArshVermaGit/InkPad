@@ -149,19 +149,12 @@
     border-color: var(--color-accent-light);
   }
 
-  .glass-premium {
-    background-color: rgba(255, 255, 255, 0.45);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
-  }
-
-  .glass-dark {
-    background-color: rgba(26, 31, 44, 0.6);
+  .glass {
+    background-color: rgba(250, 249, 246, 0.6);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.04);
   }
 
   .paper-texture {
@@ -253,137 +246,5 @@
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background-color: var(--color-gray-300);
-  }
-
-  .animate-fade-in-up {
-    animation: fadeInUp 0.8s ease-out forwards;
-  }
-
-  /* ===== RESPONSIVE UTILITIES ===== */
-
-  /* Safe Area Support for iOS */
-  @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .pb-safe {
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    .pt-safe {
-      padding-top: env(safe-area-inset-top);
-    }
-    .mb-safe {
-      margin-bottom: env(safe-area-inset-bottom);
-    }
-  }
-
-  /* Mobile-first responsive utilities */
-  @layer utilities {
-    /* Dynamic viewport height for mobile browsers */
-    .h-screen-safe {
-      height: 100vh;
-      height: 100dvh;
-    }
-    
-    .min-h-screen-safe {
-      min-height: 100vh;
-      min-height: 100dvh;
-    }
-
-    /* Touch-friendly tap targets */
-    .touch-target {
-      min-height: 44px;
-      min-width: 44px;
-    }
-
-    /* Hide scrollbar but allow scrolling */
-    .scrollbar-hide {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    .scrollbar-hide::-webkit-scrollbar {
-      display: none;
-    }
-
-    /* Mobile drawer/panel animation */
-    .slide-up-enter {
-      transform: translateY(100%);
-    }
-    .slide-up-enter-active {
-      transform: translateY(0);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .slide-up-exit-active {
-      transform: translateY(100%);
-      transition: transform 0.2s ease-in;
-    }
-
-    /* Responsive text scaling */
-    .text-responsive-hero {
-      font-size: clamp(2.5rem, 8vw, 8rem);
-    }
-    
-    .text-responsive-title {
-      font-size: clamp(1.5rem, 4vw, 3rem);
-    }
-    
-    .text-responsive-subtitle {
-      font-size: clamp(1.25rem, 3vw, 2rem);
-    }
-  }
-
-  /* Mobile FAB (Floating Action Button) */
-  .fab {
-    position: fixed;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    z-index: 90;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .fab:active {
-    transform: scale(0.95);
-  }
-
-  /* Touch device optimizations */
-  @media (hover: none) and (pointer: coarse) {
-    /* Increase tap targets on touch devices */
-    button, a, input, select, textarea {
-      min-height: 44px;
-    }
-    
-    /* Disable hover effects that might cause issues */
-    .no-touch-hover:hover {
-      transform: none !important;
-    }
-  }
-
-  /* Editor-specific responsive fixes */
-  @media (max-width: 767px) {
-    .editor-container {
-      flex-direction: column;
-      height: auto;
-      min-height: 100dvh;
-    }
-    
-    .editor-sidebar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      width: 100%;
-      height: auto;
-      max-height: 70vh;
-      border-radius: 24px 24px 0 0;
-      z-index: 50;
-    }
-    
-    .editor-canvas-area {
-      width: 100%;
-      padding: 16px;
-      padding-bottom: 100px;
-    }
   }
 }

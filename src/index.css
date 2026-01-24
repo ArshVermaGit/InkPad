@@ -13,9 +13,30 @@
   --font-handwriting: "Caveat", cursive;
   --font-script: "Dancing Script", cursive;
   --font-print: "Patrick Hand", cursive;
-  --font-display: "Playfair Display", serif;
+  --font-display: "Outfit", "Inter", sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
   --font-serif: "Merriweather", serif;
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-slow: pulse-slow 8s ease-in-out infinite;
+  --animate-blob: blob 7s infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
 }
 
 html {
@@ -31,28 +52,28 @@ html {
   --color-accent-light: #818cf8;
 }
 
-@utility btn-primary {
-  @apply px-6 py-3 rounded-full bg-ink text-white font-bold transition-transform hover:scale-105 active:scale-95 shadow-lg shadow-ink/20;
-}
+@layer utilities {
+  .btn-primary {
+    @apply px-6 py-3 rounded-full bg-ink text-white font-bold transition-transform hover:scale-105 active:scale-95 shadow-lg shadow-ink/20;
+  }
 
-@utility btn-secondary {
-  @apply px-6 py-3 rounded-full bg-white border border-black/5 text-ink font-bold transition-colors hover:bg-gray-50;
-}
+  .btn-secondary {
+    @apply px-6 py-3 rounded-full bg-white border border-black/5 text-ink font-bold transition-colors hover:bg-gray-50;
+  }
 
-@utility paper-card {
-  @apply bg-white rounded-2xl shadow-xl shadow-ink/5 border border-black/5 p-6;
-}
+  .paper-card {
+    @apply bg-white rounded-2xl shadow-xl shadow-ink/5 border border-black/5 p-6;
+  }
 
-@utility animate-marquee {
-  animation: marquee 30s linear infinite;
-  will-change: transform;
+  /* Smooth Marquee Animation */
+  .animate-marquee {
+    animation: marquee 30s linear infinite;
+    will-change: transform;
+  }
 }
 
 body {
-  background-color: var(--color-paper);
-  color: var(--color-ink);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  @apply bg-paper text-ink antialiased;
   font-feature-settings:
     "rlig" 1,
     "calt" 1;
@@ -64,9 +85,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-display);
-  letter-spacing: -0.025em;
-  color: var(--color-ink);
+  @apply font-display tracking-tight text-ink;
 }
 
 @keyframes fadeInUp {
@@ -213,6 +232,39 @@ h6 {
 
   .text-responsive-subtitle {
     font-size: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .mesh-gradient {
+    background-color: hsla(0, 0%, 100%, 1);
+    background-image: 
+      radial-gradient(at 40% 20%, hsla(28, 100%, 74%, 1) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 1) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, hsla(355, 100%, 93%, 1) 0px, transparent 50%),
+      radial-gradient(at 80% 50%, hsla(340, 100%, 76%, 1) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(22, 100%, 77%, 1) 0px, transparent 50%),
+      radial-gradient(at 80% 100%, hsla(242, 100%, 70%, 1) 0px, transparent 50%),
+      radial-gradient(at 0% 0%, hsla(343, 100%, 76%, 1) 0px, transparent 50%);
+  }
+
+  .noise-bg {
+    position: relative;
+  }
+
+  .noise-bg::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.05;
+    pointer-events: none;
+    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+    z-index: 1;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
   }
 }
 

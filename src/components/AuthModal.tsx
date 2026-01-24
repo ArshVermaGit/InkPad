@@ -34,12 +34,12 @@ export default function AuthModal() {
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type: "spring", duration: 0.5 }}
                         ref={modalRef}
-                        className="bg-white rounded-3xl sm:rounded-4xl overflow-hidden shadow-2xl w-full max-w-[calc(100vw-32px)] sm:max-w-sm relative border border-white/20"
+                        className="bg-white rounded-3xl sm:rounded-4xl overflow-hidden shadow-2xl max-w-sm w-full relative border border-white/20"
                     >
                         {/* Close Button */}
                         <button 
                             onClick={() => setAuthModalOpen(false)}
-                            className="absolute top-3 sm:top-4 right-3 sm:right-4 p-2 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-full transition-colors z-20"
+                            className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-full transition-colors z-10"
                         >
                             <X size={20} />
                         </button>

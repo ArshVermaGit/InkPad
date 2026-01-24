@@ -21,15 +21,21 @@ export default function LandingPage() {
     const scrollToEditor = () => editorRef.current?.scrollIntoView({ behavior: 'smooth' });
 
     return (
-        <div className="bg-linear-to-br from-purple-50 via-indigo-50 to-violet-100 min-h-screen overflow-x-hidden selection:bg-accent/30 relative">
+        <div className="bg-paper min-h-screen overflow-x-hidden selection:bg-accent/30 relative">
             {/* Global Page Background Grid & Soft Glows */}
             <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-purple-200/20 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-indigo-200/20 rounded-full blur-[120px]" />
+                <div className="absolute inset-0 mesh-gradient opacity-30" />
+                <div className="absolute inset-0 bg-[radial-gradient(#00000005_1px,transparent_1px)] bg-[size:40px_40px]" />
+                <div className="absolute top-0 left-0 w-full h-full noise-bg opacity-20" />
+                
+                {/* Animated Background Blobs */}
+                <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-300/30 rounded-full blur-3xl animate-blob" />
+                <div className="absolute top-1/3 -right-20 w-96 h-96 bg-indigo-300/30 rounded-full blur-3xl animate-blob [animation-delay:2s]" />
+                <div className="absolute -bottom-20 left-1/3 w-96 h-96 bg-rose-300/30 rounded-full blur-3xl animate-blob [animation-delay:4s]" />
             </div>
             
             {/* --- HERO SECTION --- */}
-            <HeroSection onStartClick={scrollToEditor} />
+            <HeroSection />
 
             {/* --- REAL EDITOR SECTION --- */}
             <section ref={editorRef} id="editor" className="relative z-20 py-12 sm:py-16 md:py-28">
@@ -75,7 +81,7 @@ export default function LandingPage() {
                                 }
                             }
                         }}
-                        className="grid grid-cols-1 md:grid-cols-3 gap-6 md:grid-rows-2 h-auto"
+                        className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:grid-rows-2 h-auto"
                     >
                         {/* Large Card */}
                         <motion.div 
@@ -83,8 +89,8 @@ export default function LandingPage() {
                                 hidden: { opacity: 0, y: 40 },
                                 visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
                             }}
-                            className="md:col-span-2 md:row-span-2 bg-[#F5F5F7] rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 relative overflow-hidden group border border-black/5 shadow-xl transition-all duration-500"
-                            whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 300, damping: 20 } }}
+                            className="md:col-span-2 md:row-span-2 bg-[#F5F5F7] rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden group border border-black/5 shadow-xl transition-all duration-500"
+                            whileHover={{ scale: 1.01, transition: { type: "spring", stiffness: 300, damping: 20 } }}
                         >
                             <div className="relative z-10">
                                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform">
@@ -157,7 +163,7 @@ export default function LandingPage() {
                             damping: 20,
                             duration: 0.7 
                         }}
-                        className="bg-neutral-900 text-white rounded-2xl sm:rounded-3xl p-6 sm:p-10 md:p-16 shadow-2xl relative overflow-hidden group/cta"
+                        className="bg-neutral-900 text-white rounded-4xl sm:rounded-[3rem] p-6 sm:p-10 md:p-24 shadow-2xl relative overflow-hidden group/cta"
                     >
                          {/* Abstract BG */}
                          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] group-hover/cta:scale-110 transition-transform duration-1000" />
@@ -191,7 +197,7 @@ export default function LandingPage() {
     );
 }
 
-function HeroSection({ onStartClick }: { onStartClick: () => void }) {
+function HeroSection() {
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
 
@@ -210,92 +216,45 @@ function HeroSection({ onStartClick }: { onStartClick: () => void }) {
     return (
         <section 
             onMouseMove={handleMouseMove}
-            className="relative min-h-screen-safe flex flex-col items-center justify-center px-4 sm:px-6 overflow-hidden perspective-1000"
+            className="relative min-h-[108vh] flex flex-col items-center justify-center px-4 sm:px-6 overflow-hidden perspective-1000"
         >
             {/* 3D Background Plane */}
             <motion.div 
                 style={{ rotateX, rotateY }}
-                className="absolute inset-0 pointer-events-none"
+                className="absolute inset-0 pointer-events-none flex items-center justify-center"
             >
-                <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-purple-200/20 rounded-full blur-[120px] mix-blend-multiply opacity-70" />
-                <div className="absolute bottom-0 right-1/4 w-[800px] h-[800px] bg-indigo-200/20 rounded-full blur-[120px] mix-blend-multiply opacity-70" />
+                <div className="w-full max-w-7xl h-full relative">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-100/50 rounded-full blur-[160px] mix-blend-multiply transition-opacity duration-1000" />
+                </div>
             </motion.div>
 
-            {/* Main 3D Container */}
+            {/* Main 3D Container with Parallax Layers */}
             <motion.div 
                 style={{ rotateX: contentRotateX, rotateY: contentRotateY, transformStyle: "preserve-3d" }}
-                className="relative z-10 flex flex-col items-center justify-center w-full max-w-6xl aspect-video"
+                className="relative z-10 flex flex-col items-center justify-center w-full max-w-6xl py-24"
             >
-                {/* 3D Floating Elements - Arranged in depth */}
-                <motion.div 
-                    transformTemplate={({ rotateX, rotateY }) => `translate3d(-200px, -150px, 100px) rotateX(${rotateX}) rotateY(${rotateY}) rotate(-6deg)`}
-                    style={{ rotateX: useTransform(rotateX, v => v * 1.5), rotateY: useTransform(rotateY, v => v * 1.5) }}
-                    className="absolute top-1/4 left-10 lg:left-32 hidden md:block"
-                >
-                    <div className="bg-[#FEF9C3]/90 backdrop-blur-sm px-8 py-5 rounded-2xl shadow-xl border border-yellow-100/50">
-                        <span className="font-handwriting text-2xl text-neutral-800">Quick & Easy!</span>
-                    </div>
-                </motion.div>
+                {/* Floating elements removed as they were overlapping text */}
 
-                <motion.div 
-                    transformTemplate={({ rotateX, rotateY }) => `translate3d(200px, -120px, 150px) rotateX(${rotateX}) rotateY(${rotateY}) rotate(3deg)`}
-                    style={{ rotateX: useTransform(rotateX, v => v * 2), rotateY: useTransform(rotateY, v => v * 2) }}
-                    className="absolute top-1/3 right-10 lg:right-32 hidden md:block"
-                >
-                    <div className="bg-[#FCE7F3]/90 backdrop-blur-sm px-8 py-5 rounded-2xl shadow-xl border border-pink-100/50">
-                        <span className="font-handwriting text-2xl text-neutral-800">Pro Export</span>
-                    </div>
-                </motion.div>
+                {/* Central Text Content - Layered Depth */}
+                <div className="text-center transform-style-3d pt-32 pb-20 relative">
+                    {/* Background Soft Glow for Text */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[150%] bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
 
-                <motion.div 
-                    transformTemplate={({ rotateX, rotateY }) => `translate3d(-250px, 150px, 80px) rotateX(${rotateX}) rotateY(${rotateY}) rotate(-2deg)`}
-                    style={{ rotateX, rotateY }}
-                    className="absolute bottom-32 left-12 md:left-48 hidden md:block"
-                >
-                    <div className="bg-[#DBEAFE]/90 backdrop-blur-sm px-8 py-5 rounded-2xl shadow-xl border border-blue-100/50">
-                        <span className="font-handwriting text-2xl text-neutral-800">12+ Fonts</span>
-                    </div>
-                </motion.div>
-
-                <motion.div 
-                    transformTemplate={({ rotateX, rotateY }) => `translate3d(250px, 180px, 120px) rotateX(${rotateX}) rotateY(${rotateY}) rotate(2deg)`}
-                    style={{ rotateX: useTransform(rotateX, v => v * 1.2), rotateY: useTransform(rotateY, v => v * 1.2) }}
-                    className="absolute bottom-24 right-16 md:right-40 hidden md:block"
-                >
-                    <div className="bg-[#DCFCE7]/90 backdrop-blur-sm px-8 py-5 rounded-2xl shadow-xl border border-green-100/50">
-                        <span className="font-handwriting text-2xl text-neutral-800">Realistic ✨</span>
-                    </div>
-                </motion.div>
-
-                {/* Central Text Content */}
-                <div className="text-center transform-style-3d">
-                    <motion.h1 
-                        style={{ transform: "translateZ(60px)" }}
-                        className="text-4xl sm:text-6xl md:text-8xl lg:text-[12rem] font-display font-medium leading-[0.8] tracking-tight text-neutral-900 mb-2 drop-shadow-xl"
-                    >
-                        Handwritten.
-                    </motion.h1>
-
-                    <motion.p 
-                        style={{ transform: "translateZ(40px)" }}
-                        className="font-script text-2xl sm:text-3xl md:text-5xl lg:text-7xl mt-4 sm:mt-6 text-indigo-600/80 pb-4"
-                    >
-                        Text to Handwriting Converter
-                    </motion.p>
-                    
                     <motion.div
                         style={{ transform: "translateZ(80px)" }}
-                        className="mt-8 sm:mt-12 md:mt-16"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                        className="flex flex-col items-center"
                     >
-                        <motion.button
-                            onClick={onStartClick}
-                            whileHover={{ scale: 1.1, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)" }}
-                            whileTap={{ scale: 0.95 }}
-                            className="px-8 sm:px-10 md:px-14 py-4 sm:py-5 md:py-6 bg-neutral-900 text-white rounded-full font-bold text-base sm:text-lg md:text-xl shadow-2xl hover:bg-black transition-all flex items-center gap-2 sm:gap-3 md:gap-4 mx-auto"
+                        <h1 
+                            className="text-7xl sm:text-9xl lg:text-[12rem] font-display font-bold leading-[1.1] tracking-tight text-neutral-900 mb-2"
                         >
-                            <span>Start Writing</span>
-                            <ArrowRight size={24} />
-                        </motion.button>
+                            Handwritten.
+                        </h1>
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-serif italic text-neutral-600 leading-tight">
+                            Text to Handwriting Converter
+                        </h2>
                     </motion.div>
                 </div>
             </motion.div>
@@ -402,9 +361,9 @@ function SocialLink({ href, icon: Icon }: { href: string, icon: React.ElementTyp
             href={href} 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="w-12 h-12 bg-white border border-black/5 rounded-full flex items-center justify-center text-ink/60 hover:text-ink hover:bg-gray-50 transition-all shadow-xl"
+            className="w-10 h-10 bg-white border border-black/5 rounded-full flex items-center justify-center text-ink/60 hover:text-ink hover:bg-gray-50 transition-all shadow-xl"
         >
-            <Icon size={20} />
+            <Icon size={18} />
         </motion.a>
     );
 }
