@@ -1,15 +1,18 @@
-import { useState, useMemo, useDeferredValue, useEffect, useCallback, useRef } from 'react';
+import { useState, useMemo, useDeferredValue, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
     Settings2, FileText, RefreshCw, Type, 
     AlignLeft, AlignCenter, AlignRight, AlignJustify, 
-    Sparkles, Ruler, Zap, Download, Wand2
+    Sparkles, Ruler, Zap, Download, Wand2, Clock
 } from 'lucide-react';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import JSZip from 'jszip';
+import { useStore } from '../lib/store';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../hooks/useToast';
+import HistoryModal from '../components/HistoryModal';
 import ExportModal from '../components/ExportModal';
 
 // --- PIPELINE TYPES ---
@@ -26,15 +29,6 @@ interface PageData {
     index: number;
 }
 
-interface PageConfig {
-    marginTop: number;
-    marginBottom: number;
-    marginLeft: number;
-    marginRight: number;
-    showPageNumbers: boolean;
-    showHeader: boolean;
-    headerText: string;
-}
 
 // --- PIPELINE STAGE 1 & 2: TOKENIZE & BUILD LINES ---
 function buildDocumentLines(text: string, charsPerLine: number): LineData[] {
@@ -202,83 +196,66 @@ const PAPERS = [
 export default function EditorPage() {
     const { addToast } = useToast();
     const sourceRef = useRef<HTMLTextAreaElement>(null);
+    const { user } = useAuth();
     
-    // Core Logic
-    const [text, setText] = useState("Intuitive Sync & History\n\nInkPad now feels like a pro tool. \n\n*   Click any word on the paper to jump to it in the editor.\n*   Standard Cmd+Z/Redo works across the whole session.\n*   The interface stays smooth while you type, thanks to performance debouncing.\n\nTry it out!");
-    const [history, setHistory] = useState<string[]>([text]);
-    const [historyIndex, setHistoryIndex] = useState(0);
+    // Global Store State
+    const { 
+        text, setText, 
+        handwritingStyle: font, setHandwritingStyle: setFont,
+        fontSize, setFontSize,
+        inkColor: color, setInkColor: setColor,
+        paperMaterial, setPaperMaterial,
+        marginTop, marginBottom, marginLeft, marginRight,
+        showPageNumbers, showHeader, headerText, setPageOptions,
+        jitter, setJitter,
+        pressure, setPressure,
+        smudge, setSmudge,
+        baseline, setBaseline,
+        textAlign, setTextAlign,
+        history: storeHistory, addToHistory
+    } = useStore();
 
-    const deferredText = useDeferredValue(text);
-
-    // History Snapshots
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            const currentHistoryText = history[historyIndex];
-            if (text !== currentHistoryText) {
-                const newHist = history.slice(0, historyIndex + 1);
-                newHist.push(text);
-                if (newHist.length > 50) newHist.shift();
-                setHistory(newHist);
-                setHistoryIndex(newHist.length - 1);
-            }
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [text, history, historyIndex]);
-
-    const normalizeInput = (val: string) => {
-        // Simple normalization: Smart bullets and quotes
-        return val
-            .replace(/-- /g, '— ') // Em-dash
-            .replace(/\.\.\./g, '…'); // Ellipsis
-    };
-
-    const handleUndo = useCallback(() => {
-        if (historyIndex > 0) {
-            setHistoryIndex(prev => prev - 1);
-            setText(history[historyIndex - 1]);
-        }
-    }, [history, historyIndex]);
-
-    const handleRedo = useCallback(() => {
-        if (historyIndex < history.length - 1) {
-            setHistoryIndex(prev => prev + 1);
-            setText(history[historyIndex + 1]);
-        }
-    }, [history, historyIndex]);
-
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
-                e.preventDefault();
-                if (e.shiftKey) handleRedo(); else handleUndo();
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [handleUndo, handleRedo]);
-
-    const [font, setFont] = useState(FONTS[0].name);
-    const [fontSize, setFontSize] = useState(24);
-    const [color, setColor] = useState(COLORS[0].value);
-    const [paper, setPaper] = useState(PAPERS[1]); 
-    const [pageConfig, setPageConfig] = useState<PageConfig>({
-        marginTop: 60, marginBottom: 60, marginLeft: 70, marginRight: 40,
-        showPageNumbers: false, showHeader: false, headerText: ""
-    });
-
-    const [jitter, setJitter] = useState(1);
-    const [pressure, setPressure] = useState(0);
-    const [smudge, setSmudge] = useState(0);
-    const [baseline, setBaseline] = useState(11);
-    const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right' | 'justify'>('left');
-
+    // Local UI State
     const [progress, setProgress] = useState(0);
     const [randomSeed, setRandomSeed] = useState(0);
-
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportFormat, setExportFormat] = useState<'pdf' | 'zip'>('pdf');
     const [exportStatus, setExportStatus] = useState<'idle' | 'processing' | 'complete' | 'error'>('idle');
     const [isHumanizing, setIsHumanizing] = useState(false);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+    const deferredText = useDeferredValue(text);
+
+    // Sync Paper (Store uses 'white'|'ruled', but Editor uses object)
+    const paper = useMemo(() => {
+        const p = PAPERS.find(p => p.id === (paperMaterial === 'white' ? 'plain' : 'lined')) || PAPERS[1];
+        return p;
+    }, [paperMaterial]);
+
+    const setPaper = (p: { id: string }) => setPaperMaterial(p.id === 'plain' ? 'white' : 'ruled');
+
+    // History Snapshots (Zustand addToHistory)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (user && text && text.length > 10) {
+                const latest = storeHistory[0];
+                if (!latest || latest.text !== text) {
+                    addToHistory({
+                        id: Date.now().toString(),
+                        timestamp: Date.now(),
+                        text
+                    });
+                }
+            }
+        }, 10000); 
+        return () => clearTimeout(timer);
+    }, [text, user, storeHistory, addToHistory]);
+
+    const normalizeInput = (val: string) => {
+        return val
+            .replace(/-- /g, '— ') 
+            .replace(/\.\.\./g, '…'); 
+    };
 
     // Extras & Realism
     const [marginNote, setMarginNote] = useState("");
@@ -288,17 +265,17 @@ export default function EditorPage() {
 
     // --- PIPELINE EXECUTION ---
     const pages = useMemo(() => {
-        const bodyHeight = 1123 - pageConfig.marginTop - pageConfig.marginBottom;
+        const bodyHeight = 1123 - marginTop - marginBottom;
         const linesPerPage = Math.floor(bodyHeight / paper.lineHeight);
-        const charsPerLine = Math.floor((800 - pageConfig.marginLeft - pageConfig.marginRight) / (fontSize * 0.45));
+        const charsPerLine = Math.floor((800 - marginLeft - marginRight) / (fontSize * 0.38));
         
         // Calculate header lines to reduce page 1 capacity
-        const headerLineCount = pageConfig.showHeader ? pageConfig.headerText.split('\n').length : 0;
-        const page1Lines = Math.max(1, linesPerPage - headerLineCount + 1); // +1 because we are shifting the starting point up
+        const headerLineCount = showHeader ? headerText.split('\n').length : 0;
+        const page1Lines = Math.max(1, linesPerPage - headerLineCount + 1); 
 
         const rawLines = buildDocumentLines(deferredText, charsPerLine);
         return paginateLines(rawLines, linesPerPage, page1Lines);
-    }, [deferredText, fontSize, paper.lineHeight, pageConfig]);
+    }, [deferredText, fontSize, paper.lineHeight, marginTop, marginBottom, marginLeft, marginRight, showHeader, headerText]);
 
     const handleHumanize = async () => {
         const googleKey = import.meta.env.VITE_GOOGLE_API_KEY;
@@ -389,7 +366,7 @@ export default function EditorPage() {
                 });
 
                 pdf.setProperties({
-                    title: `InkPad - ${pageConfig.headerText || 'Handwritten Document'}`,
+                    title: `InkPad - ${headerText || 'Handwritten Document'}`,
                     subject: 'Handwritten Document created with InkPad',
                     author: 'InkPad Rendering Engine',
                     creator: 'InkPad'
@@ -439,10 +416,11 @@ export default function EditorPage() {
 
             setExportStatus('complete');
             addToast(`${format.toUpperCase()} Export Complete!`, 'success');
-        } catch (e) { 
-            console.error(e);
+        } catch (e: unknown) { 
+            const err = e as { message?: string };
+            console.error(err);
             setExportStatus('error');
-            addToast('Export Failed', 'error'); 
+            addToast(`Export Failed: ${err.message || 'Unknown Error'}`, 'error'); 
         }
     };
 
@@ -519,18 +497,18 @@ export default function EditorPage() {
                                 </div>
                                 <div className="space-y-3 mt-4">
                                     <label className="flex items-center gap-3 cursor-pointer group">
-                                        <input type="checkbox" checked={pageConfig.showHeader} onChange={e=>setPageConfig({...pageConfig, showHeader:e.target.checked})} className="w-4 h-4 rounded border-black/10 text-neutral-900 focus:ring-0 transition-all"/><span className="text-[11px] font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors uppercase tracking-tight">Add Heading</span>
+                                        <input type="checkbox" checked={showHeader} onChange={e=>setPageOptions({ showHeader:e.target.checked })} className="w-4 h-4 rounded border-black/10 text-neutral-900 focus:ring-0 transition-all"/><span className="text-[11px] font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors uppercase tracking-tight">Add Heading</span>
                                     </label>
-                                    {pageConfig.showHeader && (
+                                    {showHeader && (
                                         <textarea 
-                                            value={pageConfig.headerText} 
-                                            onChange={(e) => setPageConfig({...pageConfig, headerText: e.target.value})}
+                                            value={headerText} 
+                                            onChange={(e) => setPageOptions({ headerText: e.target.value })}
                                             className="w-full h-20 p-3 bg-white border border-black/5 rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500/20 resize-none font-sans shadow-xs transition-all"
                                             placeholder="Document Title..."
                                         />
                                     )}
                                     <label className="flex items-center gap-3 cursor-pointer group">
-                                        <input type="checkbox" checked={pageConfig.showPageNumbers} onChange={e=>setPageConfig({...pageConfig, showPageNumbers:e.target.checked})} className="w-4 h-4 rounded border-black/10 text-neutral-900 focus:ring-0 transition-all"/><span className="text-[11px] font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors uppercase tracking-tight">Show Page Numbers</span>
+                                        <input type="checkbox" checked={showPageNumbers} onChange={e=>setPageOptions({ showPageNumbers:e.target.checked })} className="w-4 h-4 rounded border-black/10 text-neutral-900 focus:ring-0 transition-all"/><span className="text-[11px] font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors uppercase tracking-tight">Show Page Numbers</span>
                                     </label>
                                 </div>
                             </div>
@@ -631,7 +609,16 @@ export default function EditorPage() {
                     {/* TOP BAR / BREADCRUMB STYLE */}
                     <div className="h-14 border-b border-black/5 flex items-center px-12 justify-between bg-white/50 backdrop-blur-sm relative z-30">
                         <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">
-                            <FileText size={12} className="text-neutral-300"/> / Documents / {pageConfig.headerText || 'Untitled'}
+                            <FileText size={12} className="text-neutral-300"/> / Documents / {headerText || 'Untitled'}
+                            {user && (
+                                <button 
+                                    onClick={() => setIsHistoryOpen(true)}
+                                    className="ml-4 flex items-center gap-1.5 px-3 py-1 bg-neutral-900 text-white rounded-full hover:bg-neutral-800 transition-colors"
+                                >
+                                    <Clock size={10} />
+                                    History
+                                </button>
+                            )}
                         </div>
                         <div className="flex items-center gap-2">
                              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -694,18 +681,18 @@ export default function EditorPage() {
                                         </motion.div>
                                     )}
 
-                                    {pageConfig.showHeader && pIdx === 0 && (
+                                    {showHeader && pIdx === 0 && (
                                         <div 
                                             className="absolute left-0 right-0 z-10 flex flex-col items-center"
                                             style={{ 
-                                                top: pageConfig.marginTop - paper.lineHeight,
+                                                top: marginTop - paper.lineHeight,
                                                 textAlign: 'center',
-                                                paddingLeft: pageConfig.marginLeft,
-                                                paddingRight: pageConfig.marginRight,
+                                                paddingLeft: marginLeft,
+                                                paddingRight: marginRight,
                                                 width: '100%'
                                             }}
                                         >
-                                            {pageConfig.headerText.split('\n').map((hLine, hlIdx) => (
+                                            {headerText.split('\n').map((hLine: string, hlIdx: number) => (
                                                 <div 
                                                     key={hlIdx} 
                                                     style={{
@@ -718,7 +705,7 @@ export default function EditorPage() {
                                                     }} 
                                                     className="w-full whitespace-nowrap overflow-hidden"
                                                 >
-                                                    {hLine.split(' ').map((word, wIdx) => {
+                                                    {hLine.split(' ').map((word: string, wIdx: number) => {
                                                         const seed = `header-${hlIdx}-${wIdx}-${word}-${randomSeed}`;
                                                         const y = (getDeterminRandom(seed+'y')-0.5)*jitter*3;
                                                         const r = (getDeterminRandom(seed+'r')-0.5)*jitter*1.5;
@@ -733,10 +720,10 @@ export default function EditorPage() {
                                     <div 
                                         className="w-full h-full relative" 
                                         style={{
-                                            paddingTop: (pIdx === 0 ? pageConfig.marginTop - paper.lineHeight : pageConfig.marginTop) + (pIdx === 0 && pageConfig.showHeader ? (pageConfig.headerText.split('\n').length) * paper.lineHeight : 0), 
-                                            paddingBottom:pageConfig.marginBottom, 
-                                            paddingLeft:pageConfig.marginLeft, 
-                                            paddingRight:pageConfig.marginRight
+                                            paddingTop: (pIdx === 0 ? marginTop - paper.lineHeight : marginTop) + (pIdx === 0 && showHeader ? (headerText.split('\n').length) * paper.lineHeight : 0), 
+                                            paddingBottom: marginBottom, 
+                                            paddingLeft: marginLeft, 
+                                            paddingRight: marginRight
                                         }}
                                     >   
                                         {page.lines.map((line, lIdx) => (
@@ -779,7 +766,7 @@ export default function EditorPage() {
                                             </div>
                                         ))}
                                     </div>
-                                    {pageConfig.showPageNumbers && (
+                                    {showPageNumbers && (
                                         <div className="absolute bottom-6 left-0 right-0 text-center text-[10px] font-black text-gray-300 tracking-widest uppercase">Page {pIdx+1} of {pages.length}</div>
                                     )}
                                     <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cardboard.png')]"/>
@@ -800,7 +787,12 @@ export default function EditorPage() {
                 format={exportFormat}
                 progress={progress}
                 status={exportStatus}
-                fileName={`${pageConfig.headerText || 'Handwritten'}-${Date.now()}.${exportFormat}`}
+                fileName={`${headerText || 'Handwritten'}-${Date.now()}.${exportFormat}`}
+            />
+
+            <HistoryModal 
+                isOpen={isHistoryOpen} 
+                onClose={() => setIsHistoryOpen(false)} 
             />
         </div>
     );
