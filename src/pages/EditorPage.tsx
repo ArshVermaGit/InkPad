@@ -344,20 +344,24 @@ export default function EditorPage() {
         }
     };
 
-    const handleExport = async (format: 'pdf' | 'zip') => {
+    const handleStartExport = (format: 'pdf' | 'zip') => {
         setExportFormat(format);
-        setExportStatus('processing');
+        setExportStatus('idle');
         setIsExportModalOpen(true);
+        setProgress(0);
+    };
+
+    const executeExport = async (customName: string) => {
+        setExportStatus('processing');
         setProgress(0);
         
         try {
             const elements = document.querySelectorAll('.handwritten-export-target');
             if (elements.length === 0) throw new Error('No pages found');
 
-            const timestamp = Date.now();
-            const baseFileName = `handwritten-${timestamp}`;
+            const baseFileName = customName || `handwritten-${Date.now()}`;
 
-            if (format === 'pdf') {
+            if (exportFormat === 'pdf') {
                 const pdf = new jsPDF({
                     orientation: 'p',
                     unit: 'mm',
@@ -365,24 +369,25 @@ export default function EditorPage() {
                     putOnlyUsedFonts: true
                 });
 
-                pdf.setProperties({
-                    title: `Handwritten - ${headerText || 'Handwritten Document'}`,
-                    subject: 'Handwritten Document created with Handwritten',
-                    author: 'Handwritten Rendering Engine',
-                    creator: 'Handwritten'
-                });
-
                 for (let i = 0; i < elements.length; i++) {
                     if (i > 0) pdf.addPage();
+                    // FIX: oklch error by using hex background and scale
                     const canvas = await html2canvas(elements[i] as HTMLElement, { 
                         scale: 3, 
                         useCORS: true,
                         logging: false,
-                        backgroundColor: null,
+                        backgroundColor: '#ffffff', // Ensure solid hex color
                         scrollX: 0,
                         scrollY: 0,
                         windowWidth: 800,
-                        windowHeight: 1131
+                        windowHeight: 1131,
+                        onclone: (clonedDoc) => {
+                            // Secondary fix: Ensure any modern color bleeding is stripped
+                            const clonedElement = clonedDoc.querySelector('.handwritten-export-target');
+                            if (clonedElement) {
+                                (clonedElement as HTMLElement).style.background = '#ffffff';
+                            }
+                        }
                     });
                     const imgData = canvas.toDataURL('image/png', 1.0);
                     pdf.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'SLOW');
@@ -390,14 +395,13 @@ export default function EditorPage() {
                 }
                 pdf.save(`${baseFileName}.pdf`);
             } else {
-                // ZIP EXPORT
                 const zip = new JSZip();
                 for (let i = 0; i < elements.length; i++) {
                     const canvas = await html2canvas(elements[i] as HTMLElement, { 
                         scale: 3, 
                         useCORS: true, 
                         logging: false,
-                        backgroundColor: null,
+                        backgroundColor: '#ffffff',
                         scrollX: 0,
                         scrollY: 0,
                         windowWidth: 800,
@@ -415,10 +419,10 @@ export default function EditorPage() {
             }
 
             setExportStatus('complete');
-            addToast(`${format.toUpperCase()} Export Complete!`, 'success');
+            addToast(`${exportFormat.toUpperCase()} Export Complete!`, 'success');
         } catch (e: unknown) { 
             const err = e as { message?: string };
-            console.error(err);
+            console.error('Export Error:', err);
             setExportStatus('error');
             addToast(`Export Failed: ${err.message || 'Unknown Error'}`, 'error'); 
         }
@@ -430,7 +434,12 @@ export default function EditorPage() {
             <div className="w-full max-w-[1600px] h-[85vh] bg-white rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.12)] border border-black/5 flex overflow-hidden relative z-10 transition-all">
                 
                 {/* SIDEBAR */}
-                <aside className="w-80 bg-[#F9F9F9] border-r border-black/5 flex flex-col p-8 overflow-y-auto custom-scrollbar shrink-0">
+                <motion.aside 
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
+                    className="w-80 bg-[#F9F9F9] border-r border-black/5 flex flex-col p-8 overflow-y-auto custom-scrollbar shrink-0"
+                >
                     {/* MACOS DOTS */}
                     <div className="flex gap-2 mb-10">
                         <div className="w-3 h-3 rounded-full bg-[#FF5F57] shadow-inner" />
@@ -438,8 +447,15 @@ export default function EditorPage() {
                         <div className="w-3 h-3 rounded-full bg-[#28C840] shadow-inner" />
                     </div>
 
-                    <div className="flex flex-col gap-6">
-                        <div>
+                    <motion.div 
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                            visible: { transition: { staggerChildren: 0.1 } }
+                        }}
+                        className="flex flex-col gap-6"
+                    >
+                        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-3"><Type size={12}/> The Source</label>
                             <textarea 
                                 ref={sourceRef}
@@ -448,37 +464,40 @@ export default function EditorPage() {
                                 className="w-full h-48 p-4 bg-white border border-black/5 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/20 resize-none font-sans shadow-xs transition-all" 
                                 placeholder="Start writing..."
                             />
-                        </div>
+                        </motion.div>
 
                         {/* HIGH-FIDELITY AI TOGGLE */}
-                        <div className="relative">
-                             <button 
-                                onClick={handleHumanize}
-                                disabled={isHumanizing || !text.trim()}
-                                className="w-full py-4 px-6 rounded-2xl bg-white border border-black/5 shadow-xs hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:translate-y-0 transition-all group overflow-hidden"
-                             >
-                                <div className="absolute inset-0 bg-[linear-gradient(110deg,#000103,45%,#1e2631,55%,#000103)] bg-size-[200%_100%] animate-shimmer opacity-0 group-hover:opacity-5 transition-opacity" />
-                                <div className="flex items-center justify-between relative z-10">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-neutral-900 rounded-xl text-white">
-                                            <Wand2 size={16} className={isHumanizing ? 'animate-spin' : ''}/>
-                                        </div>
-                                        <div className="text-left leading-tight">
-                                            <div className="text-[11px] font-black uppercase tracking-widest text-neutral-900 flex items-center gap-1.5">
-                                                AI Humanizer
-                                                <Sparkles size={10} className="text-amber-500 animate-pulse" />
-                                            </div>
-                                            <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-tight">One-Click Organic Rewriting</div>
-                                        </div>
-                                    </div>
-                                    {isHumanizing && <RefreshCw size={14} className="animate-spin text-neutral-300" />}
-                                </div>
-                             </button>
-                        </div>
+                         <div className="relative">
+                              <motion.button 
+                                 whileHover={{ scale: 1.02 }}
+                                 whileTap={{ scale: 0.98 }}
+                                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                                 onClick={handleHumanize}
+                                 disabled={isHumanizing || !text.trim()}
+                                 className="w-full py-4 px-6 rounded-2xl bg-white border border-black/5 shadow-xs hover:shadow-lg disabled:opacity-50 disabled:translate-y-0 transition-all group overflow-hidden"
+                              >
+                                 <div className="absolute inset-0 bg-[linear-gradient(110deg,#000103,45%,#1e2631,55%,#000103)] bg-size-[200%_100%] animate-shimmer opacity-0 group-hover:opacity-5 transition-opacity" />
+                                 <div className="flex items-center justify-between relative z-10">
+                                     <div className="flex items-center gap-3">
+                                         <div className="p-2 bg-neutral-900 rounded-xl text-white">
+                                             <Wand2 size={16} className={isHumanizing ? 'animate-spin' : ''}/>
+                                         </div>
+                                         <div className="text-left leading-tight">
+                                             <div className="text-[11px] font-black uppercase tracking-widest text-neutral-900 flex items-center gap-1.5">
+                                                 AI Humanizer
+                                                 <Sparkles size={10} className="text-amber-500 animate-pulse" />
+                                             </div>
+                                             <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-tight">One-Click Organic Rewriting</div>
+                                         </div>
+                                     </div>
+                                     {isHumanizing && <RefreshCw size={14} className="animate-spin text-neutral-300" />}
+                                 </div>
+                              </motion.button>
+                         </div>
 
                         <div className="h-px bg-black/5 w-full my-2" />
 
-                        <div>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4"><Ruler size={12}/> Paper & Setup</label>
                             <div className="grid grid-cols-1 gap-2">
                                 <div className="flex p-1 bg-white border border-black/5 rounded-xl shadow-xs">
@@ -509,11 +528,11 @@ export default function EditorPage() {
                                     </label>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
                         <div className="h-px bg-black/5 w-full my-2" />
 
-                        <div>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4"><Settings2 size={12}/> Typography</label>
                             <div className="space-y-4">
                                 <div className="flex bg-white border border-black/5 p-1 rounded-xl shadow-xs">
@@ -528,30 +547,33 @@ export default function EditorPage() {
                                 </div>
                                 <div className="flex gap-2 pt-2">{COLORS.map(c=>(<button key={c.name} onClick={()=>setColor(c.value)} className={`w-5 h-5 rounded-full border-2 ${color===c.value?'border-neutral-900 scale-110':'border-transparent'} shadow-xs transition-all`} style={{backgroundColor:c.value}}/>))}</div>
                             </div>
-                        </div>
+                        </motion.div>
 
                         <div className="h-px bg-black/5 w-full my-2" />
 
-                        <div>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4"><Sparkles size={12}/> Rendering</label>
                             <div className="space-y-4">
-                                <button 
+                                 <motion.button 
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                                     onClick={() => setRandomSeed(prev => prev + 1)}
                                     className="w-full py-3 bg-white border border-black/5 text-[10px] font-bold uppercase tracking-widest text-neutral-600 rounded-xl hover:bg-neutral-900 hover:text-white transition-all flex items-center justify-center gap-2 shadow-xs group"
                                 >
                                     <RefreshCw size={12} className={`group-hover:rotate-180 transition-transform duration-500 ${exportStatus === 'processing' ? 'animate-spin' : ''}`}/> Re-Randomize
-                                </button>
+                                </motion.button>
                                 <div className="space-y-4">
                                     <div><span className="text-[10px] font-bold text-neutral-400 uppercase tracking-tighter mb-2 flex justify-between">Jitter <span>{jitter}</span></span><input type="range" min="0" max="6" step="0.5" value={jitter} onChange={(e) => setJitter(Number(e.target.value))} className="w-full h-1 bg-black/5 rounded-full appearance-none accent-neutral-900 cursor-pointer" /></div>
                                     <div><span className="text-[10px] font-bold text-neutral-400 uppercase tracking-tighter mb-2 flex justify-between">Pressure <span>{Math.round(pressure*100)}%</span></span><input type="range" min="0" max="1" step="0.1" value={pressure} onChange={(e) => setPressure(Number(e.target.value))} className="w-full h-1 bg-black/5 rounded-full appearance-none accent-neutral-900 cursor-pointer" /></div>
                                     <div><span className="text-[10px] font-bold text-neutral-400 uppercase tracking-tighter mb-2 flex justify-between">Smudge <span>{smudge}</span></span><input type="range" min="0" max="2" step="0.1" value={smudge} onChange={(e) => setSmudge(Number(e.target.value))} className="w-full h-1 bg-black/5 rounded-full appearance-none accent-neutral-900 cursor-pointer" /></div>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
                         <div className="h-px bg-black/5 w-full my-2" />
 
-                        <div>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4"><Zap size={12}/> Effects</label>
                             <div className="space-y-4">
                                 <input 
@@ -578,28 +600,34 @@ export default function EditorPage() {
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
                         <div className="mt-6 space-y-3">
-                            <button 
-                                onClick={() => handleExport('pdf')} 
+                            <motion.button 
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                                onClick={() => handleStartExport('pdf')} 
                                 disabled={exportStatus === 'processing'} 
-                                className="w-full py-4 rounded-2xl bg-neutral-900 text-white font-bold text-sm shadow-[0_10px_20px_-5px_rgba(0,0,0,0.2)] hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                                className="w-full py-4 rounded-2xl bg-neutral-900 text-white font-bold text-sm shadow-[0_10px_20px_-5px_rgba(0,0,0,0.2)] hover:shadow-2xl active:translate-y-0 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                             >
                                 <Download size={16} />
                                 Export PDF
-                            </button>
-                            <button 
-                                onClick={() => handleExport('zip')} 
+                            </motion.button>
+                            <motion.button 
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                                onClick={() => handleStartExport('zip')} 
                                 disabled={exportStatus === 'processing'} 
                                 className="w-full py-3 rounded-2xl bg-white border border-black/5 text-neutral-600 font-bold text-[11px] uppercase tracking-widest hover:bg-neutral-50 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                             >
                                 <Sparkles size={14} />
                                 Export Images (ZIP)
-                            </button>
+                            </motion.button>
                         </div>
-                    </div>
-                </aside>
+                    </motion.div>
+                </motion.aside>
 
                 {/* MAIN VISUAL PREVIEW AREA */}
                 <main className="flex-1 bg-[#FAFAFA] flex flex-col relative overflow-hidden group/canvas">
@@ -767,7 +795,7 @@ export default function EditorPage() {
                                         <div className="absolute bottom-6 left-0 right-0 text-center text-[10px] font-black text-gray-300 tracking-widest uppercase">Page {pIdx+1} of {pages.length}</div>
                                     )}
                                     <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cardboard.png')]"/>
-                                    <div className="absolute top-0 bottom-0 left-[50px] w-px bg-red-300 opacity-20"/>
+                                    {paper.id !== 'plain' && <div className="absolute top-0 bottom-0 left-[50px] w-px bg-red-300 opacity-20"/>}
                                 </div>
                              </motion.div>
                         ))}
@@ -776,15 +804,17 @@ export default function EditorPage() {
             </div>
 
             <ExportModal 
+                key={isExportModalOpen ? 'open' : 'closed'}
                 isOpen={isExportModalOpen}
                 onClose={() => {
                     setIsExportModalOpen(false);
-                    setExportStatus('idle');
+                    if (exportStatus !== 'processing') setExportStatus('idle');
                 }}
+                onStart={executeExport}
                 format={exportFormat}
                 progress={progress}
                 status={exportStatus}
-                fileName={`${headerText || 'Handwritten'}-${Date.now()}.${exportFormat}`}
+                initialFileName={headerText || 'handwritten-document'}
             />
 
             <HistoryModal 
