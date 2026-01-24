@@ -4,7 +4,7 @@ import type { AppState, FontPreference } from '../types';
 
 // Default typography values for reset
 const DEFAULT_TYPOGRAPHY = {
-    fontSize: 16,
+    fontSize: 25,
     letterSpacing: 0,
     lineHeight: 1.5,
     wordSpacing: 4,
@@ -16,7 +16,7 @@ export interface HistoryItem {
     text: string;
 }
 
-const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZoom' | 'setEditorMode' | 'setUploadedFileName' | 'setHandwritingStyle' | 'setFontSize' | 'setLetterSpacing' | 'setLineHeight' | 'setWordSpacing' | 'setPaperMaterial' | 'setPaperSize' | 'setPaperOrientation' | 'setInkColor' | 'addCustomFont' | 'removeCustomFont' | 'resetTypography' | 'setCustomPaperImage' | 'completeOnboarding' | 'completeTour' | 'setSidebarCollapsed' | 'setSettingsOpen' | 'setPaperShadow' | 'setInkBlur' | 'setResolutionQuality' | 'setPaperTilt' | 'setPaperTexture' | 'setExpandedPanels' | 'togglePanel' | 'applyPreset' | 'setIsRendering' | 'setRenderingProgress' | 'addToHistory'> = {
+const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZoom' | 'setEditorMode' | 'setUploadedFileName' | 'setHandwritingStyle' | 'setFontSize' | 'setLetterSpacing' | 'setLineHeight' | 'setWordSpacing' | 'setPaperMaterial' | 'setPaperSize' | 'setPaperOrientation' | 'setInkColor' | 'addCustomFont' | 'removeCustomFont' | 'resetTypography' | 'setCustomPaperImage' | 'completeOnboarding' | 'completeTour' | 'setSidebarCollapsed' | 'setSettingsOpen' | 'setPaperShadow' | 'setInkBlur' | 'setResolutionQuality' | 'setPaperTilt' | 'setPaperTexture' | 'setExpandedPanels' | 'togglePanel' | 'applyPreset' | 'setIsRendering' | 'setRenderingProgress' | 'addToHistory' | 'setJitter' | 'setPressure' | 'setSmudge' | 'setBaseline' | 'setTextAlign' | 'setMargins' | 'setPageOptions'> = {
     text: '',
     lastSaved: null,
     zoom: 1,
@@ -47,6 +47,20 @@ const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZo
     renderingProgress: 0,
     expandedPanels: ['handwriting', 'typography', 'paper', 'effects'],
     history: [],
+    
+    // Editor Refinements
+    jitter: 1,
+    pressure: 0,
+    smudge: 0.1,
+    baseline: 12,
+    textAlign: 'left',
+    marginTop: 60,
+    marginBottom: 60,
+    marginLeft: 70,
+    marginRight: 25,
+    showPageNumbers: false,
+    showHeader: false,
+    headerText: '',
 };
 
 export const useStore = create<AppState>()(
@@ -97,6 +111,24 @@ export const useStore = create<AppState>()(
             applyPreset: (settings) => set((state) => ({ ...state, ...settings })),
             addToHistory: (item) => set((state) => ({ 
                 history: [item, ...state.history].slice(0, 50) // Keep last 50 items
+            })),
+
+            // Editor Refinement Actions
+            setJitter: (jitter) => set({ jitter }),
+            setPressure: (pressure) => set({ pressure }),
+            setSmudge: (smudge) => set({ smudge }),
+            setBaseline: (baseline) => set({ baseline }),
+            setTextAlign: (textAlign) => set({ textAlign }),
+            setMargins: (margins) => set((state) => ({
+                marginTop: margins.top ?? state.marginTop,
+                marginBottom: margins.bottom ?? state.marginBottom,
+                marginLeft: margins.left ?? state.marginLeft,
+                marginRight: margins.right ?? state.marginRight,
+            })),
+            setPageOptions: (options) => set((state) => ({
+                showPageNumbers: options.showPageNumbers ?? state.showPageNumbers,
+                showHeader: options.showHeader ?? state.showHeader,
+                headerText: options.headerText ?? state.headerText,
             })),
 
             reset: () => set(() => initialState),
