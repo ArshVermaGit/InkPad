@@ -47,12 +47,12 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-ink/20 backdrop-blur-sm">
+                <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-ink/20 backdrop-blur-sm">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         ref={modalRef}
                         className="bg-white rounded-3xl overflow-hidden shadow-2xl max-w-md w-full relative flex flex-col max-h-[80vh]"
                     >
