@@ -295,56 +295,86 @@ export default function EditorPage() {
         const googleKey = import.meta.env.VITE_GOOGLE_API_KEY;
         
         if (!googleKey) {
-            addToast('Google API Key missing. Please check your .env file.', 'error');
+            addToast('AI Configuration Missing. Please connect API Key.', 'error');
             return;
         }
 
         setIsHumanizing(true);
-        try {
-            const genAI = new GoogleGenerativeAI(googleKey);
-            const model = genAI.getGenerativeModel({ 
-                model: "gemini-1.5-flash",
+        
+        // Strategy: Model Fallback Waterfall
+        const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-pro", "gemini-1.5-pro"];
+        let lastError: Error | null = null;
+
+        const attemptWithModel = async (modelName: string): Promise<string> => {
+             const genAI = new GoogleGenerativeAI(googleKey);
+             const model = genAI.getGenerativeModel({ 
+                model: modelName,
                 generationConfig: {
-                    temperature: 0.8,
-                    maxOutputTokens: 1000,
+                    temperature: 0.9,
+                    maxOutputTokens: 8192,
                 },
                 safetySettings: [
-                    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-                    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-                    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-                    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+                    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
                 ]
             });
 
-            const prompt = `Convert the following text into organic, natural human prose. 
-            Output strictly the rewritten text. 
-            Input Text: ${text}`;
-            
-            const result = await model.generateContent(prompt);
+            const systemInstruction = `You are a text humanizer for a handwriting simulator. 
+            Your goal is to rewrite the input text to sound more natural, organic, and human-written.
+            - Introduce slight imperfections.
+            - Use contractions (e.g., "don't" instead of "do not").
+            - Vary sentence structure.
+            - If the input is code or technical, keep it mostly intact but add comments or slight casualness if appropriate.
+            - Output ONLY the converted text, no preamble or markdown unless part of the text.`;
+
+            const result = await model.generateContent(`${systemInstruction}\n\nInput Text:\n${text}`);
             const response = await result.response;
-            const rewrittenText = response.text();
+            return response.text();
+        }
+
+        try {
+            let rewrittenText: string | null = null;
+            
+            for (const modelName of modelsToTry) {
+                try {
+                    console.log(`Attempting with model: ${modelName}`);
+                    rewrittenText = await attemptWithModel(modelName);
+                    if (rewrittenText) break; // Success!
+                } catch (e: unknown) {
+                    const err = e as Error;
+                    console.warn(`Model ${modelName} failed:`, err.message);
+                    lastError = err;
+                    // Continue to next model if it's a 404 or similar availability error
+                    if (err.message.includes('404') || err.message.includes('not found') || err.message.includes('fetch failed')) {
+                        continue;
+                    }
+                    // If it's a permission/key error (400/403), waiting probably won't help, but we try next just in case
+                }
+            }
 
             if (rewrittenText) {
                 setText(normalizeInput(rewrittenText.trim()));
-                addToast('Text Humanized!', 'success');
-            }
-        } catch (e: unknown) {
-            const err = e as { message?: string; status?: number };
-            console.error('Humanize Full Error Object:', err);
-            
-            let displayMsg = 'AI Error';
-            const message = err.message || 'Unknown network error';
-            
-            if (message.includes('429')) displayMsg = 'Rate Limit Reached (Free Tier)';
-            else if (message.includes('SAFETY')) displayMsg = 'Content Filtered';
-            else if (message.includes('API key')) displayMsg = 'Invalid API Key';
-            else if (message.toLowerCase().includes('fetch') || message.toLowerCase().includes('network')) {
-                displayMsg = `Network Blocked: ${message.substring(0, 40)}`;
+                addToast('Text Successfully Humanized!', 'success');
             } else {
-                displayMsg = message.length > 60 ? message.substring(0, 60) + '...' : message;
+                throw lastError || new Error('All models failed');
             }
+
+        } catch (e: unknown) {
+            console.error('Humanize Final Error:', e);
+            const err = e as { message?: string };
+            const message = err.message || '';
             
-            addToast(displayMsg, 'error');
+            if (message.includes('429')) {
+                addToast('High demand. Please try again in 1 minute.', 'warning');
+            } else if (message.includes('API key')) {
+                addToast('Invalid API Key. Check .env file.', 'error');
+            } else if (message.includes('404')) {
+                addToast('Model Unavailable. Restart server if .env was changed.', 'error');
+            } else {
+                addToast('Connection failed. Please check internet.', 'error');
+            }
         } finally {
             setIsHumanizing(false);
         }
