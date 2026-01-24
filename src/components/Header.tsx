@@ -9,7 +9,7 @@ export default function Header() {
         >
             <div className="max-w-7xl mx-auto">
                 <h1 className="text-4xl font-bold tracking-tight">
-                    InkPad
+                    Handwritten
                 </h1>
                 <p className="text-ink-300 mt-2">
                     Transform your text into beautiful handwriting
