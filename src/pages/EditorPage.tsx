@@ -228,6 +228,35 @@ export default function EditorPage() {
     const [pendingAction, setPendingAction] = useState<{ type: 'export', format: 'pdf' | 'zip' } | null>(null);
     const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
     const [activeMobileTab, setActiveMobileTab] = useState<'text' | 'style' | 'effects'>('text');
+    const [scale, setScale] = useState(1);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Responsive Canvas Scaling
+    useEffect(() => {
+        const updateScale = () => {
+            if (containerRef.current) {
+                const { clientWidth } = containerRef.current;
+                const targetWidth = 800; // Base width of the paper
+                const padding = 32; // Safety margin
+                const availableWidth = clientWidth - padding;
+                
+                // Only scale down, never up (max 1)
+                const newScale = Math.min(1, availableWidth / targetWidth);
+                setScale(newScale);
+            }
+        };
+
+        // Initial check
+        updateScale();
+
+        // Observer
+        const observer = new ResizeObserver(updateScale);
+        if (containerRef.current) {
+            observer.observe(containerRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, []);
 
     // Initial Login Pop-up (Handled by AuthContext, but we ensure persistence of intent)
     useEffect(() => {
@@ -759,18 +788,30 @@ export default function EditorPage() {
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 md:p-12 lg:p-24 flex flex-col items-center gap-8 sm:gap-12 md:gap-24 custom-scrollbar relative pb-24 lg:pb-12">
+                    <div ref={containerRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 md:p-12 lg:p-24 flex flex-col items-center gap-8 sm:gap-12 md:gap-24 custom-scrollbar relative pb-24 lg:pb-12">
                         {/* THE "DESK" TEXTURE */}
                         <div className="absolute inset-0 bg-[radial-gradient(#00000003_1px,transparent_1px)] bg-size-[32px_32px] pointer-events-none" />
 
                         {pages.map((page, pIdx) => (
-                             <motion.div 
-                                key={pIdx} 
-                                initial={{opacity:0, y: 20, rotate: 0}} 
-                                animate={{opacity:1, y: 0, rotate: 0}} 
-                                className={`handwritten-page-render relative w-full max-w-[800px] aspect-[1/1.414] ${pIdx === 0 ? 'paper-stack' : 'shadow-2xl'} overflow-hidden shrink-0 transition-transform duration-700 ease-out ring-1 ring-black/5 rounded-0`} 
-                                style={{ transformOrigin: 'center center' }}
+                             // SCALING WRAPPER forces layout size to match visual size
+                             <div 
+                                key={pIdx}
+                                style={{ 
+                                    width: 800 * scale, 
+                                    height: (800 * 1.414) * scale,
+                                    marginBottom: 20 // Extra gap
+                                }}
+                                className="relative shrink-0 transition-all duration-300 ease-out"
                              >
+                                 <motion.div 
+                                    initial={{opacity:0, y: 20, rotate: 0}} 
+                                    animate={{opacity:1, y: 0, rotate: 0}} 
+                                    className={`handwritten-page-render absolute top-0 left-0 w-[800px] aspect-[1/1.414] ${pIdx === 0 ? 'paper-stack' : 'shadow-2xl'} overflow-hidden bg-white ring-1 ring-black/5 rounded-none origin-top-left`} 
+                                    style={{ 
+                                        transform: `scale(${scale})`,
+                                        transformOrigin: 'top left'
+                                    }}
+                                 >
                                 {/* CLEAN EXPORT CONTAINER */}
                                 <div className={`handwritten-export-target w-full h-full relative ${paper.css}`} style={paper.style}>
                                     {/* MARGIN ANNOTATION */}
@@ -906,6 +947,7 @@ export default function EditorPage() {
                                     {paper.id !== 'plain' && <div className="absolute top-0 bottom-0 left-[50px] w-px bg-red-300 opacity-20"/>}
                                 </div>
                              </motion.div>
+                        </div>
                         ))}
                     </div>
                 </main>
