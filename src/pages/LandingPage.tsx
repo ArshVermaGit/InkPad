@@ -3,7 +3,7 @@ import {
     PenTool, Download, Type, ArrowRight,
     Mail, Github, Linkedin, Twitter
 } from 'lucide-react';
-import { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useStore } from '../lib/store';
 import EditorPage from './EditorPage';
 import photo from '../assets/arsh.jpg';
@@ -192,159 +192,119 @@ export default function LandingPage() {
 }
 
 function HeroSection({ onStartClick }: { onStartClick: () => void }) {
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        const { clientX, clientY, currentTarget } = e;
+        const { width, height, left, top } = currentTarget.getBoundingClientRect();
+        mouseX.set((clientX - left) / width - 0.5);
+        mouseY.set((clientY - top) / height - 0.5);
+    };
+
+    const rotateX = useTransform(mouseY, [-0.5, 0.5], [7, -7]);
+    const rotateY = useTransform(mouseX, [-0.5, 0.5], [-7, 7]);
+    const contentRotateX = useTransform(mouseY, [-0.5, 0.5], [15, -15]);
+    const contentRotateY = useTransform(mouseX, [-0.5, 0.5], [-15, 15]);
+
     return (
-        <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
-            
-            {/* Floating Sticky Decorations */}
-            <motion.div
-                initial={{ opacity: 0, rotate: -15, y: 20 }}
-                animate={{ 
-                    opacity: 1, 
-                    rotate: -12, 
-                    y: [0, -10, 0],
-                }}
-                transition={{ 
-                    opacity: { delay: 0.5, duration: 1 },
-                    rotate: { delay: 0.5, duration: 1 },
-                    y: { 
-                        delay: 0,
-                        duration: 5,
-                        repeat: Infinity,
-                        repeatType: "mirror",
-                        ease: "easeInOut"
-                    }
-                }}
-                className="absolute top-32 left-8 md:left-24 hidden md:block"
+        <section 
+            onMouseMove={handleMouseMove}
+            className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden perspective-1000"
+        >
+            {/* 3D Background Plane */}
+            <motion.div 
+                style={{ rotateX, rotateY }}
+                className="absolute inset-0 pointer-events-none"
             >
-                <div className="bg-yellow-200 w-32 h-32 rounded-2xl shadow-xl p-4 -rotate-6">
-                    <span className="font-handwriting text-lg text-neutral-700">Quick & Easy!</span>
-                </div>
-            </motion.div>
-            
-            <motion.div
-                initial={{ opacity: 0, rotate: 10, y: 20 }}
-                animate={{ 
-                    opacity: 1, 
-                    rotate: 6, 
-                    y: [0, 10, 0],
-                }}
-                transition={{ 
-                    opacity: { delay: 0.7, duration: 1 },
-                    rotate: { delay: 0.7, duration: 1 },
-                    y: { 
-                        delay: 0.5,
-                        duration: 6,
-                        repeat: Infinity,
-                        repeatType: "mirror",
-                        ease: "easeInOut"
-                    }
-                }}
-                className="absolute top-48 right-8 md:right-20 hidden md:block"
-            >
-                <div className="bg-pink-200 w-28 h-28 rounded-2xl shadow-xl p-3 rotate-3">
-                    <span className="font-handwriting text-base text-neutral-700">Pro Export</span>
-                </div>
-            </motion.div>
-            
-            <motion.div
-                initial={{ opacity: 0, rotate: -5, y: 20 }}
-                animate={{ 
-                    opacity: 1, 
-                    rotate: -3, 
-                    y: [0, -8, 0],
-                }}
-                transition={{ 
-                    opacity: { delay: 0.9, duration: 1 },
-                    rotate: { delay: 0.9, duration: 1 },
-                    y: { 
-                        delay: 1,
-                        duration: 5.5,
-                        repeat: Infinity,
-                        repeatType: "mirror",
-                        ease: "easeInOut"
-                    }
-                }}
-                className="absolute bottom-40 left-12 md:left-32 hidden md:block"
-            >
-                <div className="bg-blue-200 w-36 h-24 rounded-2xl shadow-xl p-4 -rotate-2">
-                    <span className="font-handwriting text-lg text-neutral-700">12+ Fonts</span>
-                </div>
-            </motion.div>
-            
-            <motion.div
-                initial={{ opacity: 0, rotate: 8, y: 20 }}
-                animate={{ 
-                    opacity: 1, 
-                    rotate: 4, 
-                    y: [0, 12, 0],
-                }}
-                transition={{ 
-                    opacity: { delay: 1.1, duration: 1 },
-                    rotate: { delay: 1.1, duration: 1 },
-                    y: { 
-                        delay: 1.5,
-                        duration: 7,
-                        repeat: Infinity,
-                        repeatType: "mirror",
-                        ease: "easeInOut"
-                    }
-                }}
-                className="absolute bottom-32 right-16 md:right-28 hidden md:block"
-            >
-                <div className="bg-green-200 w-32 h-28 rounded-2xl shadow-xl p-3 rotate-2">
-                    <span className="font-handwriting text-base text-neutral-700">Realistic ✨</span>
-                </div>
+                <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-purple-200/20 rounded-full blur-[120px] mix-blend-multiply opacity-70" />
+                <div className="absolute bottom-0 right-1/4 w-[800px] h-[800px] bg-indigo-200/20 rounded-full blur-[120px] mix-blend-multiply opacity-70" />
             </motion.div>
 
-            {/* Main Content */}
-            <div className="relative z-10 text-center flex flex-col items-center">
-                
-                {/* Website Name with Black-Gray Gradient */}
-                <motion.h1 
-                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                    viewport={{ once: false, amount: 0.3 }}
-                    transition={{ 
-                        duration: 1, 
-                        ease: [0.34, 1.56, 0.64, 1] // Custom backOut-style springy ease
-                    }}
-                    className="text-7xl md:text-[10rem] font-sans font-black leading-[0.9] tracking-tighter bg-linear-to-b from-neutral-900 to-neutral-500 bg-clip-text text-transparent"
+            {/* Main 3D Container */}
+            <motion.div 
+                style={{ rotateX: contentRotateX, rotateY: contentRotateY, transformStyle: "preserve-3d" }}
+                className="relative z-10 flex flex-col items-center justify-center w-full max-w-6xl aspect-video"
+            >
+                {/* 3D Floating Elements - Arranged in depth */}
+                <motion.div 
+                    transformTemplate={({ rotateX, rotateY }) => `translate3d(-200px, -150px, 100px) rotateX(${rotateX}) rotateY(${rotateY}) rotate(-6deg)`}
+                    style={{ rotateX: useTransform(rotateX, v => v * 1.5), rotateY: useTransform(rotateY, v => v * 1.5) }}
+                    className="absolute top-1/4 left-10 lg:left-32 hidden md:block"
                 >
-                    Handwritten
-                </motion.h1>
-
-                {/* Cursive Subtext with Purple Gradient */}
-                <motion.p 
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: false, amount: 0.3 }}
-                    transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-                    className="font-handwriting text-4xl md:text-6xl mt-4 bg-linear-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent"
-                >
-                    Text to Handwriting Converter
-                </motion.p>
-
-                {/* CTA Button */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: false, amount: 0.3 }}
-                    transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
-                    className="mt-12"
-                >
-                    <motion.button
-                        onClick={onStartClick}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                        className="px-10 py-5 bg-neutral-900 text-white rounded-full font-bold text-lg hover:bg-black transition-all shadow-xl flex items-center gap-3 group"
-                    >
-                        <span className="flex items-center gap-3 group-hover:gap-4 transition-all duration-300">
-                            Start Writing <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                        </span>
-                    </motion.button>
+                    <div className="bg-[#FEF9C3]/90 backdrop-blur-sm px-8 py-5 rounded-2xl shadow-xl border border-yellow-100/50">
+                        <span className="font-handwriting text-2xl text-neutral-800">Quick & Easy!</span>
+                    </div>
                 </motion.div>
-            </div>
+
+                <motion.div 
+                    transformTemplate={({ rotateX, rotateY }) => `translate3d(200px, -120px, 150px) rotateX(${rotateX}) rotateY(${rotateY}) rotate(3deg)`}
+                    style={{ rotateX: useTransform(rotateX, v => v * 2), rotateY: useTransform(rotateY, v => v * 2) }}
+                    className="absolute top-1/3 right-10 lg:right-32 hidden md:block"
+                >
+                    <div className="bg-[#FCE7F3]/90 backdrop-blur-sm px-8 py-5 rounded-2xl shadow-xl border border-pink-100/50">
+                        <span className="font-handwriting text-2xl text-neutral-800">Pro Export</span>
+                    </div>
+                </motion.div>
+
+                <motion.div 
+                    transformTemplate={({ rotateX, rotateY }) => `translate3d(-250px, 150px, 80px) rotateX(${rotateX}) rotateY(${rotateY}) rotate(-2deg)`}
+                    style={{ rotateX, rotateY }}
+                    className="absolute bottom-32 left-12 md:left-48 hidden md:block"
+                >
+                    <div className="bg-[#DBEAFE]/90 backdrop-blur-sm px-8 py-5 rounded-2xl shadow-xl border border-blue-100/50">
+                        <span className="font-handwriting text-2xl text-neutral-800">12+ Fonts</span>
+                    </div>
+                </motion.div>
+
+                <motion.div 
+                    transformTemplate={({ rotateX, rotateY }) => `translate3d(250px, 180px, 120px) rotateX(${rotateX}) rotateY(${rotateY}) rotate(2deg)`}
+                    style={{ rotateX: useTransform(rotateX, v => v * 1.2), rotateY: useTransform(rotateY, v => v * 1.2) }}
+                    className="absolute bottom-24 right-16 md:right-40 hidden md:block"
+                >
+                    <div className="bg-[#DCFCE7]/90 backdrop-blur-sm px-8 py-5 rounded-2xl shadow-xl border border-green-100/50">
+                        <span className="font-handwriting text-2xl text-neutral-800">Realistic ✨</span>
+                    </div>
+                </motion.div>
+
+                {/* Central Text Content */}
+                <div className="text-center transform-style-3d">
+                    <motion.h1 
+                        style={{ transform: "translateZ(60px)" }}
+                        className="text-8xl md:text-[12rem] font-display font-medium leading-[0.8] tracking-tight text-neutral-900 mb-2 drop-shadow-xl"
+                    >
+                        Handwritten.
+                    </motion.h1>
+
+                    <motion.p 
+                        style={{ transform: "translateZ(40px)" }}
+                        className="font-script text-5xl md:text-7xl mt-6 bg-linear-to-r from-purple-600 to-indigo-500 bg-clip-text text-transparent pb-4"
+                    >
+                        Text to Handwriting Converter
+                    </motion.p>
+                    
+                    <motion.div
+                        style={{ transform: "translateZ(80px)" }}
+                        className="mt-16"
+                    >
+                        <motion.button
+                            onClick={onStartClick}
+                            whileHover={{ scale: 1.1, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)" }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-14 py-6 bg-neutral-900 text-white rounded-full font-bold text-xl shadow-2xl hover:bg-black transition-all flex items-center gap-4 mx-auto"
+                        >
+                            <span>Start Writing</span>
+                            <ArrowRight size={24} />
+                        </motion.button>
+                        <motion.p 
+                           style={{ transform: "translateZ(30px)" }}
+                           className="mt-6 text-sm font-bold text-neutral-400 uppercase tracking-widest"
+                        >
+                            No Sign Up Required
+                        </motion.p>
+                    </motion.div>
+                </div>
+            </motion.div>
         </section>
     );
 }
