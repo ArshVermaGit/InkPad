@@ -111,7 +111,7 @@ export default function LandingPage() {
                         whileInView={{ scale: 1, opacity: 1 }}
                         viewport={{ once: true, margin: "-100px" }}
                         transition={{ duration: 0.6 }}
-                        className="bg-ink text-white rounded-[3rem] p-12 md:p-24 shadow-2xl relative overflow-hidden"
+                        className="bg-neutral-900 text-white rounded-[3rem] p-12 md:p-24 shadow-2xl relative overflow-hidden"
                     >
                          {/* Abstract BG */}
                          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
@@ -127,7 +127,7 @@ export default function LandingPage() {
                             </p>
                             <button
                                 onClick={() => navigate('/editor')}
-                                className="px-10 py-5 bg-white text-ink rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center gap-3 mx-auto shadow-[0_0_50px_-10px_rgba(255,255,255,0.3)]"
+                                className="px-10 py-5 bg-white text-neutral-900 rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center gap-3 mx-auto shadow-[0_0_50px_-10px_rgba(255,255,255,0.3)]"
                             >
                                 Launch Editor <ArrowRight size={20} />
                             </button>
