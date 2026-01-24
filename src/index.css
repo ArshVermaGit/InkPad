@@ -18,6 +18,10 @@
   --font-serif: 'Merriweather', serif;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   --color-paper: #FAF9F6;
   --color-paper-dark: #F2F0E9;
