@@ -246,22 +246,18 @@ function MarqueeSection() {
     return (
         <section className="py-20 bg-white border-y border-black/5 overflow-hidden">
             <div className="flex relative w-full">
-                <motion.div 
-                    animate={{ x: ["0%", "-50%"] }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="flex gap-16 whitespace-nowrap px-8"
-                >
+                <div className="flex gap-16 whitespace-nowrap px-8 animate-marquee">
                     {[1,2,3,4,5,6].map(i => (
-                        <span key={i} className="text-6xl md:text-8xl font-handwriting text-ink/10 font-bold select-none">
+                        <span key={i} className="text-6xl md:text-8xl font-handwriting text-neutral-900/10 font-bold select-none">
                             Notes with soul.
                         </span>
                     ))}
                     {[1,2,3,4,5,6].map(i => (
-                        <span key={`dup-${i}`} className="text-6xl md:text-8xl font-handwriting text-ink/10 font-bold select-none">
+                        <span key={`dup-${i}`} className="text-6xl md:text-8xl font-handwriting text-neutral-900/10 font-bold select-none">
                             Notes with soul.
                         </span>
                     ))}
-                </motion.div>
+                </div>
             </div>
         </section>
     );
