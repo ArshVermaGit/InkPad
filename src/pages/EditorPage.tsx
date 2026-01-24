@@ -438,25 +438,50 @@ export default function EditorPage() {
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
-                    className="w-80 bg-[#F9F9F9] border-r border-black/5 flex flex-col p-8 overflow-y-auto custom-scrollbar shrink-0"
+                    className="w-80 bg-[#F9F9F9] border-r border-black/5 flex flex-col shrink-0 overflow-hidden"
                 >
-                    {/* MACOS DOTS */}
-                    <div className="flex gap-2 mb-10">
-                        <div className="w-3 h-3 rounded-full bg-[#FF5F57] shadow-inner" />
-                        <div className="w-3 h-3 rounded-full bg-[#FFBD2E] shadow-inner" />
-                        <div className="w-3 h-3 rounded-full bg-[#28C840] shadow-inner" />
+                    {/* MACOS DOTS - Fixed Header */}
+                    <div className="px-8 pt-8 shrink-0">
+                         <div className="flex gap-2 mb-10">
+                            <div className="w-3 h-3 rounded-full bg-[#FF5F57] shadow-inner" />
+                            <div className="w-3 h-3 rounded-full bg-[#FFBD2E] shadow-inner" />
+                            <div className="w-3 h-3 rounded-full bg-[#28C840] shadow-inner" />
+                        </div>
                     </div>
 
-                    <motion.div 
-                        initial="hidden"
-                        animate="visible"
-                        variants={{
-                            visible: { transition: { staggerChildren: 0.1 } }
-                        }}
-                        className="flex flex-col gap-6"
-                    >
+                    {/* Scrollable Content */}
+                    <div className="flex-1 overflow-y-auto px-8 pb-8 custom-scrollbar">
+                        <motion.div 
+                            initial="hidden"
+                            animate="visible"
+                            variants={{
+                                visible: { transition: { staggerChildren: 0.1 } }
+                            }}
+                            className="flex flex-col gap-6"
+                        >
+                        {/* 1. DOCUMENT HEADING (Moved to Top) */}
                         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-3"><Type size={12}/> The Source</label>
+                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-3"><Type size={12}/> Document Heading</label>
+                             <div className="space-y-3 p-4 bg-white border border-black/5 rounded-2xl shadow-xs">
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <input type="checkbox" checked={showHeader} onChange={e=>setPageOptions({ showHeader:e.target.checked })} className="w-4 h-4 rounded border-black/10 text-neutral-900 focus:ring-0 transition-all"/><span className="text-[11px] font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors uppercase tracking-tight">Enable Heading</span>
+                                </label>
+                                {showHeader && (
+                                    <textarea 
+                                        value={headerText} 
+                                        onChange={(e) => setPageOptions({ headerText: e.target.value })}
+                                        className="w-full h-20 p-3 bg-[#F9F9F9] border border-black/5 rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500/20 resize-none font-sans transition-all"
+                                        placeholder="Type your heading here..."
+                                    />
+                                )}
+                             </div>
+                        </motion.div>
+
+                        <div className="h-px bg-black/5 w-full my-1" />
+
+                        {/* 2. THE SOURCE */}
+                        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-3"><FileText size={12}/> The Source</label>
                             <textarea 
                                 ref={sourceRef}
                                 value={text} 
@@ -466,7 +491,7 @@ export default function EditorPage() {
                             />
                         </motion.div>
 
-                        {/* HIGH-FIDELITY AI TOGGLE */}
+                        {/* 3. AI HUMANIZER */}
                          <div className="relative">
                               <motion.button 
                                  whileHover={{ scale: 1.02 }}
@@ -497,6 +522,7 @@ export default function EditorPage() {
 
                         <div className="h-px bg-black/5 w-full my-2" />
 
+                        {/* 4. PAPER & SETUP (Cleaned up) */}
                         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4"><Ruler size={12}/> Paper & Setup</label>
                             <div className="grid grid-cols-1 gap-2">
@@ -511,18 +537,7 @@ export default function EditorPage() {
                                         </button>
                                      ))}
                                 </div>
-                                <div className="space-y-3 mt-4">
-                                    <label className="flex items-center gap-3 cursor-pointer group">
-                                        <input type="checkbox" checked={showHeader} onChange={e=>setPageOptions({ showHeader:e.target.checked })} className="w-4 h-4 rounded border-black/10 text-neutral-900 focus:ring-0 transition-all"/><span className="text-[11px] font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors uppercase tracking-tight">Add Heading</span>
-                                    </label>
-                                    {showHeader && (
-                                        <textarea 
-                                            value={headerText} 
-                                            onChange={(e) => setPageOptions({ headerText: e.target.value })}
-                                            className="w-full h-20 p-3 bg-white border border-black/5 rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500/20 resize-none font-sans shadow-xs transition-all"
-                                            placeholder="Document Title..."
-                                        />
-                                    )}
+                                <div className="mt-4">
                                     <label className="flex items-center gap-3 cursor-pointer group">
                                         <input type="checkbox" checked={showPageNumbers} onChange={e=>setPageOptions({ showPageNumbers:e.target.checked })} className="w-4 h-4 rounded border-black/10 text-neutral-900 focus:ring-0 transition-all"/><span className="text-[11px] font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors uppercase tracking-tight">Show Page Numbers</span>
                                     </label>
@@ -532,6 +547,7 @@ export default function EditorPage() {
 
                         <div className="h-px bg-black/5 w-full my-2" />
 
+                        {/* 5. TYPOGRAPHY */}
                         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4"><Settings2 size={12}/> Typography</label>
                             <div className="space-y-4">
@@ -551,6 +567,7 @@ export default function EditorPage() {
 
                         <div className="h-px bg-black/5 w-full my-2" />
 
+                        {/* 6. RENDERING */}
                         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4"><Sparkles size={12}/> Rendering</label>
                             <div className="space-y-4">
@@ -573,6 +590,7 @@ export default function EditorPage() {
 
                         <div className="h-px bg-black/5 w-full my-2" />
 
+                        {/* 7. EFFECTS */}
                         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4"><Zap size={12}/> Effects</label>
                             <div className="space-y-4">
@@ -626,7 +644,8 @@ export default function EditorPage() {
                                 Export Images (ZIP)
                             </motion.button>
                         </div>
-                    </motion.div>
+                        </motion.div>
+                    </div>
                 </motion.aside>
 
                 {/* MAIN VISUAL PREVIEW AREA */}
