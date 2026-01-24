@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { googleLogout, useGoogleLogin } from '@react-oauth/google';
+import { useToast } from '../hooks/useToast';
 
 
 
@@ -31,12 +32,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isAuthModalOpen, setAuthModalOpen] = useState(false);
 
     // Show modal on first entry if not logged in
+    // Show modal on first entry if not logged in
     useEffect(() => {
-        if (!user) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setAuthModalOpen(true);
+        const hasSeenWelcome = localStorage.getItem('inkpad_welcome_seen');
+        if (!user && !hasSeenWelcome) {
+            // Push to next tick to avoid synchronous state update warning
+            const timer = setTimeout(() => {
+                setAuthModalOpen(true);
+                localStorage.setItem('inkpad_welcome_seen', 'true');
+            }, 100);
+            return () => clearTimeout(timer);
         }
     }, [user, setAuthModalOpen]);
+
+    const { addToast } = useToast();
 
     const login = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
@@ -50,17 +59,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setUser(userInfo);
                 localStorage.setItem('inkpad_user', JSON.stringify(userInfo));
                 setAuthModalOpen(false);
+                addToast(`Welcome back, ${userInfo.given_name}!`, 'success');
             } catch (error) {
                 console.error('Login Failed', error);
+                addToast('Failed to sign in. Please try again.', 'error');
             }
         },
-        onError: (error) => console.log('Login Failed:', error)
+        onError: (error) => {
+            console.log('Login Failed:', error);
+            addToast('Login failed or was cancelled.', 'error');
+        }
     });
 
     const logout = () => {
         googleLogout();
         setUser(null);
         localStorage.removeItem('inkpad_user');
+        addToast('Successfully signed out.', 'info');
     };
 
     return (
