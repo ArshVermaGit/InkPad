@@ -7,13 +7,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-.env
-.env.*
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -24,3 +17,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build and local cache
+.eslintcache
+.cache
+.vite
+.next
+.parcel-cache
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
