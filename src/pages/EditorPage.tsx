@@ -575,36 +575,38 @@ export default function EditorPage() {
                             }}
                             className="flex flex-col gap-6"
                         >
-                        {/* 1. DOCUMENT HEADING (Moved to Top) */}
                         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-3"><Type size={12}/> Document Heading</label>
-                             <div className="space-y-3 p-4 bg-white border border-black/5 rounded-2xl shadow-xs">
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <input type="checkbox" checked={showHeader} onChange={e=>setPageOptions({ showHeader:e.target.checked })} className="w-4 h-4 rounded border-black/10 text-neutral-900 focus:ring-0 transition-all"/><span className="text-[11px] font-bold text-neutral-600 group-hover:text-neutral-900 transition-colors uppercase tracking-tight">Enable Heading</span>
+                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-3"><Type size={12}/> Document Heading</label>
+                             <div className="space-y-3 p-1">
+                                <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl bg-white border border-black/5 hover:border-black/10 transition-colors">
+                                    <input type="checkbox" checked={showHeader} onChange={e=>setPageOptions({ showHeader:e.target.checked })} className="w-4 h-4 rounded border-black/20 text-neutral-900 focus:ring-0 transition-all cursor-pointer"/><span className="text-xs font-bold text-neutral-700 group-hover:text-neutral-900 transition-colors">Enable Heading</span>
                                 </label>
                                 {showHeader && (
                                     <textarea 
                                         value={headerText} 
                                         onChange={(e) => setPageOptions({ headerText: e.target.value })}
-                                        className="w-full h-20 p-3 bg-[#F9F9F9] border border-black/5 rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500/20 resize-none font-sans transition-all"
-                                        placeholder="Type your heading here..."
+                                        className="w-full h-24 p-4 bg-white border border-black/5 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/20 resize-none font-sans transition-all placeholder:text-neutral-300 shadow-sm"
+                                        placeholder="Type your heading..."
                                     />
                                 )}
                              </div>
                         </motion.div>
 
-                        <div className="h-px bg-black/5 w-full my-1" />
+                        <div className="h-px bg-black/5 w-full my-2" />
 
                         {/* 2. THE SOURCE */}
                         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-3"><FileText size={12}/> The Source</label>
-                            <textarea 
-                                ref={sourceRef}
-                                value={text} 
-                                onChange={(e) => setText(normalizeInput(e.target.value))} 
-                                className="w-full h-48 p-4 bg-white border border-black/5 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/20 resize-none font-sans shadow-xs transition-all" 
-                                placeholder="Start writing..."
-                            />
+                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-3"><FileText size={12}/> The Source</label>
+                            <div className="relative group">
+                                 <div className="absolute -inset-2 bg-linear-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition duration-1000 group-focus-within:opacity-100" />
+                                <textarea 
+                                    ref={sourceRef}
+                                    value={text} 
+                                    onChange={(e) => setText(normalizeInput(e.target.value))} 
+                                    className="relative w-full h-64 p-5 bg-white border border-black/5 rounded-2xl text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500/10 resize-none font-sans shadow-sm transition-all focus:shadow-md" 
+                                    placeholder="Start writing your masterpiece..."
+                                />
+                            </div>
                         </motion.div>
 
                         {/* 3. AI HUMANIZER */}
@@ -615,20 +617,20 @@ export default function EditorPage() {
                                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
                                  onClick={handleHumanize}
                                  disabled={isHumanizing || !text.trim()}
-                                 className="w-full py-4 px-6 rounded-2xl bg-white border border-black/5 shadow-xs hover:shadow-lg disabled:opacity-50 disabled:translate-y-0 transition-all group overflow-hidden"
+                                 className="w-full py-4 px-5 rounded-2xl bg-white border border-black/5 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 disabled:opacity-50 disabled:shadow-none transition-all group overflow-hidden relative"
                               >
-                                 <div className="absolute inset-0 bg-[linear-gradient(110deg,#000103,45%,#1e2631,55%,#000103)] bg-size-[200%_100%] animate-shimmer opacity-0 group-hover:opacity-5 transition-opacity" />
+                                 <div className="absolute inset-0 bg-linear-to-r from-indigo-50/50 via-white to-indigo-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                                  <div className="flex items-center justify-between relative z-10">
                                      <div className="flex items-center gap-3">
-                                         <div className="p-2 bg-neutral-900 rounded-xl text-white">
-                                             <Wand2 size={16} className={isHumanizing ? 'animate-spin' : ''}/>
+                                         <div className="w-10 h-10 bg-neutral-900 rounded-xl text-white flex items-center justify-center shadow-lg shadow-neutral-900/20">
+                                             <Wand2 size={18} className={isHumanizing ? 'animate-spin' : ''}/>
                                          </div>
                                          <div className="text-left leading-tight">
-                                             <div className="text-[11px] font-black uppercase tracking-widest text-neutral-900 flex items-center gap-1.5">
+                                             <div className="text-xs font-black uppercase tracking-widest text-neutral-900 flex items-center gap-1.5">
                                                  AI Humanizer
                                                  <Sparkles size={10} className="text-amber-500 animate-pulse" />
                                              </div>
-                                             <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-tight">One-Click Organic Rewriting</div>
+                                             <div className="text-[10px] font-bold text-neutral-400">One-Click Organic Rewriting</div>
                                          </div>
                                      </div>
                                      {isHumanizing && <RefreshCw size={14} className="animate-spin text-neutral-300" />}
