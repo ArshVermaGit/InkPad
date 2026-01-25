@@ -654,7 +654,17 @@ export default function EditorPage() {
             } else {
                 const zip = new JSZip();
                 for (let i = 0; i < elements.length; i++) {
-                    console.log(`Capturing ZIP page ${i + 1}/${elements.length}...`);
+                    console.log(`Capturing ZIP page ${i + 1}/${elements.length} as PDF...`);
+                    
+                    // Create a PDF for each page
+                    const pagePdf = new jsPDF({
+                        orientation: 'p',
+                        unit: 'mm',
+                        format: 'a4',
+                        putOnlyUsedFonts: true,
+                        compress: true
+                    });
+                    
                     const canvas = await html2canvas(elements[i] as HTMLElement, { 
                         scale: 3, 
                         useCORS: true, 
@@ -673,11 +683,15 @@ export default function EditorPage() {
                         }
                     });
                     
-                    const imgData = canvas.toDataURL('image/png', 1.0).split(',')[1];
-                    zip.file(`page-${i + 1}.png`, imgData, { base64: true });
+                    const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                    pagePdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
+                    
+                    // Get PDF as blob and add to ZIP
+                    const pdfBlob = pagePdf.output('arraybuffer');
+                    zip.file(`page-${i + 1}.pdf`, pdfBlob);
                     setProgress(Math.round(((i + 1) / elements.length) * 100));
                 }
-                console.log("Generating ZIP...");
+                console.log("Generating ZIP with PDFs...");
                 const content = await zip.generateAsync({ type: 'blob' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(content);
