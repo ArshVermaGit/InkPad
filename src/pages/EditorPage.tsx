@@ -192,11 +192,7 @@ const COLORS = [
 
 const PAPERS = [
     { id: 'plain', name: 'Plain White', css: 'bg-white', lineHeight: 32 },
-    { id: 'lined', name: 'Lined Paper', css: 'bg-white', lineHeight: 32, style: { 
-        backgroundImage: 'linear-gradient(to bottom, transparent 30.5px, #93c5fd 30.5px, #93c5fd 32px)', 
-        backgroundSize: '100% 32px',
-        backgroundColor: '#ffffff'
-    } },
+    { id: 'lined', name: 'Lined Paper', css: 'bg-white', lineHeight: 32, style: { backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px)', backgroundSize: '100% 32px' } },
 ];
 
 export default function EditorPage() {
@@ -418,7 +414,7 @@ export default function EditorPage() {
         const currentFormat = explicitFormat || exportFormat;
         setExportStatus('processing');
         setProgress(0);
-        console.log("Starting Surgical Export Restoration...");
+        console.log("Starting Pixel-Perfect Export...");
         
         const restoreActions: (() => void)[] = [];
         const ctx = document.createElement('canvas').getContext('2d');
@@ -442,44 +438,75 @@ export default function EditorPage() {
                 const hEl = el as HTMLElement;
                 const computed = window.getComputedStyle(hEl);
                 const originalStyle = hEl.getAttribute('style') || '';
-                
-                // SURGICAL PINNING: Only things that break or are critical for the page look
-                // 1. Resolve colors to RGB (fixes variable/oklch issues)
-                const color = computed.color;
-                if (color && !hEl.style.color) {
-                    restoreActions.push(() => hEl.style.color = '');
-                    hEl.style.color = getSafeColor(color);
-                }
+                restoreActions.push(() => hEl.setAttribute('style', originalStyle));
 
-                // 2. Ruled Lines (Wait for background specifically)
-                if (hEl.classList.contains('handwritten-export-target')) {
-                    restoreActions.push(() => hEl.setAttribute('style', originalStyle));
-                    const bgProps = ['background-image', 'background-size', 'background-position', 'background-repeat'];
-                    bgProps.forEach(p => {
-                        const val = computed.getPropertyValue(p);
-                        if (val && val !== 'none') hEl.style.setProperty(p, val);
-                    });
+                // PIN ALL VISUAL PROPERTIES
+                const props = [
+                    'color', 'background-color', 'border-color',
+                    'display', 'position', 'top', 'left', 'right', 'bottom',
+                    'width', 'height', 'margin', 'padding',
+                    'font-size', 'font-family', 'font-weight', 'line-height', 'text-align',
+                    'letter-spacing', 'word-spacing', 'white-space', 'text-decoration',
+                    'opacity', 'z-index', 'transform', 'transform-origin',
+                    'border-width', 'border-style', 'border-radius', 'box-shadow'
+                ];
+
+                props.forEach(p => {
+                    const val = computed.getPropertyValue(p);
+                    if (val && val !== 'none' && val !== 'normal' && val !== '0px auto') {
+                        if (p.includes('color')) {
+                            const safeColor = getSafeColor(val);
+                            if (safeColor) hEl.style.setProperty(p, safeColor);
+                        } else {
+                            hEl.style.setProperty(p, val);
+                        }
+                    }
+                });
+
+                // Explicit Background Logic
+                if (computed.backgroundImage !== 'none') {
+                    hEl.style.backgroundImage = computed.backgroundImage;
+                    hEl.style.backgroundSize = computed.backgroundSize;
+                    hEl.style.backgroundPosition = computed.backgroundPosition;
+                    hEl.style.backgroundRepeat = computed.backgroundRepeat;
+                }
+            });
+        };
+
+        const ignoreNonFontStyles = () => {
+            const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
+            styles.forEach(tag => {
+                const isGoogleFont = tag.tagName === 'LINK' && (tag as HTMLLinkElement).href.includes('fonts.googleapis');
+                if (!isGoogleFont) {
+                    tag.setAttribute('data-html2canvas-ignore', 'true');
+                    restoreActions.push(() => tag.removeAttribute('data-html2canvas-ignore'));
                 }
             });
         };
 
         try {
-            // Give fonts a healthy window
-            await Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 4000))]);
+            await Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 3000))]);
             
             const rawElements = document.querySelectorAll('.handwritten-export-target');
             if (rawElements.length === 0) throw new Error('No content found to export');
 
             lockComputedStyles();
-            // RE-ENABLED: Styles are now left intact (ignoreNonFontStyles REMOVED)
-            await new Promise(resolve => setTimeout(resolve, 400));
+            ignoreNonFontStyles();
+            await new Promise(resolve => setTimeout(resolve, 300)); // Slightly longer for stability
 
+            // FILENAME LOGIC (Sanitized)
             let cleanName = customName || `handwritten-${Date.now()}`;
             cleanName = cleanName.replace(/\.[^/.]+$/, "").replace(/[<>:"/\\|?*]/g, '').trim() || `handwritten-${Date.now()}`;
             const finalFileName = `${cleanName}.${currentFormat}`;
 
             if (currentFormat === 'pdf') {
-                const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
+                const pdf = new jsPDF({ 
+                    orientation: 'p', 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    putOnlyUsedFonts: true,
+                    compress: true 
+                });
 
                 for (let i = 0; i < rawElements.length; i++) {
                     if (i > 0) pdf.addPage();
@@ -488,40 +515,38 @@ export default function EditorPage() {
                         scale: 3, 
                         useCORS: true, 
                         backgroundColor: '#ffffff',
-                        logging: true,
+                        logging: false,
                         onclone: (doc) => {
                             const clonedPages = doc.querySelectorAll('.handwritten-export-target');
                             clonedPages.forEach((p) => {
                                 const pageEl = p as HTMLElement;
-                                // Reset the scaling container
+                                // Reset the scaling container but KEEP child transforms (nudge/jitter)
                                 pageEl.style.transform = 'none';
                                 pageEl.style.margin = '0';
-                                pageEl.style.position = 'relative'; 
+                                pageEl.style.position = 'relative';
                                 pageEl.style.top = '0';
                                 pageEl.style.left = '0';
                                 
-                                // Fix the parent which has the scale transform in the editor view
-                                const wrapper = pageEl.closest('.handwritten-page-render') as HTMLElement;
-                                if (wrapper) {
-                                    wrapper.style.transform = 'none';
-                                    wrapper.style.margin = '0';
-                                    wrapper.style.width = '800px';
-                                    wrapper.style.height = '1131px';
+                                // Reset any parent containers that might have transforms (like the page render wrapper)
+                                let parent = pageEl.parentElement;
+                                while (parent && !parent.classList.contains('handwritten-export-target')) {
+                                    parent.style.transform = 'none';
+                                    parent.style.margin = '0';
+                                    parent = parent.parentElement;
                                 }
 
-                                // Disable mix-blend-mode which often renders as black in html2canvas
-                                const overlays = pageEl.querySelectorAll('*');
-                                overlays.forEach(n => {
+                                // Handle html2canvas blend mode / filter quirks
+                                const problemNodes = pageEl.querySelectorAll('*');
+                                problemNodes.forEach(n => {
                                     const node = n as HTMLElement;
-                                    const style = window.getComputedStyle(node);
-                                    if (style.mixBlendMode !== 'normal') node.style.mixBlendMode = 'normal';
-                                    if (style.filter !== 'none') node.style.filter = 'none';
+                                    node.style.mixBlendMode = 'normal';
+                                    node.style.filter = 'none';
                                 });
                             });
                         }
                     });
 
-                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                    const imgData = canvas.toDataURL('image/jpeg', 0.98); // High quality
                     pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
                     setProgress(Math.round(((i + 1) / rawElements.length) * 100));
                 }
@@ -535,21 +560,21 @@ export default function EditorPage() {
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-                try { await saveExportedFile(pdfBlob, finalFileName, 'pdf'); } catch { /* Ignore save failure */ }
+                try { await saveExportedFile(pdfBlob, finalFileName, 'pdf'); } catch { /* Ignore local save failure */ }
 
             } else {
                 const zip = new JSZip();
                 for (let i = 0; i < rawElements.length; i++) {
                     const canvas = await html2canvas(rawElements[i] as HTMLElement, { 
-                        scale: 3, useCORS: true, backgroundColor: '#ffffff',
+                        scale: 3, 
+                        useCORS: true, 
+                        backgroundColor: '#ffffff',
                         onclone: (doc) => {
                             const clonedPages = doc.querySelectorAll('.handwritten-export-target');
                             clonedPages.forEach((p) => {
                                 const pageEl = p as HTMLElement;
                                 pageEl.style.transform = 'none';
                                 pageEl.style.margin = '0';
-                                const wrapper = pageEl.closest('.handwritten-page-render') as HTMLElement;
-                                if (wrapper) wrapper.style.transform = 'none';
                             });
                         }
                     });
@@ -564,11 +589,11 @@ export default function EditorPage() {
                 link.download = finalFileName;
                 link.click();
                 URL.revokeObjectURL(url);
-                try { await saveExportedFile(content, finalFileName, 'zip'); } catch { /* Ignore save failure */ }
+                try { await saveExportedFile(content, finalFileName, 'zip'); } catch { /* Ignore local save failure */ }
             }
             
             setExportStatus('complete');
-            addToast('Export Successful! Text Restored ✨', 'success');
+            addToast('Pixel-Perfect Export Successful! ✨', 'success');
         } catch (err: unknown) {
             const error = err as Error;
             console.error('Export Failure:', error);
@@ -812,7 +837,7 @@ Your words will be transformed into beautiful handwriting."
                                                         <div className="absolute bottom-6 left-0 right-0 text-center text-[10px] font-black text-gray-300 tracking-widest uppercase">Page {pIdx+1} of {pages.length}</div>
                                                     )}
                                                     <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cardboard.png')]"/>
-                                                    {paper.id !== 'plain' && <div className="absolute top-0 bottom-0 left-[50px] w-[2px] bg-red-400 opacity-40"/>}
+                                                    {paper.id !== 'plain' && <div className="absolute top-0 bottom-0 left-[50px] w-px bg-red-300 opacity-20"/>}
                                                 </div>
                                             </div>
                                         </div>
@@ -1459,7 +1484,7 @@ Your words will be transformed into beautiful handwriting."
                                         <div className="absolute bottom-6 left-0 right-0 text-center text-[10px] font-black text-gray-300 tracking-widest uppercase">Page {pIdx+1} of {pages.length}</div>
                                     )}
                                     <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cardboard.png')]"/>
-                                    {paper.id !== 'plain' && <div className="absolute top-0 bottom-0 left-[50px] w-[2px] bg-red-400 opacity-40"/>}
+                                    {paper.id !== 'plain' && <div className="absolute top-0 bottom-0 left-[50px] w-px bg-red-300 opacity-20"/>}
                                 </div>
                                  </div>
                         </div>
