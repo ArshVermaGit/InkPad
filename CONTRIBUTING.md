@@ -39,7 +39,6 @@ Thank you for your interest in contributing to Handwritten! This project aims to
 - [x] OpenRouter AI Integration
 - [ ] Custom Font Upload Support
 - [ ] Multi-language Handwriting Support
-- [ ] Cloud Sync / Account integration
 
 Please feel free to open a Pull Request or a GitHub Issue!
 
