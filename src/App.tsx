@@ -3,9 +3,19 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import RootLayout from './components/RootLayout';
 import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './context/AuthContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy Load Pages
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+
+// Legal & Support Pages
+const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/legal/TermsOfService'));
+const Disclaimer = lazy(() => import('./pages/legal/Disclaimer'));
+const CookiePolicy = lazy(() => import('./pages/legal/CookiePolicy'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const FAQPage = lazy(() => import('./pages/FAQPage'));
 
 // Loading Fallback
 const PageLoader = () => (
@@ -20,6 +30,19 @@ function InnerApp() {
       <Routes>
         <Route path="/" element={<RootLayout />}>
           <Route index element={<LandingPage />} />
+          
+          {/* Legal Pages */}
+          <Route path="privacy" element={<PrivacyPolicy />} />
+          <Route path="terms" element={<TermsOfService />} />
+          <Route path="disclaimer" element={<Disclaimer />} />
+          <Route path="cookies" element={<CookiePolicy />} />
+          
+          {/* Support Pages */}
+          <Route path="contact" element={<ContactPage />} />
+          <Route path="faq" element={<FAQPage />} />
+
+          {/* 404 Route */}
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </Suspense>
@@ -28,13 +51,15 @@ function InnerApp() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <ToastProvider>
-        <AuthProvider>
-          <InnerApp />
-        </AuthProvider>
-      </ToastProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ToastProvider>
+          <AuthProvider>
+            <InnerApp />
+          </AuthProvider>
+        </ToastProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
