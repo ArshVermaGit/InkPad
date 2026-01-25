@@ -1,53 +1,53 @@
-# Contributing to InkPad ✍️
+# Contributing to Handwritten ✍️
 
-Thank you for your interest in contributing to InkPad! This project aims to create the most realistic digital handwriting experience.
+Thank you for your interest in contributing to Handwritten! This project aims to create the most realistic digital handwriting experience.
 
 ## Getting Started
 
 1. **Fork and Clone**: Fork the repository and clone it to your local machine.
 2. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
+    ```bash
+    npm install
+    ```
 3. **Set Up Environment**:
-   Create a `.env` file in the root:
-   ```env
-   VITE_GOOGLE_API_KEY=your_gemini_api_key
-   ```
+   Create a `.env` file in the root based on your needs.
+
+    **Required for AI Features:**
+
+    ```env
+    VITE_OPENROUTER_API_KEY=your_openrouter_api_key
+    ```
+
+    _Get a key at [OpenRouter.ai](https://openrouter.ai)_
+
 4. **Run Development Server**:
-   ```bash
-   npm run dev
-   ```
-
-## Project Structure
-
-- `src/components`: UI components (Modals, Layouts, etc.)
-- `src/lib/store.ts`: Global state management via Zustand.
-- `src/pages/EditorPage.tsx`: The main rendering engine and editor logic.
-- `src/pages/LandingPage.tsx`: The splash page.
-- `src/types/index.ts`: Centralized TypeScript definitions.
+    ```bash
+    npm run dev
+    ```
 
 ## Key Technologies
 
 - **React + Vite**: Fast development and modern architecture.
-- **Zustand**: Lightweight global state.
-- **Framer Motion**: Smooth animations.
-- **Lucide React**: Beautiful icons.
-- **Google Gemini API**: Free AI humanization.
-
-## Improving the Rendering Engine
-
-The rendering pipeline in `EditorPage.tsx` goes through:
-
-1. **Tokenization**: Breaking text into paragraphs and lines.
-2. **Pagination**: Handling page breaks and widow/orphan protection.
-3. **Simulation**: Applying jitter, pressure, and smudge effects using deterministic randomness.
+- **TailwindCSS**: For rapid, consistent styling.
+- **Zustand**: Lightweight global state management.
+- **html2canvas + jsPDF**: The core export pipeline.
 
 ## Roadmap
 
-- [ ] PDF export optimization
-- [ ] Custom handwriting font uploads
-- [ ] Handwriting style presets
-- [ ] Dark mode support
+- [x] Responsive Mobile Design
+- [x] Pixel-Perfect PDF Export
+- [x] OpenRouter AI Integration
+- [ ] Custom Font Upload Support
+- [ ] Multi-language Handwriting Support
+- [ ] Cloud Sync / Account integration
 
 Please feel free to open a Pull Request or a GitHub Issue!
+
+## Contact & Community
+
+Got questions? Want to discuss a feature before building it? Reach out!
+
+- **GitHub**: [@ArshVermaGit](https://github.com/ArshVermaGit)
+- **Twitter / X**: [@TheArshVerma](https://x.com/TheArshVerma)
+- **LinkedIn**: [Arsh Verma](https://www.linkedin.com/in/arshvermadev/)
+- **Email**: [arshverma.dev@gmail.com](mailto:arshverma.dev@gmail.com)
