@@ -258,7 +258,7 @@ export default function EditorPage() {
         }
 
         return () => observer.disconnect();
-    }, []);
+    }, [mobileView]);
 
     // Initial Login Pop-up (Handled by AuthContext, but we ensure persistence of intent)
     useEffect(() => {
