@@ -192,7 +192,11 @@ const COLORS = [
 
 const PAPERS = [
     { id: 'plain', name: 'Plain White', css: 'bg-white', lineHeight: 32 },
-    { id: 'lined', name: 'Lined Paper', css: 'bg-white', lineHeight: 32, style: { backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px)', backgroundSize: '100% 32px' } },
+    { id: 'lined', name: 'Lined Paper', css: 'bg-white', lineHeight: 32, style: { 
+        backgroundImage: 'linear-gradient(to bottom, transparent 30.5px, #93c5fd 30.5px, #93c5fd 32px)', 
+        backgroundSize: '100% 32px',
+        backgroundColor: '#ffffff'
+    } },
 ];
 
 export default function EditorPage() {
@@ -448,7 +452,8 @@ export default function EditorPage() {
                     'font-size', 'font-family', 'font-weight', 'line-height', 'text-align',
                     'letter-spacing', 'word-spacing', 'white-space', 'text-decoration',
                     'opacity', 'z-index', 'transform', 'transform-origin',
-                    'border-width', 'border-style', 'border-radius', 'box-shadow'
+                    'border-width', 'border-style', 'border-radius', 'box-shadow',
+                    'box-sizing', 'overflow'
                 ];
 
                 props.forEach(p => {
@@ -463,13 +468,17 @@ export default function EditorPage() {
                     }
                 });
 
-                // Explicit Background Logic
-                if (computed.backgroundImage !== 'none') {
-                    hEl.style.backgroundImage = computed.backgroundImage;
-                    hEl.style.backgroundSize = computed.backgroundSize;
-                    hEl.style.backgroundPosition = computed.backgroundPosition;
-                    hEl.style.backgroundRepeat = computed.backgroundRepeat;
-                }
+                // Explicit Background Logic (Ruled Lines)
+                const bgProps = [
+                    'background-image', 'background-size', 'background-position', 
+                    'background-repeat', 'background-origin', 'background-clip'
+                ];
+                bgProps.forEach(p => {
+                    const val = computed.getPropertyValue(p);
+                    if (val && val !== 'none') {
+                        hEl.style.setProperty(p, val);
+                    }
+                });
             });
         };
 
@@ -837,7 +846,7 @@ Your words will be transformed into beautiful handwriting."
                                                         <div className="absolute bottom-6 left-0 right-0 text-center text-[10px] font-black text-gray-300 tracking-widest uppercase">Page {pIdx+1} of {pages.length}</div>
                                                     )}
                                                     <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cardboard.png')]"/>
-                                                    {paper.id !== 'plain' && <div className="absolute top-0 bottom-0 left-[50px] w-px bg-red-300 opacity-20"/>}
+                                                    {paper.id !== 'plain' && <div className="absolute top-0 bottom-0 left-[50px] w-[2px] bg-red-400 opacity-40"/>}
                                                 </div>
                                             </div>
                                         </div>
@@ -1484,7 +1493,7 @@ Your words will be transformed into beautiful handwriting."
                                         <div className="absolute bottom-6 left-0 right-0 text-center text-[10px] font-black text-gray-300 tracking-widest uppercase">Page {pIdx+1} of {pages.length}</div>
                                     )}
                                     <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cardboard.png')]"/>
-                                    {paper.id !== 'plain' && <div className="absolute top-0 bottom-0 left-[50px] w-px bg-red-300 opacity-20"/>}
+                                    {paper.id !== 'plain' && <div className="absolute top-0 bottom-0 left-[50px] w-[2px] bg-red-400 opacity-40"/>}
                                 </div>
                                  </div>
                         </div>
