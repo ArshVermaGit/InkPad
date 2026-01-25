@@ -438,7 +438,10 @@ export default function EditorPage() {
         setProgress(0);
     };
 
-    const executeExport = async (customName: string) => {
+    const executeExport = async (customName: string, explicitFormat?: 'pdf' | 'zip') => {
+        // Use explicit format if provided, otherwise fallback to state
+        const currentFormat = explicitFormat || exportFormat;
+        
         setExportStatus('processing');
         setProgress(0);
         console.log("Starting export process...");
@@ -591,14 +594,14 @@ export default function EditorPage() {
             // Remove extension if present (anything after the last dot)
             const nameWithoutExt = unsafeName.replace(/\.[^/.]+$/, "");
             
-            // Re-append the correct active format extension
-            const finalFileName = `${nameWithoutExt}.${exportFormat}`;
+            // Re-append the correct active format extension (using explicit or state)
+            const finalFileName = `${nameWithoutExt}.${currentFormat}`;
 
             console.log(`[Export Debug] Raw Input: "${customName}"`);
             console.log(`[Export Debug] Cleaned Base: "${nameWithoutExt}"`);
             console.log(`[Export Debug] Final Output: "${finalFileName}"`);
 
-            if (exportFormat === 'pdf') {
+            if (currentFormat === 'pdf') {
                 const pdf = new jsPDF({
                     orientation: 'p',
                     unit: 'mm',
@@ -635,9 +638,14 @@ export default function EditorPage() {
                 }
                 
                 console.log(`Saving PDF as "${finalFileName}"...`);
-                pdf.save(finalFileName);
+                // FIX: Use explicit Blob download to bypass jspdf quirks
+                const pdfBlob = pdf.output('blob');
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(pdfBlob);
+                link.download = finalFileName;
+                link.click();
+                
                 try {
-                    const pdfBlob = pdf.output('blob');
                     await saveExportedFile(pdfBlob, finalFileName, 'pdf');
                 } catch(err) {
                      console.warn("Using local save only - History save failed", err);
@@ -682,6 +690,8 @@ export default function EditorPage() {
                     console.warn("Using local save only - History save failed", err);
                 }
             }
+            
+            // ... rest of error handling ...
 
             console.log("Export complete!");
             setExportStatus('complete');
@@ -1965,40 +1975,40 @@ Your words will be transformed into beautiful handwriting."
                     )}
                 </div>
                 
-                {/* Export Buttons - Fixed at Bottom */}
-                <div className="p-4 border-t border-black/5 bg-white flex gap-3">
-                    <button 
-                        onClick={() => { setIsMobilePanelOpen(false); handleStartExport('pdf'); }}
-                        disabled={exportStatus === 'processing'}
-                        className="flex-1 py-4 bg-neutral-900 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-neutral-900/20 disabled:opacity-50 active:scale-[0.98] transition-all"
-                    >
-                        <Download size={18} />
-                        Export PDF
-                    </button>
-                    <button 
-                        onClick={() => { setIsMobilePanelOpen(false); handleStartExport('zip'); }}
-                        disabled={exportStatus === 'processing'}
-                        className="py-4 px-5 bg-neutral-100 text-neutral-700 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-all"
-                    >
-                        <Sparkles size={16} />
-                        ZIP
-                    </button>
-                </div>
+            {/* Export Buttons - Fixed at Bottom */}
+            <div className="p-4 border-t border-black/5 bg-white flex gap-3">
+                <button 
+                    onClick={() => { setIsMobilePanelOpen(false); handleStartExport('pdf'); }}
+                    disabled={exportStatus === 'processing'}
+                    className="flex-1 py-4 bg-neutral-900 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-neutral-900/20 disabled:opacity-50 active:scale-[0.98] transition-all"
+                >
+                    <Download size={18} />
+                    Export PDF
+                </button>
+                <button 
+                    onClick={() => { setIsMobilePanelOpen(false); handleStartExport('zip'); }}
+                    disabled={exportStatus === 'processing'}
+                    className="py-4 px-5 bg-neutral-100 text-neutral-700 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-all"
+                >
+                    <Sparkles size={16} />
+                    ZIP
+                </button>
             </div>
+        </div>
 
-            <ExportModal 
-                key={isExportModalOpen ? 'open' : 'closed'}
-                isOpen={isExportModalOpen}
-                onClose={() => {
-                    setIsExportModalOpen(false);
-                    if (exportStatus !== 'processing') setExportStatus('idle');
-                }}
-                onStart={executeExport}
-                format={exportFormat}
-                progress={progress}
-                status={exportStatus}
-                initialFileName={headerText || 'handwritten-document'}
-            />
+        <ExportModal 
+            key={isExportModalOpen ? 'open' : 'closed'}
+            isOpen={isExportModalOpen}
+            onClose={() => {
+                setIsExportModalOpen(false);
+                if (exportStatus !== 'processing') setExportStatus('idle');
+            }}
+            onStart={(name) => executeExport(name, exportFormat)}
+            format={exportFormat}
+            progress={progress}
+            status={exportStatus}
+            initialFileName={headerText || 'handwritten-document'}
+        />
 
             <HistoryModal 
                 isOpen={isHistoryOpen} 
