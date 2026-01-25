@@ -443,60 +443,67 @@ export default function EditorPage() {
         setProgress(0);
         
         // --- EMERGENCY FIX HELPERS ---
-        const styleSnapshots: { tag: HTMLStyleElement, content: string }[] = [];
-        const elementSnapshots: { el: HTMLElement, style: string }[] = [];
+        const restoreActions: (() => void)[] = [];
 
-        // 1. Lock resolved RGB colors inline so they persist when we break the stylesheet
+        // 1. Lock resolved RGB colors/styles inline so visuals persist data-html2canvas-ignore 
         const lockComputedStyles = () => {
             const targets = document.querySelectorAll('.handwritten-export-target, .handwritten-export-target *');
             targets.forEach((el) => {
                 const hEl = el as HTMLElement;
                 const computed = window.getComputedStyle(hEl);
+                const originalStyle = hEl.getAttribute('style') || '';
                 
-                // Save original inline style to restore later
-                elementSnapshots.push({ el: hEl, style: hEl.getAttribute('style') || '' });
+                restoreActions.push(() => hEl.setAttribute('style', originalStyle));
 
-                // Force computed RGB values (browser resolves oklch -> rgb here)
-                // We purposefully use setProperty to override everything
-                if (computed.color) hEl.style.color = computed.color;
-                if (computed.backgroundColor && computed.backgroundColor !== 'rgba(0, 0, 0, 0)') hEl.style.backgroundColor = computed.backgroundColor;
-                if (computed.borderColor) hEl.style.borderColor = computed.borderColor;
-                if (computed.textDecorationColor) hEl.style.textDecorationColor = computed.textDecorationColor;
+                // Force computed RGB values for critical properties
+                // This ensures we don't need the stylesheet for colors/layout
+                hEl.style.color = computed.color;
+                hEl.style.backgroundColor = computed.backgroundColor;
+                hEl.style.borderColor = computed.borderColor;
+                hEl.style.textDecorationColor = computed.textDecorationColor;
+                
+                // Also lock font/layout to be safe
+                hEl.style.fontSize = computed.fontSize;
+                hEl.style.fontWeight = computed.fontWeight;
+                hEl.style.fontFamily = computed.fontFamily;
+                hEl.style.fontStyle = computed.fontStyle;
+                hEl.style.letterSpacing = computed.letterSpacing;
+                hEl.style.lineHeight = computed.lineHeight;
+                hEl.style.textAlign = computed.textAlign;
+                
+                // Lock background images (lines) - Browser resolves gradients to RGB
+                if (computed.backgroundImage !== 'none') hEl.style.backgroundImage = computed.backgroundImage;
             });
         };
 
-        // 2. Strip 'oklch' from stylesheets to prevent html2canvas parser crash
-        const patchStylesheets = () => {
-            const styleTags = Array.from(document.querySelectorAll('style'));
-            styleTags.forEach(tag => {
-                const content = tag.innerHTML;
-                if (content.includes('oklch')) {
-                    styleSnapshots.push({ tag, content });
-                    // Replace oklch(...) with a safe fallback (white). 
-                    // Visuals are valid because we locked them inline above.
-                    tag.innerHTML = content.replace(/oklch\([^)]+\)/g, '#ffffff');
+        // 2. IGNORE the main stylesheet to prevent html2canvas parser crash on 'oklch'
+        const ignoreTailwindStyles = () => {
+            const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'));
+            styles.forEach(tag => {
+                // If the style contains oklch, it's the dangerous one.
+                // We mark it to be ignored by html2canvas.
+                // The elements will rely on the inlined styles we set above.
+                if (tag.tagName === 'STYLE' && tag.innerHTML.includes('oklch')) {
+                    tag.setAttribute('data-html2canvas-ignore', 'true');
+                    restoreActions.push(() => tag.removeAttribute('data-html2canvas-ignore'));
                 }
+                // For LINK tags in dev/prod (Tailwind v4 might be distinct)
+                // We can't read content easily, but if we inline everything, ignoring ALL non-font CSS is safer?
+                // Let's try to identify it or just ignore all STYLE tags (where Tailwind v4 injects in dev).
+                // Google fonts are usually LINK tags.
             });
         };
-
-        const restoreAll = () => {
-            // Restore stylesheets
-            styleSnapshots.forEach(s => s.tag.innerHTML = s.content);
-            // Restore elements
-            elementSnapshots.forEach(s => s.el.setAttribute('style', s.style));
-        };
-        // -----------------------------
 
         try {
             await document.fonts.ready;
             const elements = document.querySelectorAll('.handwritten-export-target');
             if (elements.length === 0) throw new Error('No pages found');
 
-            // Apply FIX
+            // Apply FIX: Lock visual state inline, then hide the broken CSS from the parser
             lockComputedStyles();
-            patchStylesheets();
+            ignoreTailwindStyles();
             
-            // Give browser a moment to apply style changes before capture
+            // Give browser a moment
             await new Promise(resolve => setTimeout(resolve, 50));
 
             const baseFileName = customName || `handwritten-${Date.now()}`;
@@ -522,7 +529,6 @@ export default function EditorPage() {
                         windowWidth: 800, 
                         windowHeight: 1131,
                         onclone: (doc) => {
-                            // Secondary cleanup just in case
                             const el = doc.querySelector('.handwritten-export-target') as HTMLElement;
                             if (el) {
                                 el.style.transform = 'none';
@@ -581,8 +587,8 @@ export default function EditorPage() {
             setExportStatus('error');
             addToast(`Export Failed: ${err.message || 'Unknown Error'}`, 'error'); 
         } finally {
-            // ALWAYS RESTORE
-            restoreAll();
+            // Restore everything
+            restoreActions.forEach(undo => undo());
         }
     };
 
