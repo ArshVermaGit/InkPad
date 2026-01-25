@@ -484,14 +484,38 @@ export default function EditorPage() {
                     try { hEl.setAttribute('style', originalStyle); } catch(e) { console.warn("Restore failed for el", e); }
                 });
 
-                // Force computed RGB values for critical properties
-                // This ensures we don't need the stylesheet for colors/layout
+                // --- 1. SAFE COLORS (Force RGB) ---
                 if (computed.color) hEl.style.color = getSafeColor(computed.color);
                 if (computed.backgroundColor) hEl.style.backgroundColor = getSafeColor(computed.backgroundColor);
                 if (computed.borderColor) hEl.style.borderColor = getSafeColor(computed.borderColor);
                 if (computed.textDecorationColor) hEl.style.textDecorationColor = getSafeColor(computed.textDecorationColor);
                 
-                // Also lock font/layout to be safe
+                // --- 2. LAYOUT & POSITION (Critical for "Nuclear Mode") ---
+                hEl.style.display = computed.display;
+                hEl.style.position = computed.position;
+                hEl.style.top = computed.top;
+                hEl.style.left = computed.left;
+                hEl.style.right = computed.right;
+                hEl.style.bottom = computed.bottom;
+                hEl.style.width = computed.width;
+                hEl.style.height = computed.height;
+                hEl.style.margin = computed.margin;
+                hEl.style.padding = computed.padding;
+                hEl.style.opacity = computed.opacity;
+                hEl.style.zIndex = computed.zIndex;
+                
+                // --- 3. FLEX/GRID ---
+                hEl.style.flexDirection = computed.flexDirection;
+                hEl.style.justifyContent = computed.justifyContent;
+                hEl.style.alignItems = computed.alignItems;
+                hEl.style.gap = computed.gap;
+
+                // --- 4. BORDERS & SHAPE ---
+                hEl.style.borderWidth = computed.borderWidth;
+                hEl.style.borderStyle = computed.borderStyle;
+                hEl.style.borderRadius = computed.borderRadius;
+
+                // --- 5. TYPOGRAPHY ---
                 hEl.style.fontSize = computed.fontSize;
                 hEl.style.fontWeight = computed.fontWeight;
                 hEl.style.fontFamily = computed.fontFamily;
@@ -499,17 +523,20 @@ export default function EditorPage() {
                 hEl.style.letterSpacing = computed.letterSpacing;
                 hEl.style.lineHeight = computed.lineHeight;
                 hEl.style.textAlign = computed.textAlign;
+                hEl.style.whiteSpace = computed.whiteSpace;
+                hEl.style.overflow = computed.overflow;
                 
-                // Lock background images (lines)
-                // If the background image string contains 'oklch', we can't easily resolve it via canvas fillRect.
-                // We have to decide: Remove it or risk crash.
-                // We choose: REMOVE if dangerous.
+                // --- 6. BACKGROUND IMAGES (Lines/Textures) ---
+                // We keep them if safe, remove if oklch
                 if (computed.backgroundImage !== 'none') {
                     if (computed.backgroundImage.includes('oklch')) {
                         console.warn("Removed unsupported oklch gradient/image:", computed.backgroundImage);
                         hEl.style.backgroundImage = 'none';
                     } else {
                         hEl.style.backgroundImage = computed.backgroundImage;
+                        hEl.style.backgroundSize = computed.backgroundSize;
+                        hEl.style.backgroundPosition = computed.backgroundPosition;
+                        hEl.style.backgroundRepeat = computed.backgroundRepeat;
                     }
                 }
             });
