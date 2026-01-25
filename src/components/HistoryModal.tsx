@@ -136,7 +136,7 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                                         <FileText size={40} className="text-neutral-200" />
                                     </div>
                                     <h3 className="text-lg font-bold text-neutral-900 mb-2">No exports found</h3>
-                                    <p className="text-sm text-neutral-400 leading-relaxed max-w-xs mx-auto">
+                                    <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed max-w-xs mx-auto">
                                         Your exported PDFs and ZIPs will appear here automatically. Everything is stored privately in your browser.
                                     </p>
                                 </div>
