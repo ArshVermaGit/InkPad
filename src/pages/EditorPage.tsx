@@ -559,19 +559,44 @@ export default function EditorPage() {
             // Give browser a moment
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // FIX: Aggressively sanitize filename
-            // 1. Remove dangerous chars
-            // 2. Strip ANY extension or pseudo-extension at the end (e.g. .com, .pdf.pdf, .tar.gz)
-            const unsafeName = customName || `handwritten-${Date.now()}`;
-            // Remove extension if present (anything after the last dot)
-            const nameWithoutExt = unsafeName.replace(/\.[^/.]+$/, "");
+            // FIXED: Proper filename sanitization
+            // 1. Clean the input name by removing any file extension
+            // 2. If no valid name provided, use a default
+            // 3. Ensure the final filename has the correct extension
             
-            // Re-append the correct active format extension (using explicit or state)
-            const finalFileName = `${nameWithoutExt}.${currentFormat}`;
+            let cleanName = customName || `handwritten-${Date.now()}`;
+            
+            // Remove any existing file extensions
+            const lastDotIndex = cleanName.lastIndexOf('.');
+            if (lastDotIndex !== -1) {
+                // Check if the part after the dot looks like a file extension (3-4 chars, no spaces)
+                const potentialExt = cleanName.substring(lastDotIndex + 1);
+                const hasSpaces = potentialExt.includes(' ');
+                const extLength = potentialExt.length;
+                
+                // If it looks like a file extension (no spaces, reasonable length), remove it
+                if (!hasSpaces && extLength >= 1 && extLength <= 5) {
+                    cleanName = cleanName.substring(0, lastDotIndex);
+                }
+            }
+            
+            // Sanitize the filename: remove invalid characters
+            cleanName = cleanName
+                .replace(/[<>:"/\\|?*]/g, '') // Remove invalid filename characters
+                .replace(/\s+/g, ' ')         // Collapse multiple spaces
+                .trim();                       // Trim whitespace
+            
+            // If after cleaning the name is empty, use a default
+            if (!cleanName) {
+                cleanName = `handwritten-${Date.now()}`;
+            }
+            
+            // Create final filename with correct extension
+            const finalFileName = `${cleanName}.${currentFormat}`;
 
-            console.log(`[Export Debug] Raw Input: "${customName}"`);
-            console.log(`[Export Debug] Cleaned Base: "${nameWithoutExt}"`);
-            console.log(`[Export Debug] Final Output: "${finalFileName}"`);
+            console.log(`[Export Debug] Input: "${customName}"`);
+            console.log(`[Export Debug] Cleaned: "${cleanName}"`);
+            console.log(`[Export Debug] Final: "${finalFileName}"`);
 
             if (currentFormat === 'pdf') {
                 const pdf = new jsPDF({
@@ -669,8 +694,6 @@ export default function EditorPage() {
                 }
             }
             
-            // ... rest of error handling ...
-
             console.log("Export complete!");
             setExportStatus('complete');
             addToast(`${exportFormat.toUpperCase()} Export Complete!`, 'success');
@@ -1987,4 +2010,3 @@ Your words will be transformed into beautiful handwriting."
         </div>
     );
 }
-
