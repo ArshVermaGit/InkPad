@@ -95,133 +95,135 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 md:p-12 overflow-hidden">
-                    <motion.div
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-neutral-900/40 backdrop-blur-md">
+                    {/* BACKDROP */}
+                    <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="absolute inset-0 bg-neutral-950/60 backdrop-blur-xl"
+                        className="absolute inset-0"
                     />
-                    
+
+                    {/* MODAL CONTAINER */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         ref={modalRef}
-                        className="bg-white rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.3)] max-w-5xl w-full relative flex flex-col max-h-[90vh] border border-white/20 z-10 overflow-hidden"
+                        className="bg-white rounded-[2.5rem] overflow-hidden shadow-2xl max-w-2xl w-full relative flex flex-col h-[85vh] border border-white/20"
                     >
-                        {/* Header Section */}
-                        <div className="p-8 pb-6 border-b border-neutral-100 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white shrink-0">
-                            <div className="flex items-center gap-6">
-                                <div className="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-indigo-200 ring-4 ring-indigo-50">
-                                    <Clock size={32} />
+                        {/* HEADER with macOS dots */}
+                        <div className="p-6 sm:p-8 border-b border-neutral-100 flex items-center justify-between bg-white relative z-10 shrink-0">
+                            <div className="flex items-center gap-4">
+                                <div className="flex gap-2">
+                                    <div className="w-3 h-3 rounded-full bg-[#FF5F57] shadow-inner" />
+                                    <div className="w-3 h-3 rounded-full bg-[#FFBD2E] shadow-inner" />
+                                    <div className="w-3 h-3 rounded-full bg-[#28C840] shadow-inner" />
                                 </div>
-                                <div>
-                                    <h2 className="text-3xl font-display font-black text-neutral-900 tracking-tight leading-none mb-2">Vault History</h2>
-                                    <p className="text-sm text-neutral-400 font-semibold uppercase tracking-widest flex items-center gap-2">
-                                        <ShieldCheck size={14} className="text-emerald-500" />
-                                        Secure Local Storage
-                                    </p>
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600">
+                                        <Clock size={20} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg sm:text-xl font-display font-bold text-neutral-900 leading-tight">
+                                            Vault History
+                                        </h2>
+                                        <p className="text-xs text-neutral-400 font-medium">Manage your exported files</p>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <div className="flex flex-1 max-w-md items-center gap-4">
-                                <div className="flex-1 flex items-center gap-3 px-5 py-4 bg-neutral-50 rounded-2xl border border-neutral-100 focus-within:border-indigo-500 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(99,102,241,0.1)] transition-all">
-                                    <Search size={20} className="text-neutral-400" />
-                                    <input 
-                                        type="text" 
-                                        placeholder="Find a masterpiece..." 
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="bg-transparent border-none outline-none text-base w-full font-medium placeholder:text-neutral-300 text-neutral-900" 
-                                    />
-                                </div>
-
+                            <div className="flex items-center gap-3">
                                 <button 
                                     onClick={onClose}
-                                    className="p-4 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-2xl transition-all"
+                                    className="p-3 text-neutral-300 hover:text-neutral-900 hover:bg-neutral-100 rounded-full transition-all"
                                 >
-                                    <X size={28} />
+                                    <X size={20} />
                                 </button>
                             </div>
                         </div>
 
-                        {/* Content Area */}
-                        <div className="flex-1 overflow-y-auto p-8 pt-4 bg-[#F8F9FB] custom-scrollbar">
+                        {/* SEARCH BAR SECTION */}
+                        <div className="px-6 sm:px-8 py-4 bg-white border-b border-neutral-100 shrink-0 relative z-10">
+                            <div className="flex items-center gap-3 px-4 py-3 bg-neutral-50 rounded-2xl border border-neutral-100 focus-within:border-indigo-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all">
+                                <Search size={18} className="text-neutral-400" />
+                                <input 
+                                    type="text" 
+                                    placeholder="Search history..." 
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="bg-transparent border-none outline-none text-sm w-full font-medium placeholder:text-neutral-400 text-neutral-900" 
+                                />
+                            </div>
+                        </div>
+
+                        {/* CONTENT AREA with grid pattern */}
+                        <div className="flex-1 overflow-y-auto p-6 bg-[#FAFAFA] relative custom-scrollbar">
+                            {/* Grid Background Pattern */}
+                            <div className="absolute inset-0 bg-[radial-gradient(#00000005_1px,transparent_1px)] bg-size-[20px_20px] pointer-events-none" />
+
                             {isLoading ? (
-                                <div className="flex flex-col items-center justify-center h-64 grayscale opacity-50">
-                                    <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4" />
-                                    <p className="font-black tracking-[0.2em] uppercase text-[10px] text-neutral-400">Synchronizing Vault</p>
+                                <div className="flex flex-col items-center justify-center h-full opacity-30">
+                                    <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
+                                    <p className="font-bold tracking-widest uppercase text-[10px]">Loading Vault...</p>
                                 </div>
                             ) : filteredFiles.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
-                                    <div className="w-32 h-32 bg-white rounded-[2.5rem] shadow-sm border border-neutral-100 flex items-center justify-center mb-8">
-                                        <Package size={56} className="text-neutral-100" />
+                                <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                                    <div className="w-20 h-20 bg-white rounded-[2rem] shadow-sm border border-neutral-100 flex items-center justify-center mb-6">
+                                        <Package size={40} className="text-neutral-200" />
                                     </div>
-                                    <h3 className="text-2xl font-black text-neutral-900 mb-3">
-                                        {searchQuery ? 'Missing Masterpiece' : 'Vault Quiet'}
+                                    <h3 className="text-lg font-bold text-neutral-900 mb-2">
+                                        {searchQuery ? 'No matches found' : 'Your vault is empty'}
                                     </h3>
-                                    <p className="text-neutral-400 font-medium max-w-xs mx-auto text-sm leading-relaxed">
-                                        {searchQuery ? `No signals found for "${searchQuery}"` : "Your future legendary exports will safely settle here."}
+                                    <p className="text-neutral-400 leading-relaxed max-w-xs mx-auto text-xs uppercase tracking-tight">
+                                        {searchQuery ? `Nothing found for "${searchQuery}"` : "Exports will appear here."}
                                     </p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
                                     {filteredFiles.map((file, index) => (
                                         <motion.div 
                                             layout
                                             key={file.id}
-                                            initial={{ opacity: 0, y: 30 }}
+                                            initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: index * 0.04 }}
-                                            className="group bg-white rounded-[2rem] p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.08)] border border-neutral-100 hover:border-indigo-100 transition-all duration-500 relative flex flex-col"
+                                            transition={{ delay: index * 0.05 }}
+                                            className="group bg-white rounded-3xl p-4 shadow-sm hover:shadow-xl border border-neutral-100 hover:border-indigo-100 transition-all duration-300 flex items-center gap-4 relative overflow-hidden"
                                         >
-                                            {/* Preview Context / Icon */}
-                                            <div className={`aspect-[16/9] rounded-2xl mb-5 flex items-center justify-center relative overflow-hidden transition-all duration-500 ${
-                                                file.type === 'pdf' ? 'bg-rose-50' : 'bg-blue-50'
+                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
+                                                file.type === 'pdf' ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500'
                                             }`}>
-                                                <div className={`w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-500 ${
-                                                    file.type === 'pdf' ? 'bg-white text-rose-500' : 'bg-white text-blue-500'
-                                                }`}>
-                                                    {file.type === 'pdf' ? <FileText size={40} strokeWidth={1.5} /> : <Package size={40} strokeWidth={1.5} />}
-                                                </div>
-                                                
-                                                <div className="absolute top-4 left-4">
-                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                                        file.type === 'pdf' ? 'bg-rose-500 text-white' : 'bg-blue-500 text-white'
-                                                    }`}>
-                                                        {file.type}
-                                                    </span>
-                                                </div>
+                                                {file.type === 'pdf' ? <FileText size={28} /> : <Package size={28} />}
+                                            </div>
 
-                                                {/* Hidden Actions - Overloaded for UX */}
-                                                <div className="absolute inset-0 bg-neutral-900/60 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4">
-                                                    <button 
-                                                        onClick={() => handleDownload(file)}
-                                                        className="p-5 bg-white text-neutral-900 rounded-2xl shadow-xl hover:scale-110 active:scale-90 transition-all"
-                                                    >
-                                                        <Download size={24} />
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleDelete(file.id)}
-                                                        className="p-5 bg-rose-500 text-white rounded-2xl shadow-xl hover:scale-110 active:scale-90 transition-all hover:bg-rose-600"
-                                                    >
-                                                        <Trash2 size={24} />
-                                                    </button>
+                                            <div className="flex-1 min-w-0 pr-12">
+                                                <h4 className="font-bold text-neutral-900 truncate text-sm mb-1" title={file.name}>
+                                                    {file.name}
+                                                </h4>
+                                                <div className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 uppercase tracking-tight">
+                                                    <span>{formatSize(file.size)}</span>
+                                                    <span className="w-1 h-1 rounded-full bg-neutral-200" />
+                                                    <span>{formatDate(file.timestamp)}</span>
                                                 </div>
                                             </div>
 
-                                            <div className="flex-1">
-                                                <h4 className="font-bold text-neutral-900 truncate mb-1 text-lg group-hover:text-indigo-600 transition-colors" title={file.name}>
-                                                    {file.name}
-                                                </h4>
-                                                <div className="flex items-center gap-3 text-xs font-bold text-neutral-400 uppercase tracking-widest opacity-80">
-                                                    <span>{formatSize(file.size)}</span>
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-200" />
-                                                    <span>{formatDate(file.timestamp)}</span>
-                                                </div>
+                                            {/* Actions */}
+                                            <div className="flex items-center gap-1 absolute right-3">
+                                                <button 
+                                                    onClick={() => handleDownload(file)}
+                                                    className="p-2 text-neutral-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                                                    title="Download"
+                                                >
+                                                    <Download size={18} />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDelete(file.id)}
+                                                    className="p-2 text-neutral-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
                                             </div>
                                         </motion.div>
                                     ))}
@@ -229,15 +231,12 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                             )}
                         </div>
 
-                        {/* Secure Bottom Bar */}
-                        <div className="px-8 py-5 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between shrink-0">
-                            <div className="flex items-center gap-3 text-[10px] font-black text-neutral-400 uppercase tracking-widest">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                <span>End-to-End Client Security</span>
+                        {/* Footer Info */}
+                        <div className="p-5 bg-white border-t border-neutral-100 shrink-0 text-center relative z-10">
+                            <div className="flex items-center justify-center gap-2 text-[10px] font-black text-neutral-300 uppercase tracking-widest leading-none">
+                                <ShieldCheck size={14} className="text-emerald-500" />
+                                <span>Encrypted Local Storage • Data stays on your device</span>
                             </div>
-                            <p className="text-[10px] font-black text-neutral-300 uppercase underline decoration-neutral-200 underline-offset-4 decoration-2">
-                                Data never leaves your machine
-                            </p>
                         </div>
                     </motion.div>
                 </div>
