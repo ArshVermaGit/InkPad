@@ -106,7 +106,7 @@ export default function ExportModal({
                         </div>
 
                         {/* CONTENT */}
-                        <h3 className="text-xl sm:text-2xl font-black text-neutral-900 mb-2">
+                        <h3 className="text-lg sm:text-2xl font-black text-neutral-900 mb-2">
                             {status === 'complete' ? 'Success!' : isPDF ? 'Export as PDF' : 'Export as ZIP'}
                         </h3>
                         <p className="text-neutral-400 text-xs sm:text-sm font-medium tracking-tight h-5 mb-6 sm:mb-8">
