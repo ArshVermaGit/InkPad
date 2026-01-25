@@ -445,7 +445,7 @@ export default function EditorPage() {
         // --- EMERGENCY FIX HELPERS ---
         const restoreActions: (() => void)[] = [];
 
-        // 1. Lock resolved RGB colors/styles inline so visuals persist when we remove stylesheet
+        // 1. Lock resolved RGB colors/styles inline so visuals persist data-html2canvas-ignore 
         const lockComputedStyles = () => {
             const targets = document.querySelectorAll('.handwritten-export-target, .handwritten-export-target *');
             targets.forEach((el) => {
@@ -456,6 +456,7 @@ export default function EditorPage() {
                 restoreActions.push(() => hEl.setAttribute('style', originalStyle));
 
                 // Force computed RGB values for critical properties
+                // This ensures we don't need the stylesheet for colors/layout
                 hEl.style.color = computed.color;
                 hEl.style.backgroundColor = computed.backgroundColor;
                 hEl.style.borderColor = computed.borderColor;
@@ -475,29 +476,21 @@ export default function EditorPage() {
             });
         };
 
-        // 2. REMOVE the main stylesheet to prevent html2canvas parser crash on 'oklch'
-        // We keep Google Fonts so text renders correctly.
-        const removeTailwindStyles = () => {
+        // 2. IGNORE the main stylesheet to prevent html2canvas parser crash on 'oklch'
+        const ignoreTailwindStyles = () => {
             const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'));
             styles.forEach(tag => {
-                const isGoogleFont = tag.tagName === 'LINK' && (tag as HTMLLinkElement).href.includes('fonts.googleapis');
-                
-                // If it's NOT a font (i.e. it's our app CSS with oklch), remove it temporarily
-                if (!isGoogleFont) {
-                    const parent = tag.parentNode;
-                    const nextSibling = tag.nextSibling;
-                    
-                    if (parent) {
-                        tag.remove();
-                        restoreActions.push(() => {
-                            if (nextSibling) {
-                                parent.insertBefore(tag, nextSibling);
-                            } else {
-                                parent.appendChild(tag);
-                            }
-                        });
-                    }
+                // If the style contains oklch, it's the dangerous one.
+                // We mark it to be ignored by html2canvas.
+                // The elements will rely on the inlined styles we set above.
+                if (tag.tagName === 'STYLE' && tag.innerHTML.includes('oklch')) {
+                    tag.setAttribute('data-html2canvas-ignore', 'true');
+                    restoreActions.push(() => tag.removeAttribute('data-html2canvas-ignore'));
                 }
+                // For LINK tags in dev/prod (Tailwind v4 might be distinct)
+                // We can't read content easily, but if we inline everything, ignoring ALL non-font CSS is safer?
+                // Let's try to identify it or just ignore all STYLE tags (where Tailwind v4 injects in dev).
+                // Google fonts are usually LINK tags.
             });
         };
 
@@ -506,12 +499,12 @@ export default function EditorPage() {
             const elements = document.querySelectorAll('.handwritten-export-target');
             if (elements.length === 0) throw new Error('No pages found');
 
-            // Apply FIX: Lock visual state inline, then NUKE the broken CSS from the DOM
+            // Apply FIX: Lock visual state inline, then hide the broken CSS from the parser
             lockComputedStyles();
-            removeTailwindStyles();
+            ignoreTailwindStyles();
             
-            // Give browser a moment to apply/remove styles (layout shift might happen but we captured computed styles already)
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // Give browser a moment
+            await new Promise(resolve => setTimeout(resolve, 50));
 
             const baseFileName = customName || `handwritten-${Date.now()}`;
 
