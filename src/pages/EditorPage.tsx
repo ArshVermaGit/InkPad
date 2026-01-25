@@ -414,7 +414,7 @@ export default function EditorPage() {
         const currentFormat = explicitFormat || exportFormat;
         setExportStatus('processing');
         setProgress(0);
-        console.log("Starting Bulletproof Export...");
+        console.log("Starting Pixel-Perfect Export...");
         
         const restoreActions: (() => void)[] = [];
         const ctx = document.createElement('canvas').getContext('2d');
@@ -440,23 +440,36 @@ export default function EditorPage() {
                 const originalStyle = hEl.getAttribute('style') || '';
                 restoreActions.push(() => hEl.setAttribute('style', originalStyle));
 
-                // 1. COLORS
-                if (computed.color) hEl.style.color = getSafeColor(computed.color);
-                if (computed.backgroundColor) hEl.style.backgroundColor = getSafeColor(computed.backgroundColor);
-                if (computed.borderColor) hEl.style.borderColor = getSafeColor(computed.borderColor);
-                
-                // 2. LAYOUT & TEXT (Ensure visibility)
-                hEl.style.display = computed.display;
-                hEl.style.position = computed.position;
-                hEl.style.width = computed.width;
-                hEl.style.height = computed.height;
-                hEl.style.opacity = computed.opacity;
-                hEl.style.fontSize = computed.fontSize;
-                hEl.style.fontFamily = computed.fontFamily;
-                hEl.style.fontWeight = computed.fontWeight;
-                hEl.style.lineHeight = computed.lineHeight;
-                hEl.style.textAlign = computed.textAlign;
-                hEl.style.zIndex = computed.zIndex;
+                // PIN ALL VISUAL PROPERTIES
+                const props = [
+                    'color', 'background-color', 'border-color',
+                    'display', 'position', 'top', 'left', 'right', 'bottom',
+                    'width', 'height', 'margin', 'padding',
+                    'font-size', 'font-family', 'font-weight', 'line-height', 'text-align',
+                    'letter-spacing', 'word-spacing', 'white-space', 'text-decoration',
+                    'opacity', 'z-index', 'transform', 'transform-origin',
+                    'border-width', 'border-style', 'border-radius', 'box-shadow'
+                ];
+
+                props.forEach(p => {
+                    const val = computed.getPropertyValue(p);
+                    if (val && val !== 'none' && val !== 'normal' && val !== '0px auto') {
+                        if (p.includes('color')) {
+                            const safeColor = getSafeColor(val);
+                            if (safeColor) hEl.style.setProperty(p, safeColor);
+                        } else {
+                            hEl.style.setProperty(p, val);
+                        }
+                    }
+                });
+
+                // Explicit Background Logic
+                if (computed.backgroundImage !== 'none') {
+                    hEl.style.backgroundImage = computed.backgroundImage;
+                    hEl.style.backgroundSize = computed.backgroundSize;
+                    hEl.style.backgroundPosition = computed.backgroundPosition;
+                    hEl.style.backgroundRepeat = computed.backgroundRepeat;
+                }
             });
         };
 
@@ -479,15 +492,21 @@ export default function EditorPage() {
 
             lockComputedStyles();
             ignoreNonFontStyles();
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise(resolve => setTimeout(resolve, 300)); // Slightly longer for stability
 
-            // FILENAME LOGIC
+            // FILENAME LOGIC (Sanitized)
             let cleanName = customName || `handwritten-${Date.now()}`;
             cleanName = cleanName.replace(/\.[^/.]+$/, "").replace(/[<>:"/\\|?*]/g, '').trim() || `handwritten-${Date.now()}`;
             const finalFileName = `${cleanName}.${currentFormat}`;
 
             if (currentFormat === 'pdf') {
-                const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
+                const pdf = new jsPDF({ 
+                    orientation: 'p', 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    putOnlyUsedFonts: true,
+                    compress: true 
+                });
 
                 for (let i = 0; i < rawElements.length; i++) {
                     if (i > 0) pdf.addPage();
@@ -498,23 +517,25 @@ export default function EditorPage() {
                         backgroundColor: '#ffffff',
                         logging: false,
                         onclone: (doc) => {
-                            // IMPORTANT: Fix ALL pages in the clone, but specifically the one we are capturing
                             const clonedPages = doc.querySelectorAll('.handwritten-export-target');
                             clonedPages.forEach((p) => {
                                 const pageEl = p as HTMLElement;
-                                // Remove layout/visual constraints for the engine
+                                // Reset the scaling container but KEEP child transforms (nudge/jitter)
                                 pageEl.style.transform = 'none';
                                 pageEl.style.margin = '0';
                                 pageEl.style.position = 'relative';
                                 pageEl.style.top = '0';
                                 pageEl.style.left = '0';
-                                if (pageEl.parentElement) {
-                                    pageEl.parentElement.style.transform = 'none';
-                                    pageEl.parentElement.style.margin = '0';
+                                
+                                // Reset any parent containers that might have transforms (like the page render wrapper)
+                                let parent = pageEl.parentElement;
+                                while (parent && !parent.classList.contains('handwritten-export-target')) {
+                                    parent.style.transform = 'none';
+                                    parent.style.margin = '0';
+                                    parent = parent.parentElement;
                                 }
 
-                                // FIX: html2canvas hates mix-blend-mode and complex filters. 
-                                // They often cause content to disappear or render opaque black/white.
+                                // Handle html2canvas blend mode / filter quirks
                                 const problemNodes = pageEl.querySelectorAll('*');
                                 problemNodes.forEach(n => {
                                     const node = n as HTMLElement;
@@ -525,8 +546,8 @@ export default function EditorPage() {
                         }
                     });
 
-                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+                    const imgData = canvas.toDataURL('image/jpeg', 0.98); // High quality
+                    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
                     setProgress(Math.round(((i + 1) / rawElements.length) * 100));
                 }
                 
@@ -545,7 +566,9 @@ export default function EditorPage() {
                 const zip = new JSZip();
                 for (let i = 0; i < rawElements.length; i++) {
                     const canvas = await html2canvas(rawElements[i] as HTMLElement, { 
-                        scale: 3, useCORS: true, backgroundColor: '#ffffff',
+                        scale: 3, 
+                        useCORS: true, 
+                        backgroundColor: '#ffffff',
                         onclone: (doc) => {
                             const clonedPages = doc.querySelectorAll('.handwritten-export-target');
                             clonedPages.forEach((p) => {
@@ -555,7 +578,7 @@ export default function EditorPage() {
                             });
                         }
                     });
-                    const imgData = canvas.toDataURL('image/png').split(',')[1];
+                    const imgData = canvas.toDataURL('image/png', 1.0).split(',')[1];
                     zip.file(`page-${i + 1}.png`, imgData, { base64: true });
                     setProgress(Math.round(((i + 1) / rawElements.length) * 100));
                 }
@@ -570,10 +593,10 @@ export default function EditorPage() {
             }
             
             setExportStatus('complete');
-            addToast('Export Successful! ✨', 'success');
+            addToast('Pixel-Perfect Export Successful! ✨', 'success');
         } catch (err: unknown) {
             const error = err as Error;
-            console.error('Export Error:', error);
+            console.error('Export Failure:', error);
             setExportStatus('error');
             addToast(`Export Failed: ${error.message}`, 'error');
         } finally {
