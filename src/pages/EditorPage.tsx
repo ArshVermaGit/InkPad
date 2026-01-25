@@ -584,8 +584,11 @@ export default function EditorPage() {
             // Give browser a moment
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            const baseFileName = customName || `handwritten-${Date.now()}`;
-            console.log(`Starting ${exportFormat.toUpperCase()} export...`);
+            // fix: Strip any existing extension from customName to avoid double extensions (e.g. file.pdf.pdf)
+            const cleanName = customName ? customName.replace(/\.[^/.]+$/, "") : `handwritten-${Date.now()}`;
+            const finalFileName = `${cleanName}.${exportFormat}`; // e.g. "my-doc.pdf"
+
+            console.log(`Starting ${exportFormat.toUpperCase()} export as ${finalFileName}...`);
 
             if (exportFormat === 'pdf') {
                 const pdf = new jsPDF({
@@ -624,10 +627,10 @@ export default function EditorPage() {
                 }
                 
                 console.log("Saving PDF...");
-                pdf.save(`${baseFileName}.pdf`);
+                pdf.save(finalFileName);
                 try {
                     const pdfBlob = pdf.output('blob');
-                    await saveExportedFile(pdfBlob, `${baseFileName}.pdf`, 'pdf');
+                    await saveExportedFile(pdfBlob, finalFileName, 'pdf');
                 } catch(err) {
                      console.warn("Using local save only - History save failed", err);
                 }
@@ -662,11 +665,11 @@ export default function EditorPage() {
                 const content = await zip.generateAsync({ type: 'blob' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(content);
-                link.download = `${baseFileName}.zip`;
+                link.download = finalFileName;
                 link.click();
                 
                 try {
-                    await saveExportedFile(content, `${baseFileName}.zip`, 'zip');
+                    await saveExportedFile(content, finalFileName, 'zip');
                 } catch(err) {
                     console.warn("Using local save only - History save failed", err);
                 }
