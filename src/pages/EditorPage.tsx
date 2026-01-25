@@ -3,8 +3,7 @@ import { motion } from 'framer-motion';
 import { 
     Settings2, FileText, RefreshCw, Type, 
     AlignLeft, AlignCenter, AlignRight, AlignJustify, 
-    Sparkles, Ruler, Zap, Download, Wand2, Clock,
-    Menu, X
+    Sparkles, Ruler, Zap, Download, Wand2, Clock, X
 } from 'lucide-react';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import html2canvas from 'html2canvas';
@@ -228,6 +227,8 @@ export default function EditorPage() {
     const [pendingAction, setPendingAction] = useState<{ type: 'export', format: 'pdf' | 'zip' } | null>(null);
     const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
     const [activeMobileTab, setActiveMobileTab] = useState<'write' | 'design' | 'paper' | 'effects'>('write');
+    const [mobileView, setMobileView] = useState<'write' | 'preview'>('write');
+    const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
     const [scale, setScale] = useState(1);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -521,33 +522,494 @@ export default function EditorPage() {
 
     return (
         <div className="relative selection:bg-indigo-500/30 font-sans">
-            {/* MOBILE FLOATING ACTION BUTTONS */}
-            <div className="lg:hidden fixed bottom-20 right-4 z-40 flex flex-col gap-3">
-                <button 
-                    onClick={() => handleStartExport('pdf')}
-                    className="fab bg-neutral-900 text-white"
-                    disabled={exportStatus === 'processing'}
-                >
-                    <Download size={22} />
-                </button>
-                <button 
-                    onClick={() => setIsMobilePanelOpen(true)}
-                    className="fab bg-indigo-600 text-white"
-                >
-                    <Menu size={22} />
-                </button>
-            </div>
+            
+            {/* ==================== MOBILE LAYOUT (lg:hidden) ==================== */}
+            <div className="lg:hidden flex flex-col h-screen bg-neutral-50">
+                
+                {/* Mobile Header */}
+                <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-black/5 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-neutral-900 rounded-xl flex items-center justify-center">
+                            <FileText size={14} className="text-white" />
+                        </div>
+                        <div>
+                            <h1 className="font-bold text-sm text-neutral-900 truncate max-w-[180px]">
+                                {headerText || 'Untitled Document'}
+                            </h1>
+                            <p className="text-[10px] text-neutral-400">
+                                {mobileView === 'write' ? 'Writing Mode' : 'Preview Mode'}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[9px] font-bold uppercase text-emerald-600">Live</span>
+                    </div>
+                </div>
 
-            {/* MOBILE BOTTOM PANEL OVERLAY */}
+                {/* Mobile Content Area */}
+                <div className="flex-1 overflow-hidden">
+                    
+                    {/* WRITE VIEW */}
+                    {mobileView === 'write' && (
+                        <div className="h-full flex flex-col bg-white">
+                            
+                            {/* Quick Settings Bar */}
+                            <div className="flex items-center gap-2 px-4 py-3 border-b border-black/5 overflow-x-auto shrink-0">
+                                <select 
+                                    value={font} 
+                                    onChange={e => setFont(e.target.value)}
+                                    className="px-3 py-2 bg-neutral-100 rounded-xl text-xs font-medium min-w-[100px]"
+                                >
+                                    {FONTS.map(f => <option key={f.name} value={f.name}>{f.label}</option>)}
+                                </select>
+                                <div className="flex gap-1.5">
+                                    {COLORS.slice(0, 4).map(c => (
+                                        <button 
+                                            key={c.name} 
+                                            onClick={() => setColor(c.value)}
+                                            className={`w-7 h-7 rounded-lg border-2 transition-all ${color === c.value ? 'border-neutral-900 scale-110' : 'border-transparent'}`}
+                                            style={{ backgroundColor: c.value }}
+                                        />
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={() => setMobileSettingsOpen(true)}
+                                    className="ml-auto px-3 py-2 bg-neutral-100 rounded-xl"
+                                >
+                                    <Settings2 size={16} className="text-neutral-600" />
+                                </button>
+                            </div>
+                            
+                            {/* Main Text Input */}
+                            <div className="flex-1 p-4">
+                                <textarea 
+                                    ref={sourceRef}
+                                    value={text} 
+                                    onChange={(e) => setText(normalizeInput(e.target.value))} 
+                                    className="w-full h-full p-4 bg-neutral-50 border border-black/5 rounded-2xl text-base resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/30 transition-all leading-relaxed"
+                                    placeholder="Start writing your text here...
+
+Your words will be transformed into beautiful handwriting."
+                                    style={{ fontFamily: font }}
+                                />
+                            </div>
+                            
+                            {/* AI Humanize Button */}
+                            <div className="px-4 pb-4 shrink-0">
+                                <button 
+                                    onClick={handleHumanize}
+                                    disabled={isHumanizing || !text.trim()}
+                                    className="w-full py-4 bg-neutral-900 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg active:scale-[0.98] transition-all"
+                                >
+                                    <Wand2 size={18} className={isHumanizing ? 'animate-spin' : ''} />
+                                    {isHumanizing ? 'Humanizing...' : 'AI Humanize Text'}
+                                    <Sparkles size={12} className="text-amber-400" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* PREVIEW VIEW */}
+                    {mobileView === 'preview' && (
+                        <div className="h-full flex flex-col">
+                            
+                            {/* Preview Canvas Area */}
+                            <div ref={containerRef} className="flex-1 overflow-auto p-4 bg-neutral-100">
+                                <div className="flex flex-col items-center gap-6 pb-24">
+                                    {pages.map((page, pIdx) => (
+                                        <div 
+                                            key={pIdx}
+                                            style={{ 
+                                                width: 800 * scale, 
+                                                height: (800 * 1.414) * scale,
+                                            }}
+                                            className="relative shrink-0"
+                                        >
+                                            <motion.div 
+                                                initial={{opacity:0, y: 20}} 
+                                                animate={{opacity:1, y: 0}} 
+                                                className={`handwritten-page-render absolute top-0 left-0 w-[800px] aspect-[1/1.414] ${pIdx === 0 ? 'paper-stack' : 'shadow-2xl'} overflow-hidden bg-white ring-1 ring-black/5 rounded-sm origin-top-left`} 
+                                                style={{ 
+                                                    transform: `scale(${scale})`,
+                                                    transformOrigin: 'top left'
+                                                }}
+                                            >
+                                                {/* Export Container */}
+                                                <div className={`handwritten-export-target w-full h-full relative ${paper.css}`} style={paper.style}>
+                                                    {marginNote && pIdx === 0 && (
+                                                        <div 
+                                                            className="absolute left-4 top-1/3 -rotate-90 origin-left z-20"
+                                                            style={{ fontFamily: font, color: color, opacity: 0.5, fontSize: fontSize * 0.6 }}
+                                                        >
+                                                            {marginNote}
+                                                        </div>
+                                                    )}
+                                                    {showCoffeeStain && pIdx === 0 && (
+                                                        <div 
+                                                            className="absolute -top-10 -right-10 pointer-events-none opacity-[0.08] blur-sm z-30"
+                                                            style={{ transform: `rotate(${getDeterminRandom('stain'+randomSeed)*360}deg) scale(${0.8 + getDeterminRandom('scale'+randomSeed) * 0.5})` }}
+                                                        >
+                                                            <svg width="300" height="300" viewBox="0 0 200 200">
+                                                                <path fill="#78350f" d="M100 20C55.8 20 20 55.8 20 100s35.8 80 80 80 80-35.8 80-80S144.2 20 100 20zm0 145c-35.9 0-65-29.1-65-65s29.1-65 65-65 65 29.1 65 65-29.1 65-65 65z"/>
+                                                                <circle cx="100" cy="100" r="55" fill="#78350f" opacity="0.3"/>
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                    {showStickyNote && pIdx === 0 && (
+                                                        <motion.div 
+                                                            className="absolute bottom-20 right-10 w-40 h-40 bg-yellow-200 shadow-lg p-4 z-40 flex flex-col"
+                                                            style={{ 
+                                                                fontFamily: 'Caveat', 
+                                                                color: '#854d0e',
+                                                                transform: `rotate(${getDeterminRandom('sticky'+randomSeed)*10 - 5}deg)`,
+                                                            }}
+                                                        >
+                                                            <div className="text-xs uppercase font-black opacity-20 mb-2">Note:</div>
+                                                            <div className="text-lg leading-tight">{stickyNoteText}</div>
+                                                        </motion.div>
+                                                    )}
+                                                    {showHeader && pIdx === 0 && (
+                                                        <div 
+                                                            className="absolute left-0 right-0 z-10 flex flex-col items-center"
+                                                            style={{ 
+                                                                top: marginTop - paper.lineHeight,
+                                                                textAlign: 'center',
+                                                                paddingLeft: marginLeft,
+                                                                paddingRight: marginRight,
+                                                            }}
+                                                        >
+                                                            {headerText.split('\n').map((hLine: string, hlIdx: number) => (
+                                                                <div 
+                                                                    key={hlIdx} 
+                                                                    style={{
+                                                                        fontFamily: font, 
+                                                                        fontSize, 
+                                                                        color, 
+                                                                        height: paper.lineHeight, 
+                                                                        lineHeight: `${paper.lineHeight}px`,
+                                                                        transform: `translateY(${baseline}px)`
+                                                                    }} 
+                                                                    className="w-full whitespace-nowrap overflow-hidden"
+                                                                >
+                                                                    {hLine.split(' ').map((word: string, wIdx: number) => {
+                                                                        const seed = `header-${hlIdx}-${wIdx}-${word}-${randomSeed}`;
+                                                                        const y = (getDeterminRandom(seed+'y')-0.5)*jitter*3;
+                                                                        const r = (getDeterminRandom(seed+'r')-0.5)*jitter*1.5;
+                                                                        const op = 1-(getDeterminRandom(seed+'o')*pressure*0.2);
+                                                                        const bl = smudge > 0 ? getDeterminRandom(seed+'b')*smudge*0.4 : 0;
+                                                                        return <span key={wIdx} className="inline-block" style={{transform:`translateY(${y}px) rotate(${r}deg)`, opacity:op, filter:bl?`blur(${bl}px)`:'none', marginRight:'0.25em'}}>{word}</span>;
+                                                                    })}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    <div 
+                                                        className="w-full h-full relative" 
+                                                        style={{
+                                                            paddingTop: (pIdx === 0 ? marginTop - paper.lineHeight : marginTop) + (pIdx === 0 && showHeader ? (headerText.split('\n').length) * paper.lineHeight : 0), 
+                                                            paddingBottom: marginBottom, 
+                                                            paddingLeft: marginLeft, 
+                                                            paddingRight: marginRight
+                                                        }}
+                                                    >   
+                                                        {page.lines.map((line, lIdx) => (
+                                                            <div 
+                                                                key={lIdx} 
+                                                                dir={line.dir}
+                                                                style={{
+                                                                    fontFamily:font, 
+                                                                    fontSize, 
+                                                                    color, 
+                                                                    height:paper.lineHeight, 
+                                                                    lineHeight:`${paper.lineHeight}px`, 
+                                                                    transform:`translateY(${baseline}px)`, 
+                                                                    textAlign: line.dir === 'rtl' ? (textAlign === 'left' ? 'right' : textAlign === 'right' ? 'left' : textAlign) : textAlign, 
+                                                                    paddingLeft: line.indent ? line.indent * (fontSize * 0.4) : 0,
+                                                                }} 
+                                                                className="w-full whitespace-nowrap overflow-hidden"
+                                                            >
+                                                                {line.text.split(' ').map((word, wIdx) => {
+                                                                    const seed = `${pIdx}-${lIdx}-${wIdx}-${word}-${randomSeed}`;
+                                                                    const y = (getDeterminRandom(seed+'y')-0.5)*jitter*3;
+                                                                    const r = (getDeterminRandom(seed+'r')-0.5)*jitter*1.5;
+                                                                    const op = 1-(getDeterminRandom(seed+'o')*pressure*0.2);
+                                                                    const bl = smudge > 0 ? getDeterminRandom(seed+'b')*smudge*0.4 : 0;
+                                                                    return (
+                                                                        <span 
+                                                                            key={wIdx} 
+                                                                            className="inline-block" 
+                                                                            style={{transform:`translateY(${y}px) rotate(${r}deg)`, opacity:op, filter:bl?`blur(${bl}px)`:'none', marginRight:'0.25em'}}
+                                                                        >
+                                                                            {word}
+                                                                        </span>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    {showPageNumbers && (
+                                                        <div className="absolute bottom-6 left-0 right-0 text-center text-[10px] font-black text-gray-300 tracking-widest uppercase">Page {pIdx+1} of {pages.length}</div>
+                                                    )}
+                                                    <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cardboard.png')]"/>
+                                                    {paper.id !== 'plain' && <div className="absolute top-0 bottom-0 left-[50px] w-px bg-red-300 opacity-20"/>}
+                                                </div>
+                                            </motion.div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            {/* Export Buttons - Fixed at bottom */}
+                            <div className="absolute bottom-16 left-0 right-0 px-4 pb-4 bg-gradient-to-t from-neutral-100 via-neutral-100 to-transparent pt-8">
+                                <div className="flex gap-3">
+                                    <button 
+                                        onClick={() => handleStartExport('pdf')}
+                                        disabled={exportStatus === 'processing'}
+                                        className="flex-1 py-4 bg-neutral-900 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 active:scale-[0.98] transition-all"
+                                    >
+                                        <Download size={18} />
+                                        Export PDF
+                                    </button>
+                                    <button 
+                                        onClick={() => handleStartExport('zip')}
+                                        disabled={exportStatus === 'processing'}
+                                        className="py-4 px-5 bg-white text-neutral-700 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border border-black/5 disabled:opacity-50 active:scale-[0.98] transition-all"
+                                    >
+                                        <Sparkles size={16} />
+                                        ZIP
+                                    </button>
+                                    <button 
+                                        onClick={() => setMobileSettingsOpen(true)}
+                                        className="py-4 px-5 bg-white text-neutral-700 rounded-2xl font-bold flex items-center justify-center border border-black/5 active:scale-[0.98] transition-all"
+                                    >
+                                        <Settings2 size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Mobile Bottom Tab Bar */}
+                <div className="flex bg-white border-t border-black/5 shrink-0 safe-area-bottom">
+                    <button
+                        onClick={() => setMobileView('write')}
+                        className={`flex-1 py-4 flex flex-col items-center gap-1 transition-all ${
+                            mobileView === 'write' 
+                                ? 'text-neutral-900' 
+                                : 'text-neutral-400'
+                        }`}
+                    >
+                        <div className={`p-2 rounded-xl transition-all ${mobileView === 'write' ? 'bg-neutral-900 text-white' : ''}`}>
+                            <Type size={20} />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Write</span>
+                    </button>
+                    <button
+                        onClick={() => setMobileView('preview')}
+                        className={`flex-1 py-4 flex flex-col items-center gap-1 transition-all ${
+                            mobileView === 'preview' 
+                                ? 'text-neutral-900' 
+                                : 'text-neutral-400'
+                        }`}
+                    >
+                        <div className={`p-2 rounded-xl transition-all ${mobileView === 'preview' ? 'bg-neutral-900 text-white' : ''}`}>
+                            <FileText size={20} />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Preview</span>
+                    </button>
+                </div>
+
+                {/* Mobile Settings Overlay */}
+                {mobileSettingsOpen && (
+                    <>
+                        <div 
+                            className="fixed inset-0 bg-black/40 z-50 backdrop-blur-sm"
+                            onClick={() => setMobileSettingsOpen(false)}
+                        />
+                        <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[80vh] overflow-y-auto">
+                            <div className="flex justify-center pt-3 pb-2">
+                                <div className="w-12 h-1.5 bg-neutral-200 rounded-full" />
+                            </div>
+                            <div className="flex items-center justify-between px-5 pb-4 border-b border-black/5">
+                                <h3 className="font-bold text-neutral-900">Settings</h3>
+                                <button 
+                                    onClick={() => setMobileSettingsOpen(false)}
+                                    className="w-10 h-10 hover:bg-neutral-100 rounded-full flex items-center justify-center"
+                                >
+                                    <X size={20} className="text-neutral-400" />
+                                </button>
+                            </div>
+                            <div className="p-5 space-y-5">
+                                {/* Header */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Document Heading</label>
+                                    <label className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={showHeader} 
+                                            onChange={e => setPageOptions({ showHeader: e.target.checked })} 
+                                            className="w-5 h-5 rounded-lg"
+                                        />
+                                        <span className="text-sm font-medium">Enable Heading</span>
+                                    </label>
+                                    {showHeader && (
+                                        <textarea 
+                                            value={headerText} 
+                                            onChange={(e) => setPageOptions({ headerText: e.target.value })}
+                                            className="w-full h-20 p-4 bg-neutral-50 rounded-2xl text-sm resize-none"
+                                            placeholder="Type your heading..."
+                                        />
+                                    )}
+                                </div>
+                                
+                                {/* Paper */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Paper Style</label>
+                                    <div className="flex bg-neutral-100 rounded-2xl p-1.5">
+                                        {PAPERS.map(p => (
+                                            <button 
+                                                key={p.id} 
+                                                onClick={() => setPaper(p)}
+                                                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${paper.id === p.id ? 'bg-white shadow' : ''}`}
+                                            >
+                                                {p.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <label className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={showPageNumbers} 
+                                            onChange={e => setPageOptions({ showPageNumbers: e.target.checked })} 
+                                            className="w-5 h-5 rounded-lg"
+                                        />
+                                        <span className="text-sm font-medium">Show Page Numbers</span>
+                                    </label>
+                                </div>
+                                
+                                {/* Typography */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Typography</label>
+                                    <div className="bg-neutral-50 rounded-2xl p-4 space-y-4">
+                                        <div>
+                                            <label className="text-xs text-neutral-500 mb-2 flex justify-between">
+                                                Font Size <span className="font-bold text-neutral-900">{fontSize}px</span>
+                                            </label>
+                                            <input type="range" min="14" max="64" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="w-full" />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-neutral-500 mb-2 flex justify-between">
+                                                Line Nudge <span className="font-bold text-neutral-900">{baseline}</span>
+                                            </label>
+                                            <input type="range" min="-10" max="30" value={baseline} onChange={e => setBaseline(Number(e.target.value))} className="w-full" />
+                                        </div>
+                                    </div>
+                                    <div className="flex bg-neutral-100 rounded-2xl p-1.5">
+                                        {[
+                                            { id: 'left' as const, icon: AlignLeft },
+                                            { id: 'center' as const, icon: AlignCenter },
+                                            { id: 'right' as const, icon: AlignRight },
+                                            { id: 'justify' as const, icon: AlignJustify }
+                                        ].map(opt => (
+                                            <button 
+                                                key={opt.id} 
+                                                onClick={() => setTextAlign(opt.id)}
+                                                className={`flex-1 p-3 flex justify-center rounded-xl transition-all ${textAlign === opt.id ? 'bg-white shadow' : ''}`}
+                                            >
+                                                <opt.icon size={18} />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                {/* Effects */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Handwriting Effects</label>
+                                    <button 
+                                        onClick={() => setRandomSeed(prev => prev + 1)}
+                                        className="w-full py-3 bg-neutral-100 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
+                                    >
+                                        <RefreshCw size={16} />
+                                        Re-Randomize
+                                    </button>
+                                    <div className="bg-neutral-50 rounded-2xl p-4 space-y-4">
+                                        <div>
+                                            <label className="text-xs text-neutral-500 mb-2 flex justify-between">
+                                                Jitter <span className="font-bold text-neutral-900">{jitter}</span>
+                                            </label>
+                                            <input type="range" min="0" max="6" step="0.5" value={jitter} onChange={e => setJitter(Number(e.target.value))} className="w-full" />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-neutral-500 mb-2 flex justify-between">
+                                                Pressure <span className="font-bold text-neutral-900">{Math.round(pressure*100)}%</span>
+                                            </label>
+                                            <input type="range" min="0" max="1" step="0.1" value={pressure} onChange={e => setPressure(Number(e.target.value))} className="w-full" />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-neutral-500 mb-2 flex justify-between">
+                                                Smudge <span className="font-bold text-neutral-900">{smudge}</span>
+                                            </label>
+                                            <input type="range" min="0" max="2" step="0.1" value={smudge} onChange={e => setSmudge(Number(e.target.value))} className="w-full" />
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* Special Effects */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Special Effects</label>
+                                    <input 
+                                        type="text" 
+                                        value={marginNote} 
+                                        onChange={(e) => setMarginNote(e.target.value)}
+                                        className="w-full p-4 bg-neutral-50 rounded-2xl text-sm"
+                                        placeholder="Margin note..."
+                                    />
+                                    <label className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={showCoffeeStain} 
+                                            onChange={(e) => setShowCoffeeStain(e.target.checked)} 
+                                            className="w-5 h-5 rounded-lg"
+                                        />
+                                        <span className="text-sm font-medium">Coffee Stain Effect</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={showStickyNote} 
+                                            onChange={(e) => setShowStickyNote(e.target.checked)} 
+                                            className="w-5 h-5 rounded-lg"
+                                        />
+                                        <span className="text-sm font-medium">Sticky Note</span>
+                                    </label>
+                                    {showStickyNote && (
+                                        <textarea 
+                                            value={stickyNoteText} 
+                                            onChange={(e) => setStickyNoteText(e.target.value)}
+                                            className="w-full h-16 p-3 bg-yellow-50 border border-yellow-200 rounded-2xl text-sm resize-none"
+                                            placeholder="Note text..."
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+            {/* ==================== END MOBILE LAYOUT ==================== */}
+
+            {/* MOBILE BOTTOM PANEL OVERLAY - Keep for backwards compat but hidden */}
             {isMobilePanelOpen && (
                 <div 
-                    className="lg:hidden fixed inset-0 bg-black/40 z-50 backdrop-blur-sm"
+                    className="lg:hidden hidden fixed inset-0 bg-black/40 z-50 backdrop-blur-sm"
                     onClick={() => setIsMobilePanelOpen(false)}
                 />
             )}
 
-            {/* MAIN WINDOW CONTAINER */}
-            <div className="w-full max-w-[1600px] min-h-[60vh] lg:h-[85vh] bg-white rounded-2xl lg:rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.12)] border border-black/5 flex flex-col lg:flex-row overflow-hidden relative z-10 transition-all">
+            {/* MAIN WINDOW CONTAINER - Desktop Only */}
+            <div className="hidden lg:flex w-full max-w-[1600px] min-h-[60vh] lg:h-[85vh] bg-white rounded-2xl lg:rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.12)] border border-black/5 flex-col lg:flex-row overflow-hidden relative z-10 transition-all">
                 
                 {/* DESKTOP SIDEBAR - Hidden on mobile */}
                 <motion.aside 
