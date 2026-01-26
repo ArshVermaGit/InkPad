@@ -7,13 +7,9 @@ import {
     Sparkles, Ruler, Zap, Download, Wand2, Clock, X
 } from 'lucide-react';
 
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-import JSZip from 'jszip';
 import { useStore } from '../lib/store';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../hooks/useToast';
-import { saveExportedFile } from '../lib/fileStorage';
 import HistoryModal from '../components/HistoryModal';
 import ExportModal from '../components/ExportModal';
 
@@ -416,117 +412,13 @@ export default function EditorPage() {
         setProgress(0);
         
         try {
-            // Wait for fonts to be fully loaded
-            await document.fonts.ready;
-            
-            // Sanitize filename
-            let cleanName = customName || `handwritten-${Date.now()}`;
-            cleanName = cleanName.replace(/\.[^/.]+$/, "").replace(/[<>:"/\\|?*]/g, '').trim() || `handwritten-${Date.now()}`;
-            const finalFileName = `${cleanName}.${currentFormat}`;
-            
-            // 1. Get ALL potential export targets
-            const allTargets = Array.from(document.querySelectorAll('.handwritten-export-target'));
-            
-            // 2. FILTER: Only keep VISIBLE targets
-            //    offsetParent is null if display:none or if parents are hidden. 
-            //    We also check computed style for good measure.
-            const pageElements = allTargets.filter(el => {
-                const element = el as HTMLElement;
-                // Basic visibility check
-                if (element.offsetParent === null) return false;
-                
-                const style = window.getComputedStyle(element);
-                if (style.display === 'none' || style.visibility === 'hidden') return false;
-                
-                // Ensure it has dimensions
-                const rect = element.getBoundingClientRect();
-                return rect.width > 0 && rect.height > 0;
-            });
-
-            if (pageElements.length === 0) {
-                // Identify if we are in mobile 'Write' mode which hides preview
-                if (window.innerWidth < 1024) {
-                    throw new Error('Please switch to the "Preview" tab to export.');
-                }
-                throw new Error('No visible pages found to export.');
-            }
-            
-            if (currentFormat === 'pdf') {
-                const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
-                
-                for (let i = 0; i < pageElements.length; i++) {
-                    if (i > 0) pdf.addPage();
-                    
-                    // Capture directly with html2canvas
-                    // Improved settings for clearer text
-                    const canvas = await html2canvas(pageElements[i] as HTMLElement, {
-                        scale: 2, // 2x for better resolution, but not too heavy
-                        useCORS: true,
-                        backgroundColor: '#ffffff',
-                        logging: false,
-                        allowTaint: true,
-                        onclone: (_doc, el) => {
-                            // Enforce exact A4 proportions during capture to avoid glitches
-                            el.style.transform = 'none';
-                            el.style.width = '800px'; 
-                            el.style.height = '1131px';
-                            el.style.boxShadow = 'none'; // removing shadows from capture
-                        }
-                    });
-                    
-                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
-                    setProgress(Math.round(((i + 1) / pageElements.length) * 100));
-                }
-                
-                // Download PDF
-                const blob = pdf.output('blob');
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = finalFileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(link.href);
-                
-                // Attempt to save to history/storage (non-blocking)
-                saveExportedFile(blob, finalFileName, 'pdf').catch(() => {});
-                
-            } else {
-                const zip = new JSZip();
-                
-                for (let i = 0; i < pageElements.length; i++) {
-                    const canvas = await html2canvas(pageElements[i] as HTMLElement, {
-                        scale: 2,
-                        useCORS: true,
-                        backgroundColor: '#ffffff',
-                        logging: false,
-                        allowTaint: true,
-                        onclone: (_doc, el) => {
-                            el.style.transform = 'none';
-                            el.style.width = '800px';
-                            el.style.height = '1131px';
-                            el.style.boxShadow = 'none';
-                        }
-                    });
-                    
-                    const imgData = canvas.toDataURL('image/png').split(',')[1];
-                    zip.file(`page-${i + 1}.png`, imgData, { base64: true });
-                    setProgress(Math.round(((i + 1) / pageElements.length) * 100));
-                }
-                
-                // Download ZIP
-                const content = await zip.generateAsync({ type: 'blob' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(content);
-                link.download = finalFileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(link.href);
-                
-                saveExportedFile(content, finalFileName, 'zip').catch(() => {});
-            }
+            await import('../utils/exportUtils').then(({ exportDocument }) => 
+                exportDocument({
+                    name: customName,
+                    format: currentFormat,
+                    onProgress: (p) => setProgress(p)
+                })
+            );
             
             setExportStatus('complete');
             addToast('Export Complete!', 'success');
