@@ -414,92 +414,284 @@ export default function EditorPage() {
         const currentFormat = explicitFormat || exportFormat;
         setExportStatus('processing');
         setProgress(0);
-        console.log("Starting Pixel-Perfect Export...");
         
-        const restoreActions: (() => void)[] = [];
-        const ctx = document.createElement('canvas').getContext('2d');
+        // Page dimensions - exact match to preview
+        const PAGE_WIDTH = 800;
+        const PAGE_HEIGHT = 1131; // 800 * 1.414 (A4 aspect ratio)
         
-        const getSafeColor = (color: string) => {
-            if (!ctx || !color || color === 'none' || color === 'transparent') return color;
-            if (color.startsWith('#') || color.startsWith('rgb')) return color;
-            try {
-                ctx.clearRect(0, 0, 1, 1);
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillStyle = color;
-                ctx.fillRect(0, 0, 1, 1);
-                const d = ctx.getImageData(0, 0, 1, 1).data;
-                return `rgba(${d[0]}, ${d[1]}, ${d[2]}, ${(d[3]/255).toFixed(3)})`;
-            } catch { return color; }
-        };
-
-        const lockComputedStyles = () => {
-            const targets = document.querySelectorAll('.handwritten-export-target, .handwritten-export-target *');
-            targets.forEach((el) => {
-                const hEl = el as HTMLElement;
-                const computed = window.getComputedStyle(hEl);
-                const originalStyle = hEl.getAttribute('style') || '';
-                restoreActions.push(() => hEl.setAttribute('style', originalStyle));
-
-                // PIN ALL VISUAL PROPERTIES
-                const props = [
-                    'color', 'background-color', 'border-color',
-                    'display', 'position', 'top', 'left', 'right', 'bottom',
-                    'width', 'height', 'margin', 'padding',
-                    'font-size', 'font-family', 'font-weight', 'line-height', 'text-align',
-                    'letter-spacing', 'word-spacing', 'white-space', 'text-decoration',
-                    'opacity', 'z-index', 'transform', 'transform-origin',
-                    'border-width', 'border-style', 'border-radius', 'box-shadow',
-                    'filter', 'mix-blend-mode'
-                ];
-
-                props.forEach(p => {
-                    const val = computed.getPropertyValue(p);
-                    if (val && val !== 'none' && val !== 'normal' && val !== '0px auto') {
-                        if (p.includes('color')) {
-                            const safeColor = getSafeColor(val);
-                            if (safeColor) hEl.style.setProperty(p, safeColor);
-                        } else {
-                            hEl.style.setProperty(p, val);
-                        }
-                    }
-                });
-
-                // Explicit Background Logic
-                if (computed.backgroundImage !== 'none') {
-                    hEl.style.backgroundImage = computed.backgroundImage;
-                    hEl.style.backgroundSize = computed.backgroundSize;
-                    hEl.style.backgroundPosition = computed.backgroundPosition;
-                    hEl.style.backgroundRepeat = computed.backgroundRepeat;
-                }
-            });
-        };
-
-        const ignoreNonFontStyles = () => {
-            const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
-            styles.forEach(tag => {
-                const isGoogleFont = tag.tagName === 'LINK' && (tag as HTMLLinkElement).href.includes('fonts.googleapis');
-                if (!isGoogleFont) {
-                    tag.setAttribute('data-html2canvas-ignore', 'true');
-                    restoreActions.push(() => tag.removeAttribute('data-html2canvas-ignore'));
-                }
-            });
-        };
-
         try {
+            // Wait for fonts to be ready
             await Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 3000))]);
             
-            const rawElements = document.querySelectorAll('.handwritten-export-target');
-            if (rawElements.length === 0) throw new Error('No content found to export');
-
-            lockComputedStyles();
-            ignoreNonFontStyles();
-            await new Promise(resolve => setTimeout(resolve, 300)); // Slightly longer for stability
-
             // FILENAME LOGIC (Sanitized)
             let cleanName = customName || `handwritten-${Date.now()}`;
             cleanName = cleanName.replace(/\.[^/.]+$/, "").replace(/[<>:"/\\|?*]/g, '').trim() || `handwritten-${Date.now()}`;
             const finalFileName = `${cleanName}.${currentFormat}`;
-
+            
+            // Create hidden export container - EXACT same dimensions as preview
+            const exportContainer = document.createElement('div');
+            exportContainer.style.cssText = `
+                position: fixed;
+                left: -9999px;
+                top: 0;
+                width: ${PAGE_WIDTH}px;
+                z-index: -1;
+                pointer-events: none;
+            `;
+            document.body.appendChild(exportContainer);
+            
+            // Helper to build a single page DOM for export - mirrors preview exactly
+            const buildPageForExport = (pageData: PageData, pageIndex: number): HTMLDivElement => {
+                const pageEl = document.createElement('div');
+                pageEl.style.cssText = `
+                    width: ${PAGE_WIDTH}px;
+                    height: ${PAGE_HEIGHT}px;
+                    position: relative;
+                    background: white;
+                    overflow: hidden;
+                `;
+                
+                // Paper background with lines if needed
+                if (paper.id === 'lined') {
+                    pageEl.style.backgroundImage = 'linear-gradient(#e5e7eb 1px, transparent 1px)';
+                    pageEl.style.backgroundSize = `100% ${paper.lineHeight}px`;
+                }
+                
+                // Cardboard texture overlay
+                const textureOverlay = document.createElement('div');
+                textureOverlay.style.cssText = `
+                    position: absolute;
+                    inset: 0;
+                    pointer-events: none;
+                    mix-blend-mode: multiply;
+                    opacity: 0.05;
+                    background-image: url('https://www.transparenttextures.com/patterns/cardboard.png');
+                `;
+                pageEl.appendChild(textureOverlay);
+                
+                // Red margin line for lined paper
+                if (paper.id === 'lined') {
+                    const marginLine = document.createElement('div');
+                    marginLine.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        bottom: 0;
+                        left: 50px;
+                        width: 1px;
+                        background-color: rgb(252, 165, 165);
+                        opacity: 0.2;
+                    `;
+                    pageEl.appendChild(marginLine);
+                }
+                
+                // Margin note (first page only)
+                if (marginNote && pageIndex === 0) {
+                    const noteEl = document.createElement('div');
+                    noteEl.style.cssText = `
+                        position: absolute;
+                        left: 16px;
+                        top: 33%;
+                        transform: rotate(-90deg);
+                        transform-origin: left center;
+                        font-family: ${font};
+                        color: ${color};
+                        opacity: 0.5;
+                        font-size: ${fontSize * 0.6}px;
+                        z-index: 20;
+                    `;
+                    noteEl.textContent = marginNote;
+                    pageEl.appendChild(noteEl);
+                }
+                
+                // Coffee stain (first page only)
+                if (showCoffeeStain && pageIndex === 0) {
+                    const stainEl = document.createElement('div');
+                    const stainRotate = getDeterminRandom('stain' + randomSeed) * 360;
+                    const stainScale = 0.8 + getDeterminRandom('scale' + randomSeed) * 0.5;
+                    stainEl.style.cssText = `
+                        position: absolute;
+                        top: -40px;
+                        right: -40px;
+                        pointer-events: none;
+                        opacity: 0.08;
+                        filter: blur(2px);
+                        z-index: 30;
+                        transform: rotate(${stainRotate}deg) scale(${stainScale});
+                    `;
+                    stainEl.innerHTML = `<svg width="300" height="300" viewBox="0 0 200 200"><path fill="#78350f" d="M100 20C55.8 20 20 55.8 20 100s35.8 80 80 80 80-35.8 80-80S144.2 20 100 20zm0 145c-35.9 0-65-29.1-65-65s29.1-65 65-65 65 29.1 65 65-29.1 65-65 65z"/><circle cx="100" cy="100" r="55" fill="#78350f" opacity="0.3"/></svg>`;
+                    pageEl.appendChild(stainEl);
+                }
+                
+                // Sticky note (first page only)
+                if (showStickyNote && pageIndex === 0) {
+                    const stickyRotate = getDeterminRandom('sticky' + randomSeed) * 10 - 5;
+                    const stickyEl = document.createElement('div');
+                    stickyEl.style.cssText = `
+                        position: absolute;
+                        bottom: 80px;
+                        right: 40px;
+                        width: 160px;
+                        height: 160px;
+                        background-color: #fef08a;
+                        box-shadow: 2px 5px 15px rgba(0,0,0,0.1);
+                        padding: 16px;
+                        z-index: 40;
+                        font-family: 'Caveat', cursive;
+                        color: #854d0e;
+                        transform: rotate(${stickyRotate}deg);
+                        display: flex;
+                        flex-direction: column;
+                    `;
+                    stickyEl.innerHTML = `
+                        <div style="font-size: 10px; text-transform: uppercase; font-weight: 900; opacity: 0.2; margin-bottom: 8px;">Note:</div>
+                        <div style="font-size: 18px; line-height: 1.2;">${stickyNoteText}</div>
+                        <div style="position: absolute; top: 0; left: 0; right: 0; height: 16px; background-color: rgba(253, 224, 71, 0.3);"></div>
+                    `;
+                    pageEl.appendChild(stickyEl);
+                }
+                
+                // Header (first page only)
+                if (showHeader && pageIndex === 0) {
+                    const headerContainer = document.createElement('div');
+                    headerContainer.style.cssText = `
+                        position: absolute;
+                        left: 0;
+                        right: 0;
+                        top: ${marginTop - paper.lineHeight}px;
+                        text-align: center;
+                        padding-left: ${marginLeft}px;
+                        padding-right: ${marginRight}px;
+                        z-index: 10;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                    `;
+                    
+                    headerText.split('\n').forEach((hLine: string, hlIdx: number) => {
+                        const lineEl = document.createElement('div');
+                        lineEl.style.cssText = `
+                            font-family: ${font};
+                            font-size: ${fontSize}px;
+                            color: ${color};
+                            height: ${paper.lineHeight}px;
+                            line-height: ${paper.lineHeight}px;
+                            transform: translateY(${baseline}px);
+                            width: 100%;
+                            white-space: nowrap;
+                            overflow: hidden;
+                        `;
+                        
+                        hLine.split(' ').forEach((word: string, wIdx: number) => {
+                            const seed = `header-${hlIdx}-${wIdx}-${word}-${randomSeed}`;
+                            const y = (getDeterminRandom(seed + 'y') - 0.5) * jitter * 3;
+                            const r = (getDeterminRandom(seed + 'r') - 0.5) * jitter * 1.5;
+                            const op = 1 - (getDeterminRandom(seed + 'o') * pressure * 0.2);
+                            const bl = smudge > 0 ? getDeterminRandom(seed + 'b') * smudge * 0.4 : 0;
+                            
+                            const wordSpan = document.createElement('span');
+                            wordSpan.style.cssText = `
+                                display: inline-block;
+                                transform: translateY(${y}px) rotate(${r}deg);
+                                opacity: ${op};
+                                filter: ${bl ? `blur(${bl}px)` : 'none'};
+                                margin-right: 0.25em;
+                            `;
+                            wordSpan.textContent = word;
+                            lineEl.appendChild(wordSpan);
+                        });
+                        
+                        headerContainer.appendChild(lineEl);
+                    });
+                    
+                    pageEl.appendChild(headerContainer);
+                }
+                
+                // Content container
+                const contentContainer = document.createElement('div');
+                const headerLineCount = showHeader && pageIndex === 0 ? headerText.split('\n').length + 1 : 0;
+                const topPadding = (pageIndex === 0 ? marginTop - paper.lineHeight : marginTop) + (pageIndex === 0 && showHeader ? headerLineCount * paper.lineHeight : 0);
+                
+                contentContainer.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    position: relative;
+                    padding-top: ${topPadding}px;
+                    padding-bottom: ${marginBottom}px;
+                    padding-left: ${marginLeft}px;
+                    padding-right: ${marginRight}px;
+                    box-sizing: border-box;
+                `;
+                
+                // Render each line
+                pageData.lines.forEach((line, lIdx) => {
+                    const lineEl = document.createElement('div');
+                    const lineTextAlign = line.dir === 'rtl' 
+                        ? (textAlign === 'left' ? 'right' : textAlign === 'right' ? 'left' : textAlign) 
+                        : textAlign;
+                    
+                    lineEl.style.cssText = `
+                        font-family: ${font};
+                        font-size: ${fontSize}px;
+                        color: ${color};
+                        height: ${paper.lineHeight}px;
+                        line-height: ${paper.lineHeight}px;
+                        transform: translateY(${baseline}px);
+                        text-align: ${lineTextAlign};
+                        padding-left: ${line.indent ? line.indent * (fontSize * 0.4) : 0}px;
+                        padding-right: ${line.dir === 'rtl' && line.indent ? line.indent * (fontSize * 0.4) : 0}px;
+                        width: 100%;
+                        white-space: nowrap;
+                        overflow: hidden;
+                    `;
+                    lineEl.setAttribute('dir', line.dir || 'ltr');
+                    
+                    // Render words with jitter/pressure/smudge effects
+                    line.text.split(' ').forEach((word, wIdx) => {
+                        const seed = `${pageIndex}-${lIdx}-${wIdx}-${word}-${randomSeed}`;
+                        const y = (getDeterminRandom(seed + 'y') - 0.5) * jitter * 3;
+                        const r = (getDeterminRandom(seed + 'r') - 0.5) * jitter * 1.5;
+                        const op = 1 - (getDeterminRandom(seed + 'o') * pressure * 0.2);
+                        const bl = smudge > 0 ? getDeterminRandom(seed + 'b') * smudge * 0.4 : 0;
+                        
+                        const wordSpan = document.createElement('span');
+                        wordSpan.style.cssText = `
+                            display: inline-block;
+                            transform: translateY(${y}px) rotate(${r}deg);
+                            opacity: ${op};
+                            filter: ${bl ? `blur(${bl}px)` : 'none'};
+                            margin-right: 0.25em;
+                        `;
+                        wordSpan.textContent = word;
+                        lineEl.appendChild(wordSpan);
+                    });
+                    
+                    contentContainer.appendChild(lineEl);
+                });
+                
+                pageEl.appendChild(contentContainer);
+                
+                // Page numbers
+                if (showPageNumbers) {
+                    const pageNumEl = document.createElement('div');
+                    pageNumEl.style.cssText = `
+                        position: absolute;
+                        bottom: 24px;
+                        left: 0;
+                        right: 0;
+                        text-align: center;
+                        font-size: 10px;
+                        font-weight: 900;
+                        color: rgb(209, 213, 219);
+                        letter-spacing: 0.1em;
+                        text-transform: uppercase;
+                    `;
+                    pageNumEl.textContent = `Page ${pageIndex + 1} of ${pages.length}`;
+                    pageEl.appendChild(pageNumEl);
+                }
+                
+                return pageEl;
+            };
+            
             if (currentFormat === 'pdf') {
                 const pdf = new jsPDF({ 
                     orientation: 'p', 
@@ -508,43 +700,31 @@ export default function EditorPage() {
                     putOnlyUsedFonts: true,
                     compress: true 
                 });
-
-                for (let i = 0; i < rawElements.length; i++) {
+                
+                for (let i = 0; i < pages.length; i++) {
                     if (i > 0) pdf.addPage();
                     
-                    const canvas = await html2canvas(rawElements[i] as HTMLElement, { 
-                        scale: 3, 
+                    // Build page DOM in hidden container
+                    const pageEl = buildPageForExport(pages[i], i);
+                    exportContainer.innerHTML = '';
+                    exportContainer.appendChild(pageEl);
+                    
+                    // Wait for rendering
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    // Capture with html2canvas
+                    const canvas = await html2canvas(pageEl, { 
+                        scale: 3,
                         useCORS: true, 
                         backgroundColor: '#ffffff',
                         logging: false,
-                        onclone: (doc) => {
-                            const clonedPages = doc.querySelectorAll('.handwritten-export-target');
-                            clonedPages.forEach((p) => {
-                                const pageEl = p as HTMLElement;
-                                pageEl.style.transform = 'none';
-                                pageEl.style.margin = '0';
-                                pageEl.style.position = 'relative';
-                                pageEl.style.top = '0';
-                                pageEl.style.left = '0';
-                                
-                                let parent = pageEl.parentElement;
-                                while (parent && !parent.classList.contains('handwritten-export-target')) {
-                                    parent.style.transform = 'none';
-                                    parent.style.margin = '0';
-                                    parent = parent.parentElement;
-                                }
-
-                                const pageContainer = pageEl.querySelector('.handwritten-export-target');
-                                if (pageContainer && pageContainer instanceof HTMLElement) {
-                                    pageContainer.style.mixBlendMode = 'normal';
-                                }
-                            });
-                        }
+                        width: PAGE_WIDTH,
+                        height: PAGE_HEIGHT
                     });
-
-                    const imgData = canvas.toDataURL('image/jpeg', 0.98); // High quality
+                    
+                    const imgData = canvas.toDataURL('image/jpeg', 0.98);
                     pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
-                    setProgress(Math.round(((i + 1) / rawElements.length) * 100));
+                    setProgress(Math.round(((i + 1) / pages.length) * 100));
                 }
                 
                 const pdfBlob = pdf.output('blob');
@@ -556,43 +736,35 @@ export default function EditorPage() {
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-                try { await saveExportedFile(pdfBlob, finalFileName, 'pdf'); } catch { /* Ignore local save failure */ }
-
+                try { await saveExportedFile(pdfBlob, finalFileName, 'pdf'); } catch { /* Ignore */ }
+                
             } else {
                 const zip = new JSZip();
-                for (let i = 0; i < rawElements.length; i++) {
-                    const canvas = await html2canvas(rawElements[i] as HTMLElement, { 
-                        scale: 3, 
+                
+                for (let i = 0; i < pages.length; i++) {
+                    // Build page DOM in hidden container
+                    const pageEl = buildPageForExport(pages[i], i);
+                    exportContainer.innerHTML = '';
+                    exportContainer.appendChild(pageEl);
+                    
+                    // Wait for rendering
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    // Capture with html2canvas
+                    const canvas = await html2canvas(pageEl, { 
+                        scale: 3,
                         useCORS: true, 
                         backgroundColor: '#ffffff',
-                        onclone: (doc) => {
-                            const clonedPages = doc.querySelectorAll('.handwritten-export-target');
-                            clonedPages.forEach((p) => {
-                                const pageEl = p as HTMLElement;
-                                pageEl.style.transform = 'none';
-                                pageEl.style.margin = '0';
-                                pageEl.style.position = 'relative';
-                                pageEl.style.top = '0';
-                                pageEl.style.left = '0';
-                                
-                                let parent = pageEl.parentElement;
-                                while (parent && !parent.classList.contains('handwritten-export-target')) {
-                                    parent.style.transform = 'none';
-                                    parent.style.margin = '0';
-                                    parent = parent.parentElement;
-                                }
-
-                                const pageContainer = pageEl.querySelector('.handwritten-export-target');
-                                if (pageContainer && pageContainer instanceof HTMLElement) {
-                                    pageContainer.style.mixBlendMode = 'normal';
-                                }
-                            });
-                        }
+                        logging: false,
+                        width: PAGE_WIDTH,
+                        height: PAGE_HEIGHT
                     });
+                    
                     const imgData = canvas.toDataURL('image/png', 1.0).split(',')[1];
                     zip.file(`page-${i + 1}.png`, imgData, { base64: true });
-                    setProgress(Math.round(((i + 1) / rawElements.length) * 100));
+                    setProgress(Math.round(((i + 1) / pages.length) * 100));
                 }
+                
                 const content = await zip.generateAsync({ type: 'blob' });
                 const url = URL.createObjectURL(content);
                 const link = document.createElement('a');
@@ -600,18 +772,19 @@ export default function EditorPage() {
                 link.download = finalFileName;
                 link.click();
                 URL.revokeObjectURL(url);
-                try { await saveExportedFile(content, finalFileName, 'zip'); } catch { /* Ignore local save failure */ }
+                try { await saveExportedFile(content, finalFileName, 'zip'); } catch { /* Ignore */ }
             }
             
+            // Cleanup
+            document.body.removeChild(exportContainer);
+            
             setExportStatus('complete');
-            addToast('Pixel-Perfect Export Successful! ✨', 'success');
+            addToast('Export Complete! ✨', 'success');
         } catch (err: unknown) {
             const error = err as Error;
             console.error('Export Failure:', error);
             setExportStatus('error');
             addToast(`Export Failed: ${error.message}`, 'error');
-        } finally {
-            restoreActions.forEach(undo => undo());
         }
     };
 
