@@ -1,5 +1,5 @@
 import PageLayout from '../components/PageLayout';
-import { Mail, MessageCircle, HelpCircle, FileText, Shield } from 'lucide-react';
+import { Mail, Linkedin, HelpCircle, FileText, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function SupportPage() {
@@ -18,24 +18,29 @@ export default function SupportPage() {
                         Have a specific question or issue? Send us an email and we'll get back to you within 24 hours.
                     </p>
                     <a 
-                        href="mailto:support@handwritten.app" 
+                        href="mailto:arshverma.dev@gmail.com" 
                         className="inline-flex items-center font-bold text-neutral-900 hover:gap-2 transition-all"
                     >
-                        support@handwritten.app →
+                        arshverma.dev@gmail.com →
                     </a>
                 </div>
 
                 <div className="p-8 bg-white border border-black/5 rounded-3xl hover:shadow-xl hover:shadow-neutral-900/5 transition-all">
                     <div className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center mb-6">
-                        <MessageCircle size={24} />
+                        <Linkedin size={24} />
                     </div>
-                    <h3 className="mt-0">Live Chat</h3>
+                    <h3 className="mt-0">LinkedIn</h3>
                     <p className="text-neutral-500 mb-6">
-                        Chat with our support team in real-time. Available Monday to Friday, 9am - 5pm EST.
+                        Connect with us on LinkedIn for professional updates and networking.
                     </p>
-                    <button className="px-6 py-2.5 bg-neutral-900 text-white rounded-full text-sm font-bold hover:scale-105 transition-transform">
-                        Start Chat
-                    </button>
+                    <a 
+                        href="https://www.linkedin.com/in/arshvermadev/" 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center font-bold text-neutral-900 hover:gap-2 transition-all"
+                    >
+                        Connect on LinkedIn →
+                    </a>
                 </div>
             </div>
 
