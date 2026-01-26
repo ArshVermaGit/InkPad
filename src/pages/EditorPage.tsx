@@ -414,24 +414,85 @@ export default function EditorPage() {
         const currentFormat = explicitFormat || exportFormat;
         setExportStatus('processing');
         setProgress(0);
-        console.log("Starting Pixel-Perfect Export...");
+        console.log("Starting Export...");
         
+        const restoreActions: (() => void)[] = [];
+        const ctx = document.createElement('canvas').getContext('2d');
+        
+        // Safety helper to convert modern CSS colors (oklch, etc) to RGBA for html2canvas
+        const getSafeColor = (color: string) => {
+            if (!ctx || !color || color === 'none' || color === 'transparent') return color;
+            if (color.startsWith('#') || color.startsWith('rgb')) return color;
+            try {
+                ctx.clearRect(0, 0, 1, 1);
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillStyle = color;
+                ctx.fillRect(0, 0, 1, 1);
+                const d = ctx.getImageData(0, 0, 1, 1).data;
+                return `rgba(${d[0]}, ${d[1]}, ${d[2]}, ${(d[3]/255).toFixed(3)})`;
+            } catch { return color; }
+        };
+
+        const lockComputedStyles = () => {
+            const targets = document.querySelectorAll('.handwritten-export-target, .handwritten-export-target *');
+            targets.forEach((el) => {
+                const hEl = el as HTMLElement;
+                const computed = window.getComputedStyle(hEl);
+                const originalStyle = hEl.getAttribute('style') || '';
+                restoreActions.push(() => hEl.setAttribute('style', originalStyle));
+
+                // PIN ALL VISUAL PROPERTIES to inline styles (sanitizing colors)
+                const props = [
+                    'color', 'background-color', 'border-color',
+                    'display', 'position', 'top', 'left', 'right', 'bottom',
+                    'width', 'height', 'margin', 'padding',
+                    'font-size', 'font-family', 'font-weight', 'line-height', 'text-align',
+                    'letter-spacing', 'word-spacing', 'white-space', 'text-decoration',
+                    'opacity', 'z-index', 'transform', 'transform-origin',
+                    'border-width', 'border-style', 'border-radius', 'box-shadow'
+                ];
+
+                props.forEach(p => {
+                    const val = computed.getPropertyValue(p);
+                    if (val && val !== 'none' && val !== 'normal' && val !== '0px auto') {
+                        if (p.includes('color')) {
+                            const safeColor = getSafeColor(val);
+                            if (safeColor) hEl.style.setProperty(p, safeColor);
+                        } else {
+                            hEl.style.setProperty(p, val);
+                        }
+                    }
+                });
+
+                // Explicit Background Logic
+                if (computed.backgroundImage !== 'none') {
+                    hEl.style.backgroundImage = computed.backgroundImage;
+                    hEl.style.backgroundSize = computed.backgroundSize;
+                    hEl.style.backgroundPosition = computed.backgroundPosition;
+                    hEl.style.backgroundRepeat = computed.backgroundRepeat;
+                }
+            });
+        };
+
         try {
             await document.fonts.ready;
-            // Short delay to ensure layout is stable
             await new Promise(resolve => setTimeout(resolve, 500));
 
             const rawElements = document.querySelectorAll('.handwritten-export-target');
             if (rawElements.length === 0) throw new Error('No content found to export');
+
+            // Sanitize styles (oklch -> rgba) before export
+            lockComputedStyles();
+            // Note: We intentionally do NOT call ignoreNonFontStyles() here, preserving Tailwind layout.
+
+            await new Promise(resolve => setTimeout(resolve, 300)); 
 
             // Clean Filename
             let cleanName = customName || `handwritten-${Date.now()}`;
             cleanName = cleanName.replace(/\.[^/.]+$/, "").replace(/[<>:"/\\|?*]/g, '').trim() || `handwritten-${Date.now()}`;
             const finalFileName = `${cleanName}.${currentFormat}`;
 
-            // Common html2canvas configuration
-            // We do NOT disable stylesheets or lock computed styles, as that breaks Tailwind classes (colors/fonts).
-            // content is captured "live" as is.
+            // Common Configuration
             const getCanvas = async (element: HTMLElement) => {
                 return await html2canvas(element, { 
                     scale: 3, 
@@ -443,14 +504,14 @@ export default function EditorPage() {
                         clonedPages.forEach((p) => {
                             const pageEl = p as HTMLElement;
                             
-                            // 1. Reset Scale/Position to capture full resolution
+                            // 1. Reset Scale/Position
                             pageEl.style.transform = 'none';
                             pageEl.style.margin = '0';
                             pageEl.style.position = 'relative';
                             pageEl.style.top = '0';
                             pageEl.style.left = '0';
                             
-                            // 2. Clear parent transforms to prevent double-scaling or clipping
+                            // 2. Clear parent transforms
                             let parent = pageEl.parentElement;
                             while (parent && parent.tagName !== 'BODY') {
                                 parent.style.transform = 'none';
@@ -459,14 +520,12 @@ export default function EditorPage() {
                                 parent = parent.parentElement;
                             }
 
-                            // 3. CRITICAL STABILITY FIX:
-                            // We reset 'mix-blend-mode' to normal because it often crashes html2canvas.
-                            // BUT we preserve 'filter' so Smudge/Blur effects remain visible.
+                            // 3. Prevent Crashes but Keep Filters
                             const problemNodes = pageEl.querySelectorAll('*');
                             problemNodes.forEach(n => {
                                 const node = n as HTMLElement;
-                                node.style.mixBlendMode = 'normal';
-                                // Note: We do NOT reset filter here, protecting the smudge effect.
+                                node.style.mixBlendMode = 'normal'; // Fix crashes
+                                // node.style.filter = 'none'; // REMOVED to preserve Smudge
                             });
                         });
                     }
@@ -528,6 +587,8 @@ export default function EditorPage() {
             console.error('Export Failure:', error);
             setExportStatus('error');
             addToast(`Export Failed: ${error.message}`, 'error');
+        } finally {
+            restoreActions.forEach(undo => undo());
         }
     };
 
