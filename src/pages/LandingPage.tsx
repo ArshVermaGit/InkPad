@@ -42,9 +42,9 @@ export default function LandingPage() {
                 <div className="absolute top-0 left-0 w-full h-full noise-bg opacity-20" />
                 
                 {/* Static Background Blobs - No animation */}
-                <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-300/30 rounded-full blur-3xl" />
-                <div className="absolute top-1/3 -right-20 w-96 h-96 bg-indigo-300/30 rounded-full blur-3xl" />
-                <div className="absolute -bottom-20 left-1/3 w-96 h-96 bg-rose-300/30 rounded-full blur-3xl" />
+                <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-300/30 rounded-full blur-xl sm:blur-3xl" />
+                <div className="absolute top-1/3 -right-20 w-96 h-96 bg-indigo-300/30 rounded-full blur-xl sm:blur-3xl" />
+                <div className="absolute -bottom-20 left-1/3 w-96 h-96 bg-rose-300/30 rounded-full blur-xl sm:blur-3xl" />
             </div>
             
             {/* --- HERO SECTION --- */}
@@ -88,7 +88,7 @@ export default function LandingPage() {
                                 className="h-full bg-white rounded-[2.5rem] relative overflow-hidden group shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-neutral-100"
                             >
                                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-white opacity-50" />
-                                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-100/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-100/30 rounded-full blur-xl sm:blur-3xl -translate-y-1/2 translate-x-1/2" />
                                 
                                 <div className="relative z-10 p-8 sm:p-12 h-full flex flex-col justify-between">
                                     <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-8 shadow-[0_10px_20px_-5px_rgba(79,70,229,0.15)] ring-1 ring-black/5">
@@ -127,8 +127,8 @@ export default function LandingPage() {
                                 whileHover={{ y: -5 }}
                                 className="h-full bg-[#1A1F2C] text-white rounded-[2.5rem] p-8 relative overflow-hidden group shadow-2xl flex flex-col ring-1 ring-white/10"
                             >
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/30 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
-                                <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-500/20 rounded-full blur-[60px] translate-y-1/4 -translate-x-1/4" />
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/30 rounded-full blur-[40px] sm:blur-[80px] -translate-y-1/2 translate-x-1/2" />
+                                <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-500/20 rounded-full blur-[30px] sm:blur-[60px] translate-y-1/4 -translate-x-1/4" />
                                 
                                 <div className="relative z-10 flex flex-col justify-between h-full">
                                     <div className="w-14 h-14 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center mb-6 ring-1 ring-white/20 shadow-lg shadow-indigo-500/10">
@@ -184,7 +184,7 @@ export default function LandingPage() {
                                     opacity: [0.2, 0.4, 0.2]
                                 }}
                                 transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/30 rounded-full blur-[120px]" 
+                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/30 rounded-full blur-[60px] sm:blur-[120px]" 
                             />
 
                             <div className="relative z-10">
@@ -220,18 +220,18 @@ export default function LandingPage() {
 }
 
 function HeroSection() {
-    // Floating elements with animations
+    // Floating elements with animations - Enriched for Mobile
     const floatingElements = [
-        { icon: '✒️', x: 'left-[5%]', y: 'top-[12%]', size: 'text-6xl lg:text-7xl', hideOnMobile: true, duration: 20, delay: 0 },
-        { icon: '📝', x: 'left-[3%]', y: 'top-[35%]', size: 'text-5xl lg:text-6xl', hideOnMobile: true, duration: 15, delay: 2 },
-        { icon: '🖋️', x: 'right-[5%]', y: 'top-[10%]', size: 'text-6xl lg:text-7xl', hideOnMobile: true, duration: 25, delay: 1 },
-        { icon: '💫', x: 'right-[3%]', y: 'top-[32%]', size: 'text-5xl lg:text-6xl', hideOnMobile: true, duration: 18, delay: 3 },
-        { icon: '📄', x: 'left-[2%]', y: 'top-[50%]', size: 'text-5xl lg:text-6xl', hideOnMobile: true, duration: 22, delay: 4 },
-        { icon: '📖', x: 'right-[2%]', y: 'top-[48%]', size: 'text-5xl lg:text-6xl', hideOnMobile: true, duration: 19, delay: 2 },
-        { icon: '🖊️', x: 'left-[5%]', y: 'bottom-[10%]', size: 'text-6xl lg:text-7xl', hideOnMobile: false, duration: 21, delay: 5 },
-        { icon: '✏️', x: 'left-[3%]', y: 'bottom-[28%]', size: 'text-5xl lg:text-6xl', hideOnMobile: true, duration: 17, delay: 0 },
-        { icon: '🎭', x: 'right-[5%]', y: 'bottom-[10%]', size: 'text-6xl lg:text-7xl', hideOnMobile: false, duration: 23, delay: 1 },
-        { icon: '💡', x: 'right-[3%]', y: 'bottom-[30%]', size: 'text-5xl lg:text-6xl', hideOnMobile: true, duration: 20, delay: 3 },
+        { icon: '✒️', x: 'left-4 sm:left-[5%]', y: 'top-[15%] sm:top-[12%]', size: 'text-6xl sm:text-7xl', hideOnMobile: false, duration: 20, delay: 0 },
+        { icon: '📝', x: 'left-[3%]', y: 'top-[35%]', size: 'text-4xl sm:text-6xl', hideOnMobile: true, duration: 15, delay: 2 },
+        { icon: '🖋️', x: 'right-4 sm:right-[5%]', y: 'top-[12%] sm:top-[10%]', size: 'text-6xl sm:text-7xl', hideOnMobile: false, duration: 25, delay: 1 },
+        { icon: '💫', x: 'right-[8%]', y: 'top-[30%]', size: 'text-4xl sm:text-6xl', hideOnMobile: false, duration: 18, delay: 3 },
+        { icon: '📄', x: 'left-[2%]', y: 'top-[50%]', size: 'text-6xl', hideOnMobile: true, duration: 22, delay: 4 },
+        { icon: '📖', x: 'right-[2%]', y: 'top-[48%]', size: 'text-6xl', hideOnMobile: true, duration: 19, delay: 2 },
+        { icon: '🖊️', x: 'left-4 sm:left-[5%]', y: 'bottom-[15%] sm:bottom-[10%]', size: 'text-6xl sm:text-7xl', hideOnMobile: false, duration: 21, delay: 5 },
+        { icon: '✏️', x: 'left-[3%]', y: 'bottom-[28%]', size: 'text-4xl sm:text-6xl', hideOnMobile: true, duration: 17, delay: 0 },
+        { icon: '🎭', x: 'right-4 sm:right-[5%]', y: 'bottom-[15%] sm:bottom-[10%]', size: 'text-6xl sm:text-7xl', hideOnMobile: false, duration: 23, delay: 1 },
+        { icon: '💡', x: 'right-[12%]', y: 'bottom-[35%]', size: 'text-4xl sm:text-6xl', hideOnMobile: false, duration: 20, delay: 3 },
     ];
 
     return (
@@ -243,7 +243,7 @@ function HeroSection() {
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 2, ease: "easeOut" }}
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-100/40 rounded-full blur-[140px] mix-blend-multiply" 
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-100/40 rounded-full blur-[60px] sm:blur-[140px] mix-blend-multiply" 
                     />
                 </div>
             </div>
