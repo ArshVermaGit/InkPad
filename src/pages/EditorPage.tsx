@@ -416,37 +416,88 @@ export default function EditorPage() {
         setProgress(0);
         console.log("Starting Pixel-Perfect Export...");
         
-        // Helper to convert any color to rgb/rgba for html2canvas compatibility
-        const normalizeColor = (color: string): string => {
-            if (!color || color === 'none' || color === 'transparent') return color;
+        const restoreActions: (() => void)[] = [];
+        const ctx = document.createElement('canvas').getContext('2d');
+        
+        const getSafeColor = (color: string) => {
+            if (!ctx || !color || color === 'none' || color === 'transparent') return color;
             if (color.startsWith('#') || color.startsWith('rgb')) return color;
-            
-            // For modern color functions (oklch, oklab, lch, lab), convert via canvas
             try {
-                const canvas = document.createElement('canvas');
-                canvas.width = 1;
-                canvas.height = 1;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return color;
-                
+                ctx.clearRect(0, 0, 1, 1);
+                ctx.fillStyle = '#FFFFFF';
                 ctx.fillStyle = color;
                 ctx.fillRect(0, 0, 1, 1);
-                const imageData = ctx.getImageData(0, 0, 1, 1).data;
-                return `rgba(${imageData[0]}, ${imageData[1]}, ${imageData[2]}, ${(imageData[3] / 255).toFixed(3)})`;
-            } catch {
-                return color;
-            }
+                const d = ctx.getImageData(0, 0, 1, 1).data;
+                return `rgba(${d[0]}, ${d[1]}, ${d[2]}, ${(d[3]/255).toFixed(3)})`;
+            } catch { return color; }
         };
-        
+
+        const lockComputedStyles = () => {
+            const targets = document.querySelectorAll('.handwritten-export-target, .handwritten-export-target *');
+            targets.forEach((el) => {
+                const hEl = el as HTMLElement;
+                const computed = window.getComputedStyle(hEl);
+                const originalStyle = hEl.getAttribute('style') || '';
+                restoreActions.push(() => hEl.setAttribute('style', originalStyle));
+
+                // PIN ALL VISUAL PROPERTIES
+                const props = [
+                    'color', 'background-color', 'border-color',
+                    'display', 'position', 'top', 'left', 'right', 'bottom',
+                    'width', 'height', 'margin', 'padding',
+                    'font-size', 'font-family', 'font-weight', 'line-height', 'text-align',
+                    'letter-spacing', 'word-spacing', 'white-space', 'text-decoration',
+                    'opacity', 'z-index', 'transform', 'transform-origin',
+                    'border-width', 'border-style', 'border-radius', 'box-shadow',
+                    'filter', 'mix-blend-mode'
+                ];
+
+                props.forEach(p => {
+                    const val = computed.getPropertyValue(p);
+                    if (val && val !== 'none' && val !== 'normal' && val !== '0px auto') {
+                        if (p.includes('color')) {
+                            const safeColor = getSafeColor(val);
+                            if (safeColor) hEl.style.setProperty(p, safeColor);
+                        } else {
+                            hEl.style.setProperty(p, val);
+                        }
+                    }
+                });
+
+                // Explicit Background Logic
+                if (computed.backgroundImage !== 'none') {
+                    hEl.style.backgroundImage = computed.backgroundImage;
+                    hEl.style.backgroundSize = computed.backgroundSize;
+                    hEl.style.backgroundPosition = computed.backgroundPosition;
+                    hEl.style.backgroundRepeat = computed.backgroundRepeat;
+                }
+            });
+        };
+
+        const ignoreNonFontStyles = () => {
+            const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
+            styles.forEach(tag => {
+                const isGoogleFont = tag.tagName === 'LINK' && (tag as HTMLLinkElement).href.includes('fonts.googleapis');
+                if (!isGoogleFont) {
+                    tag.setAttribute('data-html2canvas-ignore', 'true');
+                    restoreActions.push(() => tag.removeAttribute('data-html2canvas-ignore'));
+                }
+            });
+        };
+
         try {
-            // Wait for fonts to load
             await Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 3000))]);
             
             const rawElements = document.querySelectorAll('.handwritten-export-target');
             if (rawElements.length === 0) throw new Error('No content found to export');
 
+            lockComputedStyles();
+            ignoreNonFontStyles();
+            await new Promise(resolve => setTimeout(resolve, 300)); // Slightly longer for stability
+
             // FILENAME LOGIC (Sanitized)
-            const cleanName = customName || `handwritten-${Date.now()}`;
+            let cleanName = customName || `handwritten-${Date.now()}`;
+            cleanName = cleanName.replace(/\.[^/.]+$/, "").replace(/[<>:"/\\|?*]/g, '').trim() || `handwritten-${Date.now()}`;
             const finalFileName = `${cleanName}.${currentFormat}`;
 
             if (currentFormat === 'pdf') {
@@ -462,98 +513,36 @@ export default function EditorPage() {
                     if (i > 0) pdf.addPage();
                     
                     const canvas = await html2canvas(rawElements[i] as HTMLElement, { 
-                        scale: 3,
-                        useCORS: true,
-                        allowTaint: false,
+                        scale: 3, 
+                        useCORS: true, 
                         backgroundColor: '#ffffff',
                         logging: false,
-                        windowWidth: 800,
-                        windowHeight: 1131,
-                        ignoreElements: (element) => {
-                            // Ignore scale wrapper transforms
-                            return !!(element.classList.contains('handwritten-page-render') && 
-                                   element.parentElement?.style.transform?.includes('scale'));
-                        },
-                        onclone: (clonedDoc) => {
-                            // Fix all cloned pages
-                            const clonedTargets = clonedDoc.querySelectorAll('.handwritten-export-target');
-                            clonedTargets.forEach((target) => {
-                                const el = target as HTMLElement;
+                        onclone: (doc) => {
+                            const clonedPages = doc.querySelectorAll('.handwritten-export-target');
+                            clonedPages.forEach((p) => {
+                                const pageEl = p as HTMLElement;
+                                pageEl.style.transform = 'none';
+                                pageEl.style.margin = '0';
+                                pageEl.style.position = 'relative';
+                                pageEl.style.top = '0';
+                                pageEl.style.left = '0';
                                 
-                                // Reset any transforms from scaling wrappers
-                                el.style.transform = 'none';
-                                el.style.transformOrigin = 'top left';
-                                el.style.margin = '0';
-                                el.style.position = 'relative';
-                                el.style.top = '0';
-                                el.style.left = '0';
-                                el.style.width = '800px';
-                                el.style.height = '1131px';
-                                
-                                // Remove any parent wrapper transforms
-                                let parent = el.parentElement;
-                                while (parent && parent !== clonedDoc.body) {
+                                let parent = pageEl.parentElement;
+                                while (parent && !parent.classList.contains('handwritten-export-target')) {
                                     parent.style.transform = 'none';
                                     parent.style.margin = '0';
-                                    parent.style.padding = '0';
                                     parent = parent.parentElement;
                                 }
 
-                                // Fix blend modes (html2canvas doesn't support them well)
-                                const blendElements = el.querySelectorAll('[style*="mix-blend-mode"]');
-                                blendElements.forEach((blendEl) => {
-                                    (blendEl as HTMLElement).style.mixBlendMode = 'normal';
-                                });
-
-                                // Normalize all colors to rgb/rgba (fix oklch, oklab, etc.)
-                                const allElements = el.querySelectorAll('*');
-                                allElements.forEach((elem) => {
-                                    const htmlElem = elem as HTMLElement;
-                                    const computed = window.getComputedStyle(htmlElem);
-                                    
-                                    // Normalize color properties
-                                    const colorProps = ['color', 'backgroundColor', 'borderColor', 'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'];
-                                    colorProps.forEach(prop => {
-                                        const value = computed.getPropertyValue(prop.replace(/[A-Z]/g, m => '-' + m.toLowerCase()));
-                                        if (value && value !== 'none' && value !== 'transparent') {
-                                            const normalized = normalizeColor(value);
-                                            htmlElem.style.setProperty(prop.replace(/[A-Z]/g, m => '-' + m.toLowerCase()), normalized);
-                                        }
-                                    });
-                                });
-
-                                // Ensure background images are preserved
-                                const bgElements = el.querySelectorAll('[style*="background"]');
-                                bgElements.forEach((bgEl) => {
-                                    const computed = window.getComputedStyle(bgEl as HTMLElement);
-                                    const bgImage = computed.backgroundImage;
-                                    const bgSize = computed.backgroundSize;
-                                    const bgPosition = computed.backgroundPosition;
-                                    const bgRepeat = computed.backgroundRepeat;
-                                    
-                                    if (bgImage && bgImage !== 'none') {
-                                        (bgEl as HTMLElement).style.backgroundImage = bgImage;
-                                        (bgEl as HTMLElement).style.backgroundSize = bgSize;
-                                        (bgEl as HTMLElement).style.backgroundPosition = bgPosition;
-                                        (bgEl as HTMLElement).style.backgroundRepeat = bgRepeat;
-                                    }
-                                });
-
-                                // Lock font properties explicitly
-                                const textElements = el.querySelectorAll('[style*="font"]');
-                                textElements.forEach((textEl) => {
-                                    const computed = window.getComputedStyle(textEl as HTMLElement);
-                                    (textEl as HTMLElement).style.fontFamily = computed.fontFamily;
-                                    (textEl as HTMLElement).style.fontSize = computed.fontSize;
-                                    (textEl as HTMLElement).style.fontWeight = computed.fontWeight;
-                                    (textEl as HTMLElement).style.lineHeight = computed.lineHeight;
-                                    (textEl as HTMLElement).style.color = normalizeColor(computed.color);
-                                });
+                                const pageContainer = pageEl.querySelector('.handwritten-export-target');
+                                if (pageContainer && pageContainer instanceof HTMLElement) {
+                                    pageContainer.style.mixBlendMode = 'normal';
+                                }
                             });
                         }
                     });
 
-                    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+                    const imgData = canvas.toDataURL('image/jpeg', 0.98); // High quality
                     pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
                     setProgress(Math.round(((i + 1) / rawElements.length) * 100));
                 }
@@ -567,100 +556,43 @@ export default function EditorPage() {
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-                try { await saveExportedFile(pdfBlob, finalFileName, 'pdf'); } catch { /* Ignore */ }
+                try { await saveExportedFile(pdfBlob, finalFileName, 'pdf'); } catch { /* Ignore local save failure */ }
 
             } else {
                 const zip = new JSZip();
                 for (let i = 0; i < rawElements.length; i++) {
                     const canvas = await html2canvas(rawElements[i] as HTMLElement, { 
-                        scale: 3,
-                        useCORS: true,
-                        allowTaint: false,
+                        scale: 3, 
+                        useCORS: true, 
                         backgroundColor: '#ffffff',
-                        logging: false,
-                        windowWidth: 800,
-                        windowHeight: 1131,
-                        ignoreElements: (element) => {
-                            return !!(element.classList.contains('handwritten-page-render') && 
-                                   element.parentElement?.style.transform?.includes('scale'));
-                        },
-                        onclone: (clonedDoc) => {
-                            const clonedTargets = clonedDoc.querySelectorAll('.handwritten-export-target');
-                            clonedTargets.forEach((target) => {
-                                const el = target as HTMLElement;
+                        onclone: (doc) => {
+                            const clonedPages = doc.querySelectorAll('.handwritten-export-target');
+                            clonedPages.forEach((p) => {
+                                const pageEl = p as HTMLElement;
+                                pageEl.style.transform = 'none';
+                                pageEl.style.margin = '0';
+                                pageEl.style.position = 'relative';
+                                pageEl.style.top = '0';
+                                pageEl.style.left = '0';
                                 
-                                el.style.transform = 'none';
-                                el.style.transformOrigin = 'top left';
-                                el.style.margin = '0';
-                                el.style.position = 'relative';
-                                el.style.top = '0';
-                                el.style.left = '0';
-                                el.style.width = '800px';
-                                el.style.height = '1131px';
-                                
-                                let parent = el.parentElement;
-                                while (parent && parent !== clonedDoc.body) {
+                                let parent = pageEl.parentElement;
+                                while (parent && !parent.classList.contains('handwritten-export-target')) {
                                     parent.style.transform = 'none';
                                     parent.style.margin = '0';
-                                    parent.style.padding = '0';
                                     parent = parent.parentElement;
                                 }
 
-                                const blendElements = el.querySelectorAll('[style*="mix-blend-mode"]');
-                                blendElements.forEach((blendEl) => {
-                                    (blendEl as HTMLElement).style.mixBlendMode = 'normal';
-                                });
-
-                                // Normalize all colors to rgb/rgba
-                                const allElements = el.querySelectorAll('*');
-                                allElements.forEach((elem) => {
-                                    const htmlElem = elem as HTMLElement;
-                                    const computed = window.getComputedStyle(htmlElem);
-                                    
-                                    const colorProps = ['color', 'backgroundColor', 'borderColor', 'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'];
-                                    colorProps.forEach(prop => {
-                                        const value = computed.getPropertyValue(prop.replace(/[A-Z]/g, m => '-' + m.toLowerCase()));
-                                        if (value && value !== 'none' && value !== 'transparent') {
-                                            const normalized = normalizeColor(value);
-                                            htmlElem.style.setProperty(prop.replace(/[A-Z]/g, m => '-' + m.toLowerCase()), normalized);
-                                        }
-                                    });
-                                });
-
-                                const bgElements = el.querySelectorAll('[style*="background"]');
-                                bgElements.forEach((bgEl) => {
-                                    const computed = window.getComputedStyle(bgEl as HTMLElement);
-                                    const bgImage = computed.backgroundImage;
-                                    const bgSize = computed.backgroundSize;
-                                    const bgPosition = computed.backgroundPosition;
-                                    const bgRepeat = computed.backgroundRepeat;
-                                    
-                                    if (bgImage && bgImage !== 'none') {
-                                        (bgEl as HTMLElement).style.backgroundImage = bgImage;
-                                        (bgEl as HTMLElement).style.backgroundSize = bgSize;
-                                        (bgEl as HTMLElement).style.backgroundPosition = bgPosition;
-                                        (bgEl as HTMLElement).style.backgroundRepeat = bgRepeat;
-                                    }
-                                });
-
-                                const textElements = el.querySelectorAll('[style*="font"]');
-                                textElements.forEach((textEl) => {
-                                    const computed = window.getComputedStyle(textEl as HTMLElement);
-                                    (textEl as HTMLElement).style.fontFamily = computed.fontFamily;
-                                    (textEl as HTMLElement).style.fontSize = computed.fontSize;
-                                    (textEl as HTMLElement).style.fontWeight = computed.fontWeight;
-                                    (textEl as HTMLElement).style.lineHeight = computed.lineHeight;
-                                    (textEl as HTMLElement).style.color = normalizeColor(computed.color);
-                                });
+                                const pageContainer = pageEl.querySelector('.handwritten-export-target');
+                                if (pageContainer && pageContainer instanceof HTMLElement) {
+                                    pageContainer.style.mixBlendMode = 'normal';
+                                }
                             });
                         }
                     });
-                    
                     const imgData = canvas.toDataURL('image/png', 1.0).split(',')[1];
                     zip.file(`page-${i + 1}.png`, imgData, { base64: true });
                     setProgress(Math.round(((i + 1) / rawElements.length) * 100));
                 }
-                
                 const content = await zip.generateAsync({ type: 'blob' });
                 const url = URL.createObjectURL(content);
                 const link = document.createElement('a');
@@ -668,7 +600,7 @@ export default function EditorPage() {
                 link.download = finalFileName;
                 link.click();
                 URL.revokeObjectURL(url);
-                try { await saveExportedFile(content, finalFileName, 'zip'); } catch { /* Ignore */ }
+                try { await saveExportedFile(content, finalFileName, 'zip'); } catch { /* Ignore local save failure */ }
             }
             
             setExportStatus('complete');
@@ -678,6 +610,8 @@ export default function EditorPage() {
             console.error('Export Failure:', error);
             setExportStatus('error');
             addToast(`Export Failed: ${error.message}`, 'error');
+        } finally {
+            restoreActions.forEach(undo => undo());
         }
     };
 
