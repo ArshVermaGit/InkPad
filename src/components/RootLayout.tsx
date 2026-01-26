@@ -1,7 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import Footer from './Footer';
-import MobileNav from './MobileNav';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function RootLayout() {
@@ -26,7 +25,6 @@ export default function RootLayout() {
                 </main>
             </div>
             <Footer />
-            <MobileNav />
         </div>
     );
 }
