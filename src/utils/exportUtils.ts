@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas';
+import { domToJpeg, domToPng } from 'modern-screenshot';
 import { jsPDF } from 'jspdf';
 import JSZip from 'jszip';
 import { saveExportedFile } from '../lib/fileStorage';
@@ -30,20 +30,25 @@ function getVisiblePages(): HTMLElement[] {
 }
 
 // Helper to capture a single page
-async function capturePage(element: HTMLElement): Promise<HTMLCanvasElement> {
-    return html2canvas(element, {
+async function capturePage(element: HTMLElement, format: 'jpeg' | 'png'): Promise<string> {
+    const options = {
         scale: 2,
-        useCORS: true,
         backgroundColor: '#ffffff',
-        logging: false,
-        allowTaint: true,
-        onclone: (_doc, el) => {
-            el.style.transform = 'none';
-            el.style.width = '800px';
-            el.style.height = '1131px';
-            el.style.boxShadow = 'none';
+        style: {
+            transform: 'none',
+            boxShadow: 'none'
+        },
+        features: {
+            // Ensure modern CSS features are handled
+            removeControlCharacter: false
         }
-    });
+    };
+
+    if (format === 'jpeg') {
+        return domToJpeg(element, { ...options, quality: 0.95 });
+    } else {
+        return domToPng(element, options);
+    }
 }
 
 // Main Export Function
@@ -74,18 +79,20 @@ export async function exportDocument({ name, format, onProgress }: ExportOptions
         // Process batch in parallel
         const batchResults = await Promise.all(batch.map(async (page, batchIndex) => {
             const globalIndex = i + batchIndex;
-            const canvas = await capturePage(page);
             
             if (format === 'pdf') {
+                const dataUrl = await capturePage(page, 'jpeg');
                 return { 
                     index: globalIndex, 
-                    data: canvas.toDataURL('image/jpeg', 0.95),
+                    data: dataUrl,
                     type: 'jpeg' as const
                 };
             } else {
+                const dataUrl = await capturePage(page, 'png');
+                // Remove data URL prefix for ZIP
                 return { 
                     index: globalIndex, 
-                    data: canvas.toDataURL('image/png').split(',')[1],
+                    data: dataUrl.split(',')[1],
                     type: 'png' as const
                 };
             }
