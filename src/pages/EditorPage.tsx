@@ -416,12 +416,84 @@ export default function EditorPage() {
         setProgress(0);
         console.log("Starting Pixel-Perfect Export...");
         
+        const restoreActions: (() => void)[] = [];
+        const ctx = document.createElement('canvas').getContext('2d');
+        
+        const getSafeColor = (color: string) => {
+            if (!ctx || !color || color === 'none' || color === 'transparent') return color;
+            if (color.startsWith('#') || color.startsWith('rgb')) return color;
+            try {
+                ctx.clearRect(0, 0, 1, 1);
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillStyle = color;
+                ctx.fillRect(0, 0, 1, 1);
+                const d = ctx.getImageData(0, 0, 1, 1).data;
+                return `rgba(${d[0]}, ${d[1]}, ${d[2]}, ${(d[3]/255).toFixed(3)})`;
+            } catch { return color; }
+        };
+
+        const lockComputedStyles = () => {
+            const targets = document.querySelectorAll('.handwritten-export-target, .handwritten-export-target *');
+            targets.forEach((el) => {
+                const hEl = el as HTMLElement;
+                const computed = window.getComputedStyle(hEl);
+                const originalStyle = hEl.getAttribute('style') || '';
+                restoreActions.push(() => hEl.setAttribute('style', originalStyle));
+
+                // PIN ALL VISUAL PROPERTIES
+                const props = [
+                    'color', 'background-color', 'border-color',
+                    'display', 'position', 'top', 'left', 'right', 'bottom',
+                    'width', 'height', 'margin', 'padding',
+                    'font-size', 'font-family', 'font-weight', 'line-height', 'text-align',
+                    'letter-spacing', 'word-spacing', 'white-space', 'text-decoration',
+                    'opacity', 'z-index', 'transform', 'transform-origin',
+                    'border-width', 'border-style', 'border-radius', 'box-shadow',
+                    'filter', 'mix-blend-mode'
+                ];
+
+                props.forEach(p => {
+                    const val = computed.getPropertyValue(p);
+                    if (val && val !== 'none' && val !== 'normal' && val !== '0px auto') {
+                        if (p.includes('color')) {
+                            const safeColor = getSafeColor(val);
+                            if (safeColor) hEl.style.setProperty(p, safeColor);
+                        } else {
+                            hEl.style.setProperty(p, val);
+                        }
+                    }
+                });
+
+                // Explicit Background Logic
+                if (computed.backgroundImage !== 'none') {
+                    hEl.style.backgroundImage = computed.backgroundImage;
+                    hEl.style.backgroundSize = computed.backgroundSize;
+                    hEl.style.backgroundPosition = computed.backgroundPosition;
+                    hEl.style.backgroundRepeat = computed.backgroundRepeat;
+                }
+            });
+        };
+
+        const ignoreNonFontStyles = () => {
+            const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
+            styles.forEach(tag => {
+                const isGoogleFont = tag.tagName === 'LINK' && (tag as HTMLLinkElement).href.includes('fonts.googleapis');
+                if (!isGoogleFont) {
+                    tag.setAttribute('data-html2canvas-ignore', 'true');
+                    restoreActions.push(() => tag.removeAttribute('data-html2canvas-ignore'));
+                }
+            });
+        };
+
         try {
-            // Wait for fonts to load
             await Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 3000))]);
             
             const rawElements = document.querySelectorAll('.handwritten-export-target');
             if (rawElements.length === 0) throw new Error('No content found to export');
+
+            lockComputedStyles();
+            ignoreNonFontStyles();
+            await new Promise(resolve => setTimeout(resolve, 300)); // Slightly longer for stability
 
             // FILENAME LOGIC (Sanitized)
             let cleanName = customName || `handwritten-${Date.now()}`;
@@ -443,46 +515,34 @@ export default function EditorPage() {
                     const canvas = await html2canvas(rawElements[i] as HTMLElement, { 
                         scale: 3, 
                         useCORS: true, 
-                        allowTaint: false,
                         backgroundColor: '#ffffff',
                         logging: false,
-                        onclone: (clonedDoc) => {
-                            // Find the cloned target element
-                            const clonedTargets = clonedDoc.querySelectorAll('.handwritten-page-render');
-                            
-                            clonedTargets.forEach((pageRender) => {
-                                const renderEl = pageRender as HTMLElement;
+                        onclone: (doc) => {
+                            const clonedPages = doc.querySelectorAll('.handwritten-export-target');
+                            clonedPages.forEach((p) => {
+                                const pageEl = p as HTMLElement;
+                                pageEl.style.transform = 'none';
+                                pageEl.style.margin = '0';
+                                pageEl.style.position = 'relative';
+                                pageEl.style.top = '0';
+                                pageEl.style.left = '0';
                                 
-                                // Remove the display scaling (we want actual size)
-                                renderEl.style.transform = 'none';
-                                renderEl.style.width = '800px';
-                                renderEl.style.height = 'auto';
-                                
-                                // Find parent scaling wrappers and reset them too
-                                let parent = renderEl.parentElement;
-                                while (parent && parent !== clonedDoc.body) {
+                                let parent = pageEl.parentElement;
+                                while (parent && !parent.classList.contains('handwritten-export-target')) {
                                     parent.style.transform = 'none';
                                     parent.style.margin = '0';
-                                    parent.style.padding = '0';
                                     parent = parent.parentElement;
                                 }
-                            });
 
-                            // Ensure all text styling is preserved (DON'T reset filter, opacity, transform on text!)
-                            const allTextElements = clonedDoc.querySelectorAll('.handwritten-export-target span, .handwritten-export-target div');
-                            allTextElements.forEach((el) => {
-                                const element = el as HTMLElement;
-                                // Preserve existing inline styles - DO NOT override
-                                const currentStyle = element.getAttribute('style');
-                                if (currentStyle) {
-                                    // Keep all inline styles exactly as they are
-                                    element.setAttribute('style', currentStyle);
+                                const pageContainer = pageEl.querySelector('.handwritten-export-target');
+                                if (pageContainer && pageContainer instanceof HTMLElement) {
+                                    pageContainer.style.mixBlendMode = 'normal';
                                 }
                             });
                         }
                     });
 
-                    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+                    const imgData = canvas.toDataURL('image/jpeg', 0.98); // High quality
                     pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
                     setProgress(Math.round(((i + 1) / rawElements.length) * 100));
                 }
@@ -496,53 +556,43 @@ export default function EditorPage() {
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-                try { await saveExportedFile(pdfBlob, finalFileName, 'pdf'); } catch { /* Ignore */ }
+                try { await saveExportedFile(pdfBlob, finalFileName, 'pdf'); } catch { /* Ignore local save failure */ }
 
             } else {
-                // ZIP Export
                 const zip = new JSZip();
-                
                 for (let i = 0; i < rawElements.length; i++) {
                     const canvas = await html2canvas(rawElements[i] as HTMLElement, { 
                         scale: 3, 
                         useCORS: true, 
-                        allowTaint: false,
                         backgroundColor: '#ffffff',
-                        logging: false,
-                        onclone: (clonedDoc) => {
-                            const clonedTargets = clonedDoc.querySelectorAll('.handwritten-page-render');
-                            
-                            clonedTargets.forEach((pageRender) => {
-                                const renderEl = pageRender as HTMLElement;
-                                renderEl.style.transform = 'none';
-                                renderEl.style.width = '800px';
-                                renderEl.style.height = 'auto';
+                        onclone: (doc) => {
+                            const clonedPages = doc.querySelectorAll('.handwritten-export-target');
+                            clonedPages.forEach((p) => {
+                                const pageEl = p as HTMLElement;
+                                pageEl.style.transform = 'none';
+                                pageEl.style.margin = '0';
+                                pageEl.style.position = 'relative';
+                                pageEl.style.top = '0';
+                                pageEl.style.left = '0';
                                 
-                                let parent = renderEl.parentElement;
-                                while (parent && parent !== clonedDoc.body) {
+                                let parent = pageEl.parentElement;
+                                while (parent && !parent.classList.contains('handwritten-export-target')) {
                                     parent.style.transform = 'none';
                                     parent.style.margin = '0';
-                                    parent.style.padding = '0';
                                     parent = parent.parentElement;
                                 }
-                            });
 
-                            const allTextElements = clonedDoc.querySelectorAll('.handwritten-export-target span, .handwritten-export-target div');
-                            allTextElements.forEach((el) => {
-                                const element = el as HTMLElement;
-                                const currentStyle = element.getAttribute('style');
-                                if (currentStyle) {
-                                    element.setAttribute('style', currentStyle);
+                                const pageContainer = pageEl.querySelector('.handwritten-export-target');
+                                if (pageContainer && pageContainer instanceof HTMLElement) {
+                                    pageContainer.style.mixBlendMode = 'normal';
                                 }
                             });
                         }
                     });
-                    
                     const imgData = canvas.toDataURL('image/png', 1.0).split(',')[1];
                     zip.file(`page-${i + 1}.png`, imgData, { base64: true });
                     setProgress(Math.round(((i + 1) / rawElements.length) * 100));
                 }
-                
                 const content = await zip.generateAsync({ type: 'blob' });
                 const url = URL.createObjectURL(content);
                 const link = document.createElement('a');
@@ -550,16 +600,18 @@ export default function EditorPage() {
                 link.download = finalFileName;
                 link.click();
                 URL.revokeObjectURL(url);
-                try { await saveExportedFile(content, finalFileName, 'zip'); } catch { /* Ignore */ }
+                try { await saveExportedFile(content, finalFileName, 'zip'); } catch { /* Ignore local save failure */ }
             }
             
             setExportStatus('complete');
-            addToast('Export Successful! ✨', 'success');
+            addToast('Pixel-Perfect Export Successful! ✨', 'success');
         } catch (err: unknown) {
             const error = err as Error;
             console.error('Export Failure:', error);
             setExportStatus('error');
             addToast(`Export Failed: ${error.message}`, 'error');
+        } finally {
+            restoreActions.forEach(undo => undo());
         }
     };
 
