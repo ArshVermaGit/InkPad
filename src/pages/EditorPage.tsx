@@ -425,10 +425,14 @@ export default function EditorPage() {
             if (color.startsWith('#') || color.startsWith('rgb')) return color;
             try {
                 ctx.clearRect(0, 0, 1, 1);
-                ctx.fillStyle = '#FFFFFF';
+                // Fallback to BLACK just in case the browser computed style is invalid for canvas
+                // (Previous fallback was White, which made text invisible on white paper if parsing failed)
+                ctx.fillStyle = '#000000';
                 ctx.fillStyle = color;
                 ctx.fillRect(0, 0, 1, 1);
                 const d = ctx.getImageData(0, 0, 1, 1).data;
+                // If completely transparent, return original (might be intentional, or failure)
+                if (d[3] === 0) return color;
                 return `rgba(${d[0]}, ${d[1]}, ${d[2]}, ${(d[3]/255).toFixed(3)})`;
             } catch { return color; }
         };
@@ -454,7 +458,8 @@ export default function EditorPage() {
 
                 props.forEach(p => {
                     const val = computed.getPropertyValue(p);
-                    if (val && val !== 'none' && val !== 'normal' && val !== '0px auto') {
+                    // Added 'auto' to exclusion list to avoid unnecessary overrides
+                    if (val && val !== 'none' && val !== 'normal' && val !== 'auto' && val !== '0px auto') {
                         if (p.includes('color')) {
                             const safeColor = getSafeColor(val);
                             if (safeColor) hEl.style.setProperty(p, safeColor);
