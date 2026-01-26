@@ -33,10 +33,15 @@ function getVisiblePages(): HTMLElement[] {
 async function capturePage(element: HTMLElement, format: 'jpeg' | 'png'): Promise<string> {
     const options = {
         scale: 2,
+        width: 800, // Force standard width for export
+        height: 1131, // Force standard height (A4 ratio) for export
         backgroundColor: '#ffffff',
         style: {
             transform: 'none',
-            boxShadow: 'none'
+            boxShadow: 'none',
+            margin: '0',
+            display: 'block',
+            position: 'relative'
         },
         features: {
             // Ensure modern CSS features are handled
