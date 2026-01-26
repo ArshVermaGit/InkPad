@@ -4,7 +4,7 @@ import type { AppState, FontPreference } from '../types';
 
 // Default typography values for reset
 const DEFAULT_TYPOGRAPHY = {
-    fontSize: 25,
+    fontSize: 28,
     letterSpacing: 0,
     lineHeight: 1.5,
     wordSpacing: 4,
@@ -53,7 +53,7 @@ const initialState: Omit<AppState, 'reset' | 'setText' | 'setLastSaved' | 'setZo
     jitter: 0,
     pressure: 0,
     smudge: 0,
-    baseline: 12,
+    baseline: -1,
     textAlign: 'left',
     marginTop: 60,
     marginBottom: 60,
