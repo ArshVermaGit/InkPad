@@ -608,88 +608,152 @@ export default function EditorPage() {
         <div className="relative selection:bg-indigo-500/30 font-sans">
             
             {/* ==================== MOBILE LAYOUT (lg:hidden) ==================== */}
-            <div className="lg:hidden flex flex-col h-screen bg-neutral-50">
+            <div className="lg:hidden flex flex-col h-screen mesh-gradient relative">
                 
-                {/* Mobile Header */}
-                {/* Mobile Header - Premium Window Style */}
-                <div className="flex items-center justify-between px-5 py-4 bg-white/80 backdrop-blur-md border-b border-neutral-100 shrink-0 sticky top-0 z-30">
-                    <div className="flex items-center gap-4">
-                        {/* Decorative Window Dots */}
-                        <div className="flex gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
-                        </div>
-                        <div className="h-4 w-px bg-neutral-200 ml-1 mr-1" />
-                        <div>
-                            <h1 className="font-display font-bold text-neutral-900 truncate max-w-[150px] leading-tight">
-                                {headerText || 'Untitled'}
+                {/* Header removed to avoid duplication with LandingPage */}
+
+                {/* Main Curve-Edged Card */}
+                <div className="flex-1 bg-white rounded-[2.5rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col isolate ring-1 ring-black/5 mb-4">
+                    
+                    {/* Mobile Header - Clean & Minimal */}
+                    <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-neutral-100 shrink-0">
+                        <div className="flex items-center gap-4">
+                            <div className="flex gap-1.5">
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
+                            </div>
+                            <h1 className="font-display font-bold text-neutral-900 text-sm truncate max-w-[120px]">
+                                {headerText || 'InkPad'}
                             </h1>
                         </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setIsHistoryOpen(true)}
+                                className="p-2.5 hover:bg-neutral-100 rounded-xl transition-colors"
+                            >
+                                <Clock size={18} className="text-neutral-500" />
+                            </button>
+                            <button
+                                onClick={() => setMobileSettingsOpen(true)}
+                                className="p-2.5 hover:bg-neutral-100 rounded-xl transition-colors"
+                            >
+                                <Settings2 size={18} className="text-neutral-500" />
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2 px-2 py-1 bg-emerald-50 rounded-full border border-emerald-100">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">Live</span>
-                    </div>
-                </div>
 
-                {/* Mobile Content Area */}
-                <div className="flex-1 overflow-hidden">
+                    {/* TOP SEGMENTED TOGGLE TABS */}
+                    <div className="px-5 py-3 bg-white border-b border-neutral-100 shrink-0">
+                        <div className="flex bg-neutral-100 rounded-xl p-1">
+                            <button
+                                onClick={() => setMobileView('write')}
+                                className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                                    mobileView === 'write' 
+                                        ? 'bg-white text-neutral-900 shadow-sm' 
+                                        : 'text-neutral-500 hover:text-neutral-700'
+                                }`}
+                            >
+                                <Type size={16} />
+                                Editor
+                            </button>
+                            <button
+                                onClick={() => setMobileView('preview')}
+                                className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                                    mobileView === 'preview' 
+                                        ? 'bg-white text-neutral-900 shadow-sm' 
+                                        : 'text-neutral-500 hover:text-neutral-700'
+                                }`}
+                            >
+                                <FileText size={16} />
+                                Preview
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Content Container (propagates flex) */}
+                    <div className="flex-1 overflow-hidden flex flex-col bg-neutral-50">
                     
-                    {/* WRITE VIEW */}
+                    {/* EDITOR VIEW */}
                     {mobileView === 'write' && (
-                        <div className="h-full flex flex-col bg-white">
+                        <div className="flex-1 flex flex-col overflow-hidden">
                             
-                            {/* Quick Settings Bar */}
-                            <div className="flex items-center gap-2 px-4 py-3 border-b border-black/5 overflow-x-auto shrink-0">
+                            {/* Quick Style Bar */}
+                            <div className="flex items-center gap-2 px-4 py-3 bg-white border-b border-neutral-50 overflow-x-auto shrink-0 scrollbar-hide">
                                 <select 
                                     value={font} 
                                     onChange={e => setFont(e.target.value)}
-                                    className="px-3 py-2 bg-neutral-100 rounded-xl text-xs font-medium min-w-[100px]"
+                                    className="px-3 py-2 bg-neutral-100 rounded-xl text-xs font-medium min-w-[100px] border-0 focus:ring-2 focus:ring-neutral-900/10"
                                 >
                                     {FONTS.map(f => <option key={f.name} value={f.name}>{f.label}</option>)}
                                 </select>
+                                <div className="h-6 w-px bg-neutral-200" />
                                 <div className="flex gap-1.5">
-                                    {COLORS.slice(0, 4).map(c => (
+                                    {COLORS.map(c => (
                                         <button 
                                             key={c.name} 
                                             onClick={() => setColor(c.value)}
-                                            className={`w-7 h-7 rounded-lg border-2 transition-all ${color === c.value ? 'border-neutral-900 scale-110' : 'border-transparent'}`}
+                                            className={`w-7 h-7 rounded-lg transition-all ${color === c.value ? 'ring-2 ring-neutral-900 ring-offset-2 scale-110' : 'hover:scale-105'}`}
                                             style={{ backgroundColor: c.value }}
+                                            title={c.name}
                                         />
                                     ))}
                                 </div>
-                                <button
-                                    onClick={() => setMobileSettingsOpen(true)}
-                                    className="ml-auto px-3 py-2 bg-neutral-100 rounded-xl"
-                                >
-                                    <Settings2 size={16} className="text-neutral-600" />
-                                </button>
+                            </div>
+                            {/* Main Editor Area with Heading + Body */}
+                            <div className="flex-1 p-4 overflow-auto bg-neutral-50">
+                                <div className="flex flex-col gap-4 h-full">
+                                    {/* Heading Section with Toggle */}
+                                    <div className="shrink-0">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-neutral-400">Heading</label>
+                                            <button
+                                                onClick={() => setPageOptions({ showHeader: !showHeader })}
+                                                className={`relative w-11 h-6 rounded-full transition-colors ${showHeader ? 'bg-neutral-900' : 'bg-neutral-300'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${showHeader ? 'left-6' : 'left-1'}`} />
+                                            </button>
+                                        </div>
+                                        {showHeader && (
+                                            <textarea 
+                                                value={headerText} 
+                                                onChange={(e) => setPageOptions({ headerText: e.target.value })} 
+                                                className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl text-base font-medium focus:outline-none focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-300 shadow-sm resize-none min-h-[60px]"
+                                                placeholder="Document heading..."
+                                                style={{ fontFamily: font }}
+                                                rows={2}
+                                            />
+                                        )}
+                                    </div>
+                                    
+                                    {/* Separator line when heading is on */}
+                                    {showHeader && (
+                                        <div className="h-px bg-neutral-200 -my-1" />
+                                    )}
+                                    
+                                    {/* Body Input */}
+                                    <div className="flex-1 min-h-0">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2 block">Body</label>
+                                        <textarea 
+                                            ref={sourceRef}
+                                            value={text} 
+                                            onChange={(e) => setText(normalizeInput(e.target.value))} 
+                                            className="w-full h-[calc(100%-24px)] p-4 bg-white border border-neutral-200 rounded-xl text-base resize-none focus:outline-none focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-300 shadow-sm leading-relaxed"
+                                            placeholder="Start writing your text here...&#10;&#10;Your words will be transformed into beautiful handwriting."
+                                            style={{ fontFamily: font }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                             
-                            {/* Main Text Input with Premium Feel */}
-                            <div className="flex-1 p-4 relative">
-                                <div className="absolute inset-0 bg-[radial-gradient(#00000005_1px,transparent_1px)] bg-size-[16px_16px] pointer-events-none" />
-                                <textarea 
-                                    ref={sourceRef}
-                                    value={text} 
-                                    onChange={(e) => setText(normalizeInput(e.target.value))} 
-                                    className="relative z-10 w-full h-full p-6 bg-white border border-neutral-100 rounded-[1.5rem] text-base resize-none focus:outline-none focus:ring-2 focus:ring-neutral-900/5 focus:border-neutral-200 shadow-sm leading-relaxed"
-                                    placeholder="Start writing your text here...
-
-Your words will be transformed into beautiful handwriting."
-                                    style={{ fontFamily: font }}
-                                />
-                            </div>
-                            
-                            {/* AI Humanize Button */}
-                            <div className="px-4 pb-4 shrink-0">
+                            {/* Bottom Action - AI Humanize */}
+                            <div className="p-4 bg-white border-t border-neutral-100 shrink-0">
                                 <button 
                                     onClick={handleHumanize}
                                     disabled={isHumanizing || !text.trim()}
-                                    className="w-full py-4 bg-neutral-900 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg active:scale-[0.98] transition-all"
+                                    className="w-full py-3.5 bg-neutral-900 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2.5 disabled:opacity-50 shadow-lg shadow-neutral-900/20 active:scale-[0.98] transition-all"
                                 >
-                                    <Wand2 size={18} className={isHumanizing ? 'animate-spin' : ''} />
+                                    <Wand2 size={16} className={isHumanizing ? 'animate-spin' : ''} />
                                     {isHumanizing ? 'Humanizing...' : 'AI Humanize Text'}
                                     <Sparkles size={12} className="text-amber-400" />
                                 </button>
@@ -699,11 +763,11 @@ Your words will be transformed into beautiful handwriting."
                     
                     {/* PREVIEW VIEW */}
                     {mobileView === 'preview' && (
-                        <div className="h-full flex flex-col">
+                        <div className="flex-1 flex flex-col overflow-hidden">
                             
                             {/* Preview Canvas Area */}
                             <div ref={containerRef} className="flex-1 overflow-auto p-4 bg-neutral-100">
-                                <div className="flex flex-col items-center gap-6 pb-24">
+                                <div className="flex flex-col items-center gap-6 pb-4">
                                     {pages.map((page, pIdx) => (
                                         <div 
                                             key={pIdx}
@@ -792,7 +856,7 @@ Your words will be transformed into beautiful handwriting."
                                                     <div 
                                                         className="w-full h-full relative" 
                                                         style={{
-                                                            paddingTop: (pIdx === 0 ? marginTop - paper.lineHeight : marginTop) + (pIdx === 0 && showHeader ? (headerText.split('\n').length) * paper.lineHeight : 0), 
+                                                            paddingTop: (pIdx === 0 ? marginTop - paper.lineHeight : marginTop) + (pIdx === 0 && showHeader ? (headerText.split('\n').length + 1) * paper.lineHeight : 0), 
                                                             paddingBottom: marginBottom, 
                                                             paddingLeft: marginLeft, 
                                                             paddingRight: marginRight
@@ -845,110 +909,73 @@ Your words will be transformed into beautiful handwriting."
                                 </div>
                             </div>
                             
-                            {/* Export Buttons - Fixed at bottom */}
-                            <div className="absolute bottom-16 left-0 right-0 px-4 pb-4 bg-gradient-to-t from-neutral-100 via-neutral-100 to-transparent pt-8">
+                            {/* Bottom Export Actions */}
+                            <div className="p-4 bg-white border-t border-neutral-100 shrink-0">
                                 <div className="flex gap-3">
                                     <button 
                                         onClick={() => handleStartExport('pdf')}
                                         disabled={exportStatus === 'processing'}
-                                        className="flex-1 py-4 bg-neutral-900 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 active:scale-[0.98] transition-all"
+                                        className="flex-1 py-3.5 bg-neutral-900 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-neutral-900/20 disabled:opacity-50 active:scale-[0.98] transition-all"
                                     >
-                                        <Download size={18} />
-                                        Export PDF
+                                        <Download size={16} />
+                                        Download PDF
                                     </button>
                                     <button 
                                         onClick={() => handleStartExport('zip')}
                                         disabled={exportStatus === 'processing'}
-                                        className="py-4 px-5 bg-white text-neutral-700 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border border-black/5 disabled:opacity-50 active:scale-[0.98] transition-all"
+                                        className="py-3.5 px-5 bg-neutral-100 text-neutral-700 rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-all hover:bg-neutral-200"
                                     >
-                                        <Sparkles size={16} />
+                                        <Zap size={16} />
                                         ZIP
-                                    </button>
-                                    <button 
-                                        onClick={() => setMobileSettingsOpen(true)}
-                                        className="py-4 px-5 bg-white text-neutral-700 rounded-2xl font-bold flex items-center justify-center border border-black/5 active:scale-[0.98] transition-all"
-                                    >
-                                        <Settings2 size={18} />
                                     </button>
                                 </div>
                             </div>
                         </div>
                     )}
                 </div>
-
-                {/* Mobile Bottom Tab Bar */}
-                <div className="flex bg-white border-t border-black/5 shrink-0 safe-area-bottom">
-                    <button
-                        onClick={() => setMobileView('write')}
-                        className={`flex-1 py-4 flex flex-col items-center gap-1.5 relative group ${
-                            mobileView === 'write' 
-                                ? 'text-neutral-900' 
-                                : 'text-neutral-400 hover:text-neutral-600'
-                        }`}
-                    >
-                        {mobileView === 'write' && (
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-neutral-900 rounded-b-full" />
-                        )}
-                        <Type size={22} strokeWidth={mobileView === 'write' ? 2.5 : 2} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Write</span>
-                    </button>
-                    <button
-                        onClick={() => setMobileView('preview')}
-                        className={`flex-1 py-4 flex flex-col items-center gap-1.5 relative group ${
-                            mobileView === 'preview' 
-                                ? 'text-neutral-900' 
-                                : 'text-neutral-400 hover:text-neutral-600'
-                        }`}
-                    >
-                        {mobileView === 'preview' && (
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-neutral-900 rounded-b-full" />
-                        )}
-                        <FileText size={22} strokeWidth={mobileView === 'preview' ? 2.5 : 2} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Preview</span>
-                    </button>
                 </div>
 
                 {/* Mobile Settings Overlay */}
                 {mobileSettingsOpen && (
                     <>
                         <div 
-                            className="fixed inset-0 bg-neutral-900/40 z-50 backdrop-blur-md"
+                            className="fixed inset-0 bg-neutral-900/50 z-50 backdrop-blur-sm"
                             onClick={() => setMobileSettingsOpen(false)}
                         />
-                        <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-[2rem] z-50 max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
-                            {/* Premium Header with macOS dots */}
-                            <div className="p-5 border-b border-neutral-100 flex items-center justify-between bg-white shrink-0">
-                                <div className="flex items-center gap-4">
-                                    <div className="flex gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-[#FF5F57] shadow-inner" />
-                                        <div className="w-3 h-3 rounded-full bg-[#FFBD2E] shadow-inner" />
-                                        <div className="w-3 h-3 rounded-full bg-[#28C840] shadow-inner" />
+                        <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-slide-up">
+                            {/* Handle Bar */}
+                            <div className="flex justify-center pt-3 pb-1 shrink-0">
+                                <div className="w-10 h-1 bg-neutral-300 rounded-full" />
+                            </div>
+                            {/* Header */}
+                            <div className="px-5 pb-4 pt-2 border-b border-neutral-100 flex items-center justify-between shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-neutral-900 rounded-xl flex items-center justify-center">
+                                        <Settings2 size={18} className="text-white" />
                                     </div>
                                     <div>
                                         <h3 className="font-display font-bold text-neutral-900">Settings</h3>
-                                        <p className="text-[10px] text-neutral-400 font-medium">Customize your document</p>
+                                        <p className="text-xs text-neutral-400">Customize your document</p>
                                     </div>
                                 </div>
                                 <button 
                                     onClick={() => setMobileSettingsOpen(false)}
-                                    className="p-3 hover:bg-neutral-100 rounded-full transition-all"
+                                    className="p-2.5 hover:bg-neutral-100 rounded-xl transition-all"
                                 >
                                     <X size={20} className="text-neutral-400" />
                                 </button>
                             </div>
-                            {/* Content Area with grid pattern */}
-                            <div className="flex-1 overflow-y-auto p-5 bg-[#FAFAFA] relative">
-                                <div className="absolute inset-0 bg-[radial-gradient(#00000005_1px,transparent_1px)] bg-size-[16px_16px] pointer-events-none" />
-                                <div className="relative z-10 space-y-5">
-                                {/* Header */}
+                            {/* Content */}
+                            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                                {/* Header Section */}
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Document Heading</label>
-                                    <label className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-neutral-400">Document Heading</label>
+                                    <label className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl cursor-pointer">
                                         <input 
                                             type="checkbox" 
                                             checked={showHeader} 
                                             onChange={e => setPageOptions({ showHeader: e.target.checked })} 
-                                            className="w-5 h-5 rounded-lg"
+                                            className="w-5 h-5 rounded-lg border-neutral-300 text-neutral-900 focus:ring-neutral-900"
                                         />
                                         <span className="text-sm font-medium">Enable Heading</span>
                                     </label>
@@ -956,55 +983,57 @@ Your words will be transformed into beautiful handwriting."
                                         <textarea 
                                             value={headerText} 
                                             onChange={(e) => setPageOptions({ headerText: e.target.value })}
-                                            className="w-full h-20 p-4 bg-neutral-50 rounded-2xl text-sm resize-none"
+                                            className="w-full h-20 p-4 bg-neutral-50 rounded-2xl text-sm resize-none border-0 focus:ring-2 focus:ring-neutral-900/10"
                                             placeholder="Type your heading..."
                                         />
                                     )}
                                 </div>
                                 
-                                {/* Paper */}
+                                {/* Paper Section */}
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Paper Style</label>
-                                    <div className="flex bg-neutral-100 rounded-2xl p-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-neutral-400">Paper Style</label>
+                                    <div className="flex bg-neutral-100 rounded-xl p-1">
                                         {PAPERS.map(p => (
                                             <button 
                                                 key={p.id} 
                                                 onClick={() => setPaper(p)}
-                                                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${paper.id === p.id ? 'bg-white shadow' : ''}`}
+                                                className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${paper.id === p.id ? 'bg-white shadow-sm' : ''}`}
                                             >
                                                 {p.name}
                                             </button>
                                         ))}
                                     </div>
-                                    <label className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl">
+                                    <label className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl cursor-pointer">
                                         <input 
                                             type="checkbox" 
                                             checked={showPageNumbers} 
                                             onChange={e => setPageOptions({ showPageNumbers: e.target.checked })} 
-                                            className="w-5 h-5 rounded-lg"
+                                            className="w-5 h-5 rounded-lg border-neutral-300 text-neutral-900 focus:ring-neutral-900"
                                         />
                                         <span className="text-sm font-medium">Show Page Numbers</span>
                                     </label>
                                 </div>
                                 
-                                {/* Typography */}
+                                {/* Typography Section */}
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Typography</label>
-                                    <div className="bg-neutral-50 rounded-2xl p-4 space-y-4">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-neutral-400">Typography</label>
+                                    <div className="bg-neutral-50 rounded-2xl p-4 space-y-5">
                                         <div>
-                                            <label className="text-xs text-neutral-500 mb-2 flex justify-between">
-                                                Font Size <span className="font-bold text-neutral-900">{fontSize}px</span>
-                                            </label>
-                                            <input type="range" min="14" max="64" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="w-full" />
+                                            <div className="flex justify-between mb-2">
+                                                <span className="text-xs text-neutral-500">Font Size</span>
+                                                <span className="text-xs font-bold text-neutral-900">{fontSize}px</span>
+                                            </div>
+                                            <input type="range" min="14" max="64" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="w-full accent-neutral-900" />
                                         </div>
                                         <div>
-                                            <label className="text-xs text-neutral-500 mb-2 flex justify-between">
-                                                Line Nudge <span className="font-bold text-neutral-900">{baseline}</span>
-                                            </label>
-                                            <input type="range" min="-10" max="30" value={baseline} onChange={e => setBaseline(Number(e.target.value))} className="w-full" />
+                                            <div className="flex justify-between mb-2">
+                                                <span className="text-xs text-neutral-500">Line Nudge</span>
+                                                <span className="text-xs font-bold text-neutral-900">{baseline}</span>
+                                            </div>
+                                            <input type="range" min="-10" max="30" value={baseline} onChange={e => setBaseline(Number(e.target.value))} className="w-full accent-neutral-900" />
                                         </div>
                                     </div>
-                                    <div className="flex bg-neutral-100 rounded-2xl p-1.5">
+                                    <div className="flex bg-neutral-100 rounded-xl p-1">
                                         {[
                                             { id: 'left' as const, icon: AlignLeft },
                                             { id: 'center' as const, icon: AlignCenter },
@@ -1014,7 +1043,7 @@ Your words will be transformed into beautiful handwriting."
                                             <button 
                                                 key={opt.id} 
                                                 onClick={() => setTextAlign(opt.id)}
-                                                className={`flex-1 p-3 flex justify-center rounded-xl transition-all ${textAlign === opt.id ? 'bg-white shadow' : ''}`}
+                                                className={`flex-1 p-3 flex justify-center rounded-lg transition-all ${textAlign === opt.id ? 'bg-white shadow-sm' : ''}`}
                                             >
                                                 <opt.icon size={18} />
                                             </button>
@@ -1022,63 +1051,66 @@ Your words will be transformed into beautiful handwriting."
                                     </div>
                                 </div>
                                 
-                                {/* Effects */}
+                                {/* Effects Section */}
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Handwriting Effects</label>
+                                    <label className="text-xs font-bold uppercase tracking-wider text-neutral-400">Handwriting Effects</label>
                                     <button 
                                         onClick={() => setRandomSeed(prev => prev + 1)}
-                                        className="w-full py-3 bg-neutral-100 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
+                                        className="w-full py-3 bg-neutral-100 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-neutral-200 transition-colors"
                                     >
                                         <RefreshCw size={16} />
                                         Re-Randomize
                                     </button>
-                                    <div className="bg-neutral-50 rounded-2xl p-4 space-y-4">
+                                    <div className="bg-neutral-50 rounded-2xl p-4 space-y-5">
                                         <div>
-                                            <label className="text-xs text-neutral-500 mb-2 flex justify-between">
-                                                Jitter <span className="font-bold text-neutral-900">{jitter}</span>
-                                            </label>
-                                            <input type="range" min="0" max="6" step="0.5" value={jitter} onChange={e => setJitter(Number(e.target.value))} className="w-full" />
+                                            <div className="flex justify-between mb-2">
+                                                <span className="text-xs text-neutral-500">Jitter</span>
+                                                <span className="text-xs font-bold text-neutral-900">{jitter}</span>
+                                            </div>
+                                            <input type="range" min="0" max="6" step="0.5" value={jitter} onChange={e => setJitter(Number(e.target.value))} className="w-full accent-neutral-900" />
                                         </div>
                                         <div>
-                                            <label className="text-xs text-neutral-500 mb-2 flex justify-between">
-                                                Pressure <span className="font-bold text-neutral-900">{Math.round(pressure*100)}%</span>
-                                            </label>
-                                            <input type="range" min="0" max="1" step="0.1" value={pressure} onChange={e => setPressure(Number(e.target.value))} className="w-full" />
+                                            <div className="flex justify-between mb-2">
+                                                <span className="text-xs text-neutral-500">Pressure</span>
+                                                <span className="text-xs font-bold text-neutral-900">{Math.round(pressure*100)}%</span>
+                                            </div>
+                                            <input type="range" min="0" max="1" step="0.1" value={pressure} onChange={e => setPressure(Number(e.target.value))} className="w-full accent-neutral-900" />
                                         </div>
                                         <div>
-                                            <label className="text-xs text-neutral-500 mb-2 flex justify-between">
-                                                Smudge <span className="font-bold text-neutral-900">{smudge}</span>
-                                            </label>
-                                            <input type="range" min="0" max="2" step="0.1" value={smudge} onChange={e => setSmudge(Number(e.target.value))} className="w-full" />
+                                            <div className="flex justify-between mb-2">
+                                                <span className="text-xs text-neutral-500">Smudge</span>
+                                                <span className="text-xs font-bold text-neutral-900">{smudge}</span>
+                                            </div>
+                                            <input type="range" min="0" max="2" step="0.1" value={smudge} onChange={e => setSmudge(Number(e.target.value))} className="w-full accent-neutral-900" />
                                         </div>
                                     </div>
                                 </div>
                                 
-                                {/* Special Effects */}
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Special Effects</label>
+                                {/* Special Effects Section */}
+                                <div className="space-y-3 pb-6">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-neutral-400">Special Effects</label>
                                     <input 
                                         type="text" 
                                         value={marginNote} 
                                         onChange={(e) => setMarginNote(e.target.value)}
-                                        className="w-full p-4 bg-neutral-50 rounded-2xl text-sm"
+                                        className="w-full p-4 bg-neutral-50 rounded-2xl text-sm border-0 focus:ring-2 focus:ring-neutral-900/10"
                                         placeholder="Margin note..."
                                     />
-                                    <label className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl">
+                                    <label className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl cursor-pointer">
                                         <input 
                                             type="checkbox" 
                                             checked={showCoffeeStain} 
                                             onChange={(e) => setShowCoffeeStain(e.target.checked)} 
-                                            className="w-5 h-5 rounded-lg"
+                                            className="w-5 h-5 rounded-lg border-neutral-300 text-neutral-900 focus:ring-neutral-900"
                                         />
                                         <span className="text-sm font-medium">Coffee Stain Effect</span>
                                     </label>
-                                    <label className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl">
+                                    <label className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl cursor-pointer">
                                         <input 
                                             type="checkbox" 
                                             checked={showStickyNote} 
                                             onChange={(e) => setShowStickyNote(e.target.checked)} 
-                                            className="w-5 h-5 rounded-lg"
+                                            className="w-5 h-5 rounded-lg border-neutral-300 text-neutral-900 focus:ring-neutral-900"
                                         />
                                         <span className="text-sm font-medium">Sticky Note</span>
                                     </label>
@@ -1086,11 +1118,10 @@ Your words will be transformed into beautiful handwriting."
                                         <textarea 
                                             value={stickyNoteText} 
                                             onChange={(e) => setStickyNoteText(e.target.value)}
-                                            className="w-full h-16 p-3 bg-yellow-50 border border-yellow-200 rounded-2xl text-sm resize-none"
+                                            className="w-full h-16 p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-sm resize-none focus:ring-2 focus:ring-yellow-300"
                                             placeholder="Note text..."
                                         />
                                     )}
-                                </div>
                                 </div>
                             </div>
                         </div>
@@ -1434,7 +1465,7 @@ Your words will be transformed into beautiful handwriting."
                                     <div 
                                         className="w-full h-full relative" 
                                         style={{
-                                            paddingTop: (pIdx === 0 ? marginTop - paper.lineHeight : marginTop) + (pIdx === 0 && showHeader ? (headerText.split('\n').length) * paper.lineHeight : 0), 
+                                            paddingTop: (pIdx === 0 ? marginTop - paper.lineHeight : marginTop) + (pIdx === 0 && showHeader ? (headerText.split('\n').length + 1) * paper.lineHeight : 0), 
                                             paddingBottom: marginBottom, 
                                             paddingLeft: marginLeft, 
                                             paddingRight: marginRight
