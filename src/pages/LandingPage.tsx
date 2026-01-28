@@ -67,7 +67,8 @@ export default function LandingPage() {
 
 
             {/* --- BENTO GRID FEATURES --- */}
-            <section className="py-12 sm:py-16 md:py-28 px-4 sm:px-6 relative">
+            <section className="py-12 sm:py-16 md:py-28 relative">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
                     <ScrollReveal direction="down">
                         <div className="mb-10 sm:mb-16 md:mb-20 text-center max-w-2xl mx-auto">
                             <span className="text-indigo-500 font-bold tracking-widest uppercase text-xs mb-4 block">
@@ -80,87 +81,111 @@ export default function LandingPage() {
                         </div>
                     </ScrollReveal>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:grid-rows-2 h-auto">
-                        {/* Large Card */}
-                        <ScrollReveal className="md:col-span-2 md:row-span-2" direction="right">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:grid-rows-2 h-[800px] md:h-[600px]">
+                        {/* Large Card: Advanced Simulation Engine */}
+                        <ScrollReveal className="md:col-span-2 md:row-span-2" direction="right" fillHeight>
                             <motion.div 
                                 whileHover={{ y: -5 }}
-                                className="h-full bg-white rounded-[2.5rem] relative overflow-hidden group shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-neutral-100"
+                                className="h-full bg-white rounded-[3rem] relative overflow-hidden group shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] border border-neutral-100 flex flex-col"
                             >
-                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-white opacity-50" />
-                                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-100/30 rounded-full blur-xl sm:blur-3xl -translate-y-1/2 translate-x-1/2" />
+                                {/* Textured Background */}
+                                <div className="absolute inset-0 mesh-gradient opacity-[0.08] group-hover:opacity-[0.12] transition-opacity duration-500" />
+                                <div className="absolute inset-0 noise-bg opacity-[0.03]" />
+                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-50/50 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
                                 
-                                <div className="relative z-10 p-8 sm:p-12 h-full flex flex-col justify-between">
-                                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-8 shadow-[0_10px_20px_-5px_rgba(79,70,229,0.15)] ring-1 ring-black/5">
-                                        <PenTool className="text-indigo-600" size={28} />
+                                <div className="relative z-10 p-10 sm:p-14 h-full flex flex-col justify-start gap-10">
+                                    <div className="w-20 h-20 bg-white/80 backdrop-blur-xl rounded-[2rem] flex items-center justify-center shadow-[0_15px_30px_-5px_rgba(79,70,229,0.2)] ring-1 ring-black/[0.03] flex-shrink-0 group-hover:scale-110 transition-transform duration-500">
+                                        <PenTool className="text-indigo-600" size={32} />
                                     </div>
                                     <div className="max-w-md relative z-20">
-                                        <h3 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold mb-4 text-neutral-900 tracking-tight">Advanced Simulation Engine</h3>
-                                        <p className="text-neutral-500 text-base sm:text-lg leading-relaxed font-medium">
-                                            Total control over your handwriting's soul. Fine-tune organic <b className="text-neutral-900">Jitter</b>, <b className="text-neutral-900">Pressure</b>, and <b className="text-neutral-900">Smudge</b> levels.
+                                        <h3 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold mb-6 text-neutral-900 tracking-tight leading-[1.1]">
+                                            Advanced Simulation <span className="text-indigo-600/80">Engine</span>
+                                        </h3>
+                                        <p className="text-neutral-500 text-lg sm:text-xl leading-relaxed font-medium">
+                                            Total control over your handwriting's soul. Fine-tune organic <b className="text-neutral-900 font-bold border-b-2 border-indigo-100 pb-0.5">Jitter</b>, <b className="text-neutral-900 font-bold border-b-2 border-indigo-100 pb-0.5">Pressure</b>, and <b className="text-neutral-900 font-bold border-b-2 border-indigo-100 pb-0.5">Smudge</b> levels.
                                         </p>
                                     </div>
                                 </div>
                                 
-                                {/* Visual Decoration - Refined */}
-                                <div className="absolute right-0 bottom-0 w-2/3 h-2/3 translate-x-12 translate-y-12 hidden sm:block pointer-events-none z-10">
-                                    <motion.div 
-                                        initial={{ rotate: 0, y: 20 }}
-                                        whileInView={{ rotate: -6, y: 0 }}
-                                        transition={{ delay: 0.5, duration: 1 }}
-                                        className="w-full h-full bg-white rounded-tl-[3rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] p-6 border border-neutral-100 relative"
-                                    >   
-                                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cardboard.png')] opacity-[0.03]" />
-                                        <div className="w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[20px_20px] p-10 font-handwriting text-3xl text-neutral-800 leading-loose flex items-center justify-center text-center rotate-2">
-                                            <span className="mix-blend-multiply opacity-80">
-                                                "The details are not the details. <br/> They make the design."
-                                            </span>
-                                        </div>
-                                    </motion.div>
+                                {/* Visual Decoration - Enhanced Paper Stack */}
+                                <div className="absolute right-0 bottom-0 w-3/5 h-3/5 translate-x-8 translate-y-8 hidden lg:block pointer-events-none z-10">
+                                    <div className="relative w-full h-full">
+                                        {/* Back Paper */}
+                                        <div className="absolute inset-0 bg-neutral-50 rounded-tl-[3.5rem] shadow-sm transform rotate-6 translate-x-4 translate-y-4 border border-neutral-100" />
+                                        {/* Middle Paper */}
+                                        <div className="absolute inset-0 bg-neutral-100/50 rounded-tl-[3.5rem] shadow-md transform rotate-3 translate-x-2 translate-y-2 border border-neutral-100" />
+                                        {/* Front Paper (Main) */}
+                                        <motion.div 
+                                            initial={{ rotate: 0, y: 40, opacity: 0 }}
+                                            whileInView={{ rotate: -4, y: 0, opacity: 1 }}
+                                            transition={{ delay: 0.6, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                                            className="absolute inset-0 bg-white rounded-tl-[3.5rem] shadow-[0_30px_70px_-10px_rgba(0,0,0,0.12)] p-8 border border-neutral-100 overflow-hidden"
+                                        >   
+                                            <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[24px_24px] opacity-40" />
+                                            <div className="w-full h-full flex items-center justify-center text-center p-8 relative z-10">
+                                                <span className="font-handwriting text-3xl sm:text-4xl text-neutral-800 leading-relaxed mix-blend-multiply opacity-90 block max-w-[280px]">
+                                                    "The details are not the details. They make the design."
+                                                </span>
+                                            </div>
+                                            {/* Corner shadow for depth */}
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-black/[0.02] via-transparent to-transparent pointer-events-none" />
+                                        </motion.div>
+                                    </div>
                                 </div>
                             </motion.div>
                         </ScrollReveal>
 
-                        {/* Top Right Card */}
-                        <ScrollReveal direction="left" delay={0.2}>
+                        {/* Top Right: Export Anywhere (Dark Glassmorphism) */}
+                        <ScrollReveal direction="left" delay={0.2} fillHeight>
                             <motion.div 
                                 whileHover={{ y: -5 }}
-                                className="h-full bg-[#1A1F2C] text-white rounded-[2.5rem] p-8 relative overflow-hidden group shadow-2xl flex flex-col ring-1 ring-white/10"
+                                className="h-full bg-gradient-to-br from-[#1A1F2C] via-[#111827] to-indigo-950/40 text-white rounded-[3rem] p-10 relative overflow-hidden group shadow-2xl flex flex-col ring-1 ring-white/10"
                             >
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/30 rounded-full blur-[40px] sm:blur-[80px] -translate-y-1/2 translate-x-1/2" />
-                                <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-500/20 rounded-full blur-[30px] sm:blur-[60px] translate-y-1/4 -translate-x-1/4" />
+                                {/* Animated Glows */}
+                                <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-indigo-500/30 transition-colors duration-700" />
+                                <div className="absolute bottom-0 left-0 w-60 h-60 bg-purple-500/10 rounded-full blur-[60px] translate-y-1/4 -translate-x-1/4" />
                                 
                                 <div className="relative z-10 flex flex-col justify-between h-full">
-                                    <div className="w-14 h-14 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center mb-6 ring-1 ring-white/20 shadow-lg shadow-indigo-500/10">
-                                        <Download className="text-indigo-200" size={24} />
+                                    <div className="relative">
+                                        <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full scale-150 animate-pulse-slow" />
+                                        <div className="relative w-16 h-16 bg-white/10 backdrop-blur-2xl rounded-2xl flex items-center justify-center mb-8 ring-1 ring-white/20 shadow-xl shadow-indigo-500/5 group-hover:scale-110 transition-transform duration-500">
+                                            <Download className="text-indigo-200" size={28} />
+                                        </div>
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold mb-3 font-display">Export Anywhere</h3>
-                                        <p className="text-white/70 text-sm leading-relaxed font-medium">Convert your handwritten work into high-fidelity PDF documents or individual PNGs.</p>
+                                        <h3 className="text-2xl font-bold mb-4 font-display tracking-tight">Export <span className="text-indigo-300">Anywhere</span></h3>
+                                        <p className="text-white/60 text-base leading-relaxed font-medium">
+                                            Convert your work into high-fidelity <span className="text-white">PDF documents</span> or high-res <span className="text-white">PNGs</span>.
+                                        </p>
                                     </div>
                                 </div>
                             </motion.div>
                         </ScrollReveal>
 
-                        {/* Bottom Right Card */}
-                        <ScrollReveal direction="left" delay={0.4}>
+                        {/* Bottom Right: AI Humanizer (Soft Elegant) */}
+                        <ScrollReveal direction="left" delay={0.4} fillHeight>
                             <motion.div 
                                 whileHover={{ y: -5 }}
-                                className="h-full bg-white rounded-[2.5rem] p-8 relative overflow-hidden group shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-neutral-100 flex flex-col"
+                                className="h-full bg-white rounded-[3rem] p-10 relative overflow-hidden group shadow-[0_20px_50px_-15px_rgba(0,0,0,0.06)] border border-neutral-100 flex flex-col"
                             >
-                                <div className="absolute inset-0 bg-gradient-to-tr from-rose-50/50 via-transparent to-transparent opacity-50" />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-rose-50/60 via-transparent to-transparent opacity-80" />
+                                <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-rose-100/30 rounded-full blur-3xl animate-blob" />
+                                
                                 <div className="relative z-10 flex flex-col justify-between h-full">
-                                    <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center mb-6 ring-1 ring-rose-100">
-                                        <Type className="text-rose-500" size={24} />
+                                    <div className="w-16 h-16 bg-rose-50/50 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-8 ring-1 ring-rose-100 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                        <Type className="text-rose-500" size={28} />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold mb-3 text-neutral-900 font-display">AI Humanizer</h3>
-                                        <p className="text-neutral-500 text-sm leading-relaxed font-medium">Tap into the power of Gemini to rewrite your notes into organic, natural human prose.</p>
+                                        <h3 className="text-2xl font-bold mb-4 text-neutral-900 font-display tracking-tight">AI Humanizer</h3>
+                                        <p className="text-neutral-500 text-base leading-relaxed font-medium">
+                                            Tap into <span className="text-neutral-900 font-semibold italic">Gemini</span> to rewrite notes into organic, natural human prose.
+                                        </p>
                                     </div>
                                 </div>
                             </motion.div>
                         </ScrollReveal>
                     </div>
+                </div>
             </section>
 
             {/* --- ABOUT SECTION --- */}
