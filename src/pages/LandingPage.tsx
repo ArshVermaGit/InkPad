@@ -1,9 +1,9 @@
 import { 
     PenTool, Download, Type, ArrowRight,
-    Mail, Github, Linkedin, Twitter
+    Github, Linkedin, Twitter, Mail
 } from 'lucide-react';
 import React, { useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import { useStore } from '../lib/store';
 import EditorPage from './EditorPage';
 import { ScrollReveal } from '../components/ui/ScrollReveal';
@@ -11,44 +11,44 @@ import photo from '../assets/arsh.jpg';
 
 export default function LandingPage() {
     const editorRef = useRef<HTMLDivElement>(null);
-    const { setNavbarVisible } = useStore();
+    const heroRef = useRef<HTMLElement>(null);
+    const setNavbarVisible = useStore(state => state.setNavbarVisible);
+    const isNavbarVisible = useStore(state => state.isNavbarVisible);
+
+    const heroInView = useInView(heroRef, {
+        margin: "-20px 0px 0px 0px",
+    });
 
     useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                setNavbarVisible(!entry.isIntersecting);
-            },
-            { threshold: 0.25 }
-        );
-
-        if (editorRef.current) {
-            observer.observe(editorRef.current);
-        }
-
-        return () => {
-            observer.disconnect();
+        // Toggle navbar visibility based on hero section being in view
+        // Using a check to avoid redundant store updates
+        if (heroInView && !isNavbarVisible) {
             setNavbarVisible(true);
-        };
-    }, [setNavbarVisible]);
+        } else if (!heroInView && isNavbarVisible) {
+            setNavbarVisible(false);
+        }
+    }, [heroInView, isNavbarVisible, setNavbarVisible]);
 
     const scrollToEditor = () => editorRef.current?.scrollIntoView({ behavior: 'smooth' });
 
     return (
-        <div className="bg-paper min-h-screen overflow-x-hidden selection:bg-accent/30 relative">
+        <div className="bg-[#FAFAFA] min-h-screen overflow-x-hidden selection:bg-indigo-500/30 relative">
             {/* Global Page Background Grid & Soft Glows */}
             <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute inset-0 mesh-gradient opacity-30" />
+                <div className="absolute inset-0 mesh-gradient opacity-30" style={{ willChange: 'transform' }} />
                 <div className="absolute inset-0 bg-[radial-gradient(#00000005_1px,transparent_1px)] bg-size-[40px_40px]" />
-                <div className="absolute top-0 left-0 w-full h-full noise-bg opacity-20" />
+                <div className="absolute top-0 left-0 w-full h-full noise-bg opacity-20" style={{ transform: 'translateZ(0)' }} />
                 
-                {/* Static Background Blobs - No animation */}
+                {/* Static Background Blobs */}
                 <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-300/30 rounded-full blur-xl sm:blur-3xl" />
                 <div className="absolute top-1/3 -right-20 w-96 h-96 bg-indigo-300/30 rounded-full blur-xl sm:blur-3xl" />
                 <div className="absolute -bottom-20 left-1/3 w-96 h-96 bg-rose-300/30 rounded-full blur-xl sm:blur-3xl" />
             </div>
             
             {/* --- HERO SECTION --- */}
-            <HeroSection />
+            <section ref={heroRef}>
+                <HeroSection />
+            </section>
 
             {/* --- REAL EDITOR SECTION --- */}
             <ScrollReveal>
